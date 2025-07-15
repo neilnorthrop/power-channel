@@ -1,0 +1,222 @@
+<h1>Aetherium Ascent</h1>
+
+<h2>Your Stats</h2>
+<div id="stats">
+  <p>Level: <span id="level"></span></p>
+  <p>Experience: <span id="experience"></span></p>
+  <p>Skill Points: <span id="skill-points"></span></p>
+</div>
+
+<h2>Your Resources</h2>
+<div id="resources"></div>
+
+<h2>Actions</h2>
+<div id="actions"></div>
+
+<h2>Skills</h2>
+<div id="skills"></div>
+
+<h2>Inventory</h2>
+<div id="inventory"></div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const levelSpan = document.getElementById('level');
+    const experienceSpan = document.getElementById('experience');
+    const skillPointsSpan = document.getElementById('skill-points');
+    const resourcesDiv = document.getElementById('resources');
+    const actionsDiv = document.getElementById('actions');
+    const skillsDiv = document.getElementById('skills');
+    const inventoryDiv = document.getElementById('inventory');
+
+    const fetchUser = () => {
+      fetch('/api/v1/user', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        levelSpan.innerText = data.data.attributes.level;
+        experienceSpan.innerText = data.data.attributes.experience;
+        skillPointsSpan.innerText = data.data.attributes.skill_points;
+      });
+    };
+
+    const fetchResources = () => {
+      fetch('/api/v1/resources', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        resourcesDiv.innerHTML = '';
+        data.data.forEach(resource => {
+          const resourceDiv = document.createElement('div');
+          resourceDiv.innerHTML = `<strong>${resource.attributes.name}:</strong> ${resource.attributes.base_amount}`;
+          resourcesDiv.appendChild(resourceDiv);
+        });
+      });
+    };
+
+    const fetchActions = () => {
+      fetch('/api/v1/actions', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        actionsDiv.innerHTML = '';
+        data.data.forEach(action => {
+          const actionDiv = document.createElement('div');
+          const actionButton = document.createElement('button');
+          actionButton.innerText = action.attributes.name;
+          actionButton.addEventListener('click', () => {
+            performAction(action.id);
+          });
+          actionDiv.appendChild(actionButton);
+
+          const upgradeButton = document.createElement('button');
+          upgradeButton.innerText = 'Upgrade';
+          upgradeButton.addEventListener('click', () => {
+            upgradeAction(action.id);
+          });
+          actionDiv.appendChild(upgradeButton);
+
+          actionsDiv.appendChild(actionDiv);
+        });
+      });
+    };
+
+    const fetchSkills = () => {
+      fetch('/api/v1/skills', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        skillsDiv.innerHTML = '';
+        data.data.forEach(skill => {
+          const skillDiv = document.createElement('div');
+          skillDiv.innerHTML = `<strong>${skill.attributes.name}</strong> (${skill.attributes.cost} SP): ${skill.attributes.description}`;
+          const unlockButton = document.createElement('button');
+          unlockButton.innerText = 'Unlock';
+          unlockButton.addEventListener('click', () => {
+            unlockSkill(skill.id);
+          });
+          skillDiv.appendChild(unlockButton);
+          skillsDiv.appendChild(skillDiv);
+        });
+      });
+    };
+
+    const fetchInventory = () => {
+      fetch('/api/v1/items', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        inventoryDiv.innerHTML = '';
+        data.data.forEach(item => {
+          const itemDiv = document.createElement('div');
+          itemDiv.innerHTML = `<strong>${item.attributes.name}</strong>: ${item.attributes.description}`;
+          const useButton = document.createElement('button');
+          useButton.innerText = 'Use';
+          useButton.addEventListener('click', () => {
+            useItem(item.id);
+          });
+          itemDiv.appendChild(useButton);
+          inventoryDiv.appendChild(itemDiv);
+        });
+      });
+    };
+
+    const performAction = (actionId) => {
+      fetch('/api/v1/actions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        },
+        body: JSON.stringify({ action_id: actionId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+          fetchResources();
+          fetchUser();
+        }
+      });
+    };
+
+    const upgradeAction = (actionId) => {
+      fetch(`/api/v1/actions/${actionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+        }
+      });
+    };
+
+    const unlockSkill = (skillId) => {
+      fetch('/api/v1/skills', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        },
+        body: JSON.stringify({ skill_id: skillId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+          fetchUser();
+        }
+      });
+    };
+
+    const useItem = (itemId) => {
+      fetch(`/api/v1/items/${itemId}/use`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+          fetchInventory();
+        }
+      });
+    };
+
+    fetchUser();
+    fetchResources();
+    fetchActions();
+    fetchSkills();
+    fetchInventory();
+  });
+</script>

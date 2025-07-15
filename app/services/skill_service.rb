@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+class SkillService
+  def initialize(user)
+    @user = user
+  end
+
+  def apply_skills_to_action(action, cooldown, amount)
+    @user.skills.each do |skill|
+      cooldown, amount = send(skill.effect, action, cooldown, amount)
+    end
+    [cooldown, amount]
+  end
+
+  private
+
+  def increase_gold_gain(action, cooldown, amount)
+    amount *= 1.1 if action.resource.name == 'Gold'
+    [cooldown, amount]
+  end
+
+  def decrease_wood_cooldown(action, cooldown, amount)
+    cooldown *= 0.9 if action.resource.name == 'Wood'
+    [cooldown, amount]
+  end
+
+  def increase_stone_gain(action, cooldown, amount)
+    amount *= 1.1 if action.resource.name == 'Stone'
+    [cooldown, amount]
+  end
+end
