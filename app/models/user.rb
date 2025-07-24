@@ -13,24 +13,130 @@ class User < ApplicationRecord
   has_many :user_items
   has_many :items, through: :user_items
 
+  # Gain experience and level up if the threshold is reached.
+  # This method increases the user's experience by the specified amount,
+  # checks if the user has enough experience to level up, and updates the user's level and skill points accordingly.
+  # @param amount [Integer] The amount of experience to gain.
+  # @return [void]
+  # This method is typically called when the user performs actions that grant experience,
+  # such as completing quests or defeating enemies.
+  # It is defined in the model to encapsulate the logic for gaining experience and leveling up.
+  # @example
+  #   user = User.find(1)
+  #   user.gain_experience(150)
+  #   # This will increase the user's experience by 150 and check if they level up
+  #   # If the user has enough experience to level up, it will increase their level and skill points.
+  #
+  # @note This method is called automatically when the user performs actions that grant experience,
+  #       as defined in the `after_create` callback.
+  #
   def gain_experience(amount)
     self.experience += amount
     level_up if experience >= experience_for_next_level
     save
   end
 
+  # Callback to initialize default resources, actions, and starting attributes
+  # when a new user is created.
+  # This method is called automatically after the user is created.
+  # This method sets the initial skill points, level, and experience,
+  # and assigns default resources and actions.
+  # @return [void]
+  # This method is typically called after a user is created to ensure they
+  # start with the necessary resources and actions.
+  # It is defined as a callback in the model to ensure it runs automatically.
+  # @example
+  #   user = User.create!(email: "test_user@example.com", password: "password123")
+  #   # This will automatically call initialize_defaults and set up the user.
+  # @note This method is called automatically after the user is created,
+  #       as defined in the `after_create` callback.
+  #
+  after_create :initialize_defaults
+
   private
 
+  # Callback method to initialize a new user with default resources, actions, and starting attributes.
+  # Sets initial skill points, level, and experience, then saves the user record.
+  #
+  # This method is called after a user is created.
+  def initialize_defaults
+    assign_default_resources_and_actions if user_resources.empty? && user_actions.empty?
+    self.skill_points = 0
+    self.level = 1
+    self.experience = 0
+    save
+  end
+
+  # Calculates the experience required for the next level based on the current level.
+  # The formula is: 100 * level, where level starts at 1.
+  #
+  # @return [Integer] The experience required for the next level.
+  # For level 1, it returns 100; for level 2, it returns 200, and so on.
+  #
+  # This method is used to determine when the user should level up based on their experience.
+  # It is called in the `gain_experience` method to check if the user has enough experience to level up.  
+  #
+  # Example:
+  #   user.experience_for_next_level # => 100 for level 1, 200 for level 2, etc.
+  #
+  # @example
+  #   user = User.new(level: 1)
+  #   user.experience_for_next_level # => 100
+  #
+  # @example
+  #   user = User.new(level: 2)
+  #   user.experience_for_next_level # => 200
+  #
   def experience_for_next_level
     100 * level
   end
 
+  # Levels up the user by increasing their level, resetting experience to 0,
+  # and increasing skill points by 1.
+  # This method is called when the user has enough experience to level up.
+  # It updates the user's attributes and saves the record.
+  # @return [void]
+  # This method is typically called after the user gains enough experience
+  # to reach the next level.
+  # # Example:
+  #   user = User.find(1)
+  #   user.gain_experience(150) # If this brings the user to level 2,
+  #   # it will call level_up internally.
+  # @example
+  #   user = User.find(1)
+  #   user.level_up
+  #   # This will increase the user's level by 1, reset experience to 0
+  #   # and increase skill points by 1.
+  #
+  # @note This method is called automatically when the user gains enough experience
+  #       to reach the next level, as defined in the `gain_experience` method.
+  #
+  # @see User#gain_experience
   def level_up
     self.level += 1
     self.experience = 0
     self.skill_points += 1
   end
 
+  # Assigns default resources and actions to the user.
+  # This method is called during the user creation process to ensure
+  # that the user has the necessary resources and actions available.
+  # It iterates through all available resources and actions,
+  # creating user-specific records for each.
+  #
+  # @return [void]
+  # This method is typically called after the user is created to ensure they
+  # start with the necessary resources and actions.
+  # It is defined as a private method in the model to encapsulate the logic
+  # for assigning default resources and actions.
+  #
+  # @example
+  #   user = User.create!(email: "test_user@example.com", password: "password123")
+  #   # This will automatically call assign_default_resources_and_actions
+  #   # and set up the user with default resources and actions.
+  #  # @note This method is called automatically after the user is created,
+  #       as defined in the `after_create` callback.
+  #
   def assign_default_resources_and_actions
     Resource.all.each do |resource|
       user_resources.create(resource: resource, amount: resource.base_amount)
