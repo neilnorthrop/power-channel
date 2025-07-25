@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_02_175429) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_25_151232) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,12 +24,39 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_02_175429) do
     t.index ["resource_id"], name: "index_actions_on_resource_id"
   end
 
+  create_table "buildings", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.integer "level"
+    t.string "effect"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "items", force: :cascade do |t|
     t.string "name"
     t.text "description"
     t.string "effect"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "recipe_resources", force: :cascade do |t|
+    t.bigint "recipe_id", null: false
+    t.bigint "resource_id", null: false
+    t.integer "quantity"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipe_id"], name: "index_recipe_resources_on_recipe_id"
+    t.index ["resource_id"], name: "index_recipe_resources_on_resource_id"
+  end
+
+  create_table "recipes", force: :cascade do |t|
+    t.bigint "item_id", null: false
+    t.integer "quantity"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["item_id"], name: "index_recipes_on_item_id"
   end
 
   create_table "resources", force: :cascade do |t|
@@ -58,6 +85,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_02_175429) do
     t.integer "level", default: 1
     t.index ["action_id"], name: "index_user_actions_on_action_id"
     t.index ["user_id"], name: "index_user_actions_on_user_id"
+  end
+
+  create_table "user_buildings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "building_id", null: false
+    t.integer "level"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["building_id"], name: "index_user_buildings_on_building_id"
+    t.index ["user_id"], name: "index_user_buildings_on_user_id"
   end
 
   create_table "user_items", force: :cascade do |t|
@@ -104,8 +141,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_02_175429) do
   end
 
   add_foreign_key "actions", "resources"
+  add_foreign_key "recipe_resources", "recipes"
+  add_foreign_key "recipe_resources", "resources"
+  add_foreign_key "recipes", "items"
   add_foreign_key "user_actions", "actions"
   add_foreign_key "user_actions", "users"
+  add_foreign_key "user_buildings", "buildings"
+  add_foreign_key "user_buildings", "users"
   add_foreign_key "user_items", "items"
   add_foreign_key "user_items", "users"
   add_foreign_key "user_resources", "resources"

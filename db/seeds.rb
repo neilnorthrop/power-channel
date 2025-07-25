@@ -22,5 +22,19 @@ Skill.create(name: 'Lumberjack', description: 'Decrease wood action cooldown by 
 Skill.create(name: 'Stone Mason', description: 'Increase stone gained from all actions by 10%.', cost: 1, effect: 'increase_stone_gain')
 
 # Create Items
-Item.create(name: 'Minor Potion of Luck', description: 'Slightly increases the chance of finding rare resources.', effect: 'increase_luck')
-Item.create(name: 'Scroll of Haste', description: 'Instantly completes the cooldown of a single action.', effect: 'reset_cooldown')
+potion_of_luck = Item.create(name: 'Minor Potion of Luck', description: 'Slightly increases the chance of finding rare resources.', effect: 'increase_luck')
+scroll_of_haste = Item.create(name: 'Scroll of Haste', description: 'Instantly completes the cooldown of a single action.', effect: 'reset_cooldown')
+
+# Create Recipes
+recipe1 = Recipe.create(item: potion_of_luck, quantity: 1)
+RecipeResource.create(recipe: recipe1, resource: gold, quantity: 10)
+RecipeResource.create(recipe: recipe1, resource: wood, quantity: 5)
+
+recipe2 = Recipe.create(item: scroll_of_haste, quantity: 1)
+RecipeResource.create(recipe: recipe2, resource: stone, quantity: 10)
+RecipeResource.create(recipe: recipe2, resource: wood, quantity: 10)
+
+# Create Buildings
+Building.create(name: 'Lumber Mill', description: 'Increases wood production by 10% per level.', level: 1, effect: 'increase_wood_production')
+Building.create(name: 'Mine', description: 'Increases gold production by 10% per level.', level: 1, effect: 'increase_gold_production')
+Building.create(name: 'Quarry', description: 'Increases stone production by 10% per level.', level: 1, effect: 'increase_stone_production')

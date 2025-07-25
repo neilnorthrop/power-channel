@@ -12,6 +12,8 @@ class User < ApplicationRecord
   has_many :skills, through: :user_skills
   has_many :user_items
   has_many :items, through: :user_items
+  has_many :user_buildings
+  has_many :buildings, through: :user_buildings
 
   # Gain experience and level up if the threshold is reached.
   # This method increases the user's experience by the specified amount,

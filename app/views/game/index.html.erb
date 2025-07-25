@@ -19,6 +19,12 @@
 <h2>Inventory</h2>
 <div id="inventory"></div>
 
+<h2>Crafting</h2>
+<div id="crafting"></div>
+
+<h2>Buildings</h2>
+<div id="buildings"></div>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const levelSpan = document.getElementById('level');
@@ -28,6 +34,8 @@
     const actionsDiv = document.getElementById('actions');
     const skillsDiv = document.getElementById('skills');
     const inventoryDiv = document.getElementById('inventory');
+    const craftingDiv = document.getElementById('crafting');
+    const buildingsDiv = document.getElementById('buildings');
 
     const fetchUser = () => {
       fetch('/api/v1/user', {
@@ -136,6 +144,54 @@
       });
     };
 
+    const fetchCrafting = () => {
+      fetch('/api/v1/crafting', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        craftingDiv.innerHTML = '';
+        const items = data.included.filter(inc => inc.type === 'item');
+        data.data.forEach(recipe => {
+          const item = items.find(i => i.id === recipe.relationships.item.data.id);
+          const recipeDiv = document.createElement('div');
+          recipeDiv.innerHTML = `<strong>${item.attributes.name}</strong>: `;
+          const craftButton = document.createElement('button');
+          craftButton.innerText = 'Craft';
+          craftButton.addEventListener('click', () => {
+            craftItem(recipe.id);
+          });
+          recipeDiv.appendChild(craftButton);
+          craftingDiv.appendChild(recipeDiv);
+        });
+      });
+    };
+
+    const fetchBuildings = () => {
+      fetch('/api/v1/buildings', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        buildingsDiv.innerHTML = '';
+        data.data.forEach(building => {
+          const buildingDiv = document.createElement('div');
+          buildingDiv.innerHTML = `<strong>${building.attributes.name}</strong> (Level ${building.attributes.level}): ${building.attributes.description}`;
+          const upgradeButton = document.createElement('button');
+          upgradeButton.innerText = 'Upgrade';
+          upgradeButton.addEventListener('click', () => {
+            upgradeBuilding(building.id);
+          });
+          buildingDiv.appendChild(upgradeButton);
+          buildingsDiv.appendChild(buildingDiv);
+        });
+      });
+    };
+
     const performAction = (actionId) => {
       fetch('/api/v1/actions', {
         method: 'POST',
@@ -213,10 +269,52 @@
       });
     };
 
+    const craftItem = (recipeId) => {
+      fetch('/api/v1/crafting', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        },
+        body: JSON.stringify({ recipe_id: recipeId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+          fetchResources();
+          fetchInventory();
+        }
+      });
+    };
+
+    const upgradeBuilding = (buildingId) => {
+      fetch(`/api/v1/buildings/${buildingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(data.message);
+          fetchBuildings();
+        }
+      });
+    };
+
     fetchUser();
     fetchResources();
     fetchActions();
     fetchSkills();
     fetchInventory();
+    fetchCrafting();
+    fetchBuildings();
   });
 </script>

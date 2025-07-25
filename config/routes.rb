@@ -12,6 +12,8 @@ Rails.application.routes.draw do
       resources :items, only: [:index, :create] do
         post 'use', on: :member
       end
+      resources :crafting, only: [:index, :create]
+      resources :buildings, only: [:index, :create, :update]
     end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
