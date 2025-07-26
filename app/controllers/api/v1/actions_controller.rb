@@ -5,8 +5,9 @@ class Api::V1::ActionsController < Api::ApiController
   before_action :authenticate_request
 
   def index
-    actions = Action.all
-    render json: ActionSerializer.new(actions).serializable_hash.to_json
+    user_actions = @current_user.user_actions
+    options = { include: [:action] }
+    render json: UserActionSerializer.new(user_actions, options).serializable_hash.to_json
   end
 
   def create
