@@ -8,3 +8,25 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+.countdown-visual {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Start full */
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0.5); /* Example: semi-transparent red */
+    animation-name: shrinkCountdown;
+    animation-duration: 10s; /* Example: 10-second countdown */
+    animation-timing-function: linear;
+    animation-fill-mode: forwards; /* Stays at the end state */
+}
+
+@keyframes shrinkCountdown {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}

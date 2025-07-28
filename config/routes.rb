@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'authenticate', to: 'authentication#create'
       resources :resources, only: [:index]
+      resources :user_resources, only: [:index]
       resources :actions, only: [:index, :create, :update]
       get '/user', to: 'users#show'
       resources :skills, only: [:index, :create]

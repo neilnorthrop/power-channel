@@ -25,7 +25,9 @@ class Api::V1::ActionsController < Api::ApiController
       user_resource.increment!(:amount, amount)
       user_action.update(last_performed_at: Time.current)
       @current_user.gain_experience(10)
-      render json: { message: "#{action.name} performed successfully." }
+      serialized_user = UserSerializer.new(@current_user).serializable_hash
+      serialized_user[:message] = "#{action.name} performed successfully."
+      render json: serialized_user.to_json
     else
       render json: { error: 'Action is on cooldown.' }, status: :unprocessable_entity
     end
