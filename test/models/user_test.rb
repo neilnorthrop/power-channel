@@ -55,4 +55,20 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 1, @user.skill_points # skill points should increase by 1 on level up
   end
 
+  test "level_up increases level and skill_points and resets experience" do
+    @user.level = 1
+    @user.experience = 100
+    @user.skill_points = 0
+    @user.send(:level_up)
+    assert_equal 2, @user.level
+    assert_equal 0, @user.experience
+    assert_equal 1, @user.skill_points
+  end
+
+  test "experience_for_next_level returns correct amount" do
+    @user.level = 1
+    assert_equal 100, @user.send(:experience_for_next_level)
+    @user.level = 2
+    assert_equal 200, @user.send(:experience_for_next_level)
+  end
 end

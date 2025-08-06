@@ -1,11 +1,11 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  name: MyString
-  description: MyText
-  effect: MyString
+  name: Lucky Charm
+  description: Increases your luck for a short time.
+  effect: increase_luck
 
 two:
-  name: MyString
-  description: MyText
-  effect: MyString
+  name: Cooldown Potion
+  description: Resets the cooldown of all your actions.
+  effect: reset_cooldown
