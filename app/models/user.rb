@@ -35,39 +35,9 @@ class User < ApplicationRecord
   def gain_experience(amount)
     self.experience += amount
     level_up if experience >= experience_for_next_level
-    save
   end
-
-  # Callback to initialize default resources, actions, and starting attributes
-  # when a new user is created.
-  # This method is called automatically after the user is created.
-  # This method sets the initial skill points, level, and experience,
-  # and assigns default resources and actions.
-  # @return [void]
-  # This method is typically called after a user is created to ensure they
-  # start with the necessary resources and actions.
-  # It is defined as a callback in the model to ensure it runs automatically.
-  # @example
-  #   user = User.create!(email: "test_user@example.com", password: "password123")
-  #   # This will automatically call initialize_defaults and set up the user.
-  # @note This method is called automatically after the user is created,
-  #       as defined in the `after_create` callback.
-  #
-  after_create :initialize_defaults
 
   private
-
-  # Callback method to initialize a new user with default resources, actions, and starting attributes.
-  # Sets initial skill points, level, and experience, then saves the user record.
-  #
-  # This method is called after a user is created.
-  def initialize_defaults
-    assign_default_resources_and_actions if user_resources.empty? && user_actions.empty?
-    self.skill_points = 0
-    self.level = 1
-    self.experience = 0
-    save
-  end
 
   # Calculates the experience required for the next level based on the current level.
   # The formula is: 100 * level, where level starts at 1.
@@ -139,13 +109,4 @@ class User < ApplicationRecord
   #  # @note This method is called automatically after the user is created,
   #       as defined in the `after_create` callback.
   #
-  def assign_default_resources_and_actions
-    Resource.all.each do |resource|
-      user_resources.create(resource: resource, amount: resource.base_amount)
-    end
-
-    Action.all.each do |action|
-      user_actions.create(action: action)
-    end
-  end
 end

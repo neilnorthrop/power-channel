@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   root "game#index"
-  devise_for :users
+  devise_for :users, controllers: { registrations: 'api/v1/registrations' }
 
   namespace :api do
     namespace :v1 do
