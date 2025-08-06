@@ -2,6 +2,8 @@
 
 <%= button_to "Sign Out", destroy_user_session_path, method: :delete %>
 
+<div id="toast-container"></div>
+
 <h2>Your Stats</h2>
 <div id="stats">
   <p>Level: <span id="level"></span></p>
@@ -27,7 +29,6 @@
 <h2>Buildings</h2>
 <div id="buildings"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/actioncable@7.0.0/lib/assets/compiled/action_cable.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const levelSpan = document.getElementById('level');
@@ -39,6 +40,25 @@
     const inventoryDiv = document.getElementById('inventory');
     const craftingDiv = document.getElementById('crafting');
     const buildingsDiv = document.getElementById('buildings');
+    const toastContainer = document.getElementById('toast-container');
+
+    const showToast = (message, type = 'success') => {
+      console.log('Showing toast:', message, type);
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerText = message;
+      console.log('Toast created:', toast);
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 3000);
+    };
 
     const fetchUser = () => {
       fetch('/api/v1/user', {
@@ -244,9 +264,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
           fetchResources();
           fetchUser();
           fetchActions();
@@ -265,9 +285,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
         }
       });
     };
@@ -284,9 +304,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
         }
       });
     };
@@ -301,9 +321,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
           fetchInventory();
         }
       });
@@ -321,9 +341,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
         }
       });
     };
@@ -339,9 +359,9 @@
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          showToast(data.error, 'error');
         } else {
-          alert(data.message);
+          showToast(data.message);
         }
       });
     };
@@ -357,7 +377,14 @@
     const cable = ActionCable.createConsumer('/cable?token=<%= JsonWebToken.encode(user_id: current_user.id) %>');
 
     cable.subscriptions.create('UserUpdatesChannel', {
+      connected() {
+        console.log('Connected to UserUpdatesChannel');
+      },
+      disconnected() {
+        console.log('Disconnected from UserUpdatesChannel');
+      },
       received(data) {
+        console.log('Received data:', data);
         if (data.type === 'user_action_update') {
           updateCooldown(data.data.data);
         } else if (data.type === 'user_resource_update') {
@@ -375,3 +402,4 @@
     });
   });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@rails/actioncable@7.0.0/app/assets/javascripts/actioncable.js"></script>

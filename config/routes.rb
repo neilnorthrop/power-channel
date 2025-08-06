@@ -29,4 +29,5 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+  get '/favicon.ico', to: 'application#favicon'
 end

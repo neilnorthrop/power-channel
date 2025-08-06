@@ -30,3 +30,32 @@
         width: 0%;
     }
 }
+
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.toast {
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: #fff;
+  font-family: sans-serif;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+.toast.success {
+  background-color: #28a745;
+}
+
+.toast.error {
+  background-color: #dc3545;
+}
