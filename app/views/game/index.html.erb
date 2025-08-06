@@ -27,6 +27,7 @@
 <h2>Buildings</h2>
 <div id="buildings"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/actioncable@7.0.0/lib/assets/compiled/action_cable.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const levelSpan = document.getElementById('level');
@@ -113,9 +114,15 @@
       const cooldownSpan = document.getElementById(`cooldown-${userAction.id}`);
       if (!cooldownSpan) return;
 
-      if (userAction.attributes.last_performed_at) {
-        const lastPerformedAt = new Date(userAction.attributes.last_performed_at);
-        const cooldown = userAction.attributes.cooldown;
+      let attributes = userAction.attributes;
+      if (userAction.data && userAction.data.attributes) {
+        attributes = userAction.data.attributes;
+      }
+
+
+      if (attributes.last_performed_at) {
+        const lastPerformedAt = new Date(attributes.last_performed_at);
+        const cooldown = attributes.cooldown;
         const now = new Date();
         const diff = (now - lastPerformedAt) / 1000;
 
@@ -350,5 +357,15 @@
     fetchInventory();
     fetchCrafting();
     fetchBuildings();
+
+    const cable = ActionCable.createConsumer('/cable?token=<%= JsonWebToken.encode(user_id: current_user.id) %>');
+
+    cable.subscriptions.create('UserUpdatesChannel', {
+      received(data) {
+        if (data.type === 'user_action_update') {
+          updateCooldown(data.data.data);
+        }
+      }
+    });
   });
 </script>
