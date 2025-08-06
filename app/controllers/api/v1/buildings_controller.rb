@@ -10,16 +10,24 @@ class Api::V1::BuildingsController < Api::ApiController
   end
 
   def create
-    building = Building.find(params[:building_id])
-    user_building = @current_user.user_buildings.find_or_create_by(building: building)
-    # Implement resource checking and consumption here
-    render json: { message: "#{building.name} constructed successfully." }
+    building_service = BuildingService.new(@current_user)
+    result = building_service.create_building(params[:building_id])
+    if result[:success]
+      UserUpdatesChannel.broadcast_to(@current_user, { type: 'user_building_update', data: UserBuildingSerializer.new(@current_user.user_buildings).serializable_hash })
+      render json: { message: result[:message] }
+    else
+      render json: { error: result[:error] }, status: :unprocessable_entity
+    end
   end
 
   def update
-    user_building = @current_user.user_buildings.find(params[:id])
-    # Implement resource checking and consumption here
-    user_building.increment!(:level)
-    render json: { message: "#{user_building.building.name} upgraded successfully." }
+    building_service = BuildingService.new(@current_user)
+    result = building_service.upgrade_building(params[:id])
+    if result[:success]
+      UserUpdatesChannel.broadcast_to(@current_user, { type: 'user_building_update', data: UserBuildingSerializer.new(@current_user.user_buildings).serializable_hash })
+      render json: { message: result[:message] }
+    else
+      render json: { error: result[:error] }, status: :unprocessable_entity
+    end
   end
 end

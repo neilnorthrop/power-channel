@@ -21,6 +21,7 @@ class Api::V1::ItemsController < Api::ApiController
       item_service = ItemService.new(@current_user, user_item.item)
       item_service.use
       user_item.destroy
+      UserUpdatesChannel.broadcast_to(@current_user, { type: 'user_item_update', data: UserItemSerializer.new(@current_user.user_items).serializable_hash })
       render json: { message: "#{user_item.item.name} used." }
     else
       render json: { error: 'Item not found in inventory.' }, status: :not_found

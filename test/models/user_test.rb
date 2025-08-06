@@ -7,6 +7,8 @@ class UserTest < ActiveSupport::TestCase
 
   test "after_create assigns default resources, actions, and starting attributes" do
     user = User.create!(email: "newuser@example.com", password: "password123")
+    initialization_service = UserInitializationService.new(user)
+    initialization_service.initialize_defaults
 
     # Check initial attributes
     assert_equal 1, user.level

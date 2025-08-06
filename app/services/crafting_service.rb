@@ -22,6 +22,9 @@ class CraftingService
         user_resource.decrement!(:amount, recipe_resource.quantity)
       end
       @user.items << recipe.item
+      @user.save
+      UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_update', data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
+      UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_update', data: UserItemSerializer.new(@user.user_items).serializable_hash })
       { success: true, message: "#{recipe.item.name} crafted successfully." }
     else
       { success: false, error: 'Not enough resources.' }

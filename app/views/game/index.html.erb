@@ -287,7 +287,6 @@
           alert(data.error);
         } else {
           alert(data.message);
-          fetchUser();
         }
       });
     };
@@ -325,8 +324,6 @@
           alert(data.error);
         } else {
           alert(data.message);
-          fetchResources();
-          fetchInventory();
         }
       });
     };
@@ -345,7 +342,6 @@
           alert(data.error);
         } else {
           alert(data.message);
-          fetchBuildings();
         }
       });
     };
@@ -364,6 +360,16 @@
       received(data) {
         if (data.type === 'user_action_update') {
           updateCooldown(data.data.data);
+        } else if (data.type === 'user_resource_update') {
+          fetchResources();
+        } else if (data.type === 'user_item_update') {
+          fetchInventory();
+        } else if (data.type === 'user_building_update') {
+          fetchBuildings();
+        } else if (data.type === 'user_skill_update') {
+          fetchSkills();
+        } else if (data.type === 'user_update') {
+          fetchUser();
         }
       }
     });

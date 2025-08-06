@@ -1,13 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  name: MyString
-  description: MyText
+  name: Gold Digger
+  description: Increase gold gain by 10%
   cost: 1
-  effect: MyString
+  effect: increase_gold_gain
 
 two:
-  name: MyString
-  description: MyText
+  name: Lumberjack
+  description: Decrease wood cooldown by 10%
   cost: 1
-  effect: MyString
+  effect: decrease_wood_cooldown
