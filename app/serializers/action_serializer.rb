@@ -2,5 +2,5 @@
 
 class ActionSerializer
   include JSONAPI::Serializer
-  attributes :id, :name, :description, :cooldown, :resource_id
+  attributes :id, :name, :description, :cooldown
 end

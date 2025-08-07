@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_25_151232) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_07_133758) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,10 +18,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_151232) do
     t.string "name"
     t.text "description"
     t.integer "cooldown"
-    t.bigint "resource_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["resource_id"], name: "index_actions_on_resource_id"
   end
 
   create_table "buildings", force: :cascade do |t|
@@ -65,6 +63,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_151232) do
     t.integer "base_amount"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "action_id"
+    t.index ["action_id"], name: "index_resources_on_action_id"
   end
 
   create_table "skills", force: :cascade do |t|
@@ -140,10 +140,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_25_151232) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "actions", "resources"
   add_foreign_key "recipe_resources", "recipes"
   add_foreign_key "recipe_resources", "resources"
   add_foreign_key "recipes", "items"
+  add_foreign_key "resources", "actions"
   add_foreign_key "user_actions", "actions"
   add_foreign_key "user_actions", "users"
   add_foreign_key "user_buildings", "buildings"

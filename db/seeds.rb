@@ -12,9 +12,14 @@ wood = Resource.find_or_create_by(name: 'Wood') { |r| r.description = 'A common 
 stone = Resource.find_or_create_by(name: 'Stone') { |r| r.description = 'A sturdy building material.'; r.base_amount = 5 }
 
 # Create Actions
-Action.find_or_create_by(name: 'Mine Gold') { |a| a.description = 'Mine for gold.'; a.cooldown = 60; a.resource = gold }
-Action.find_or_create_by(name: 'Chop Wood') { |a| a.description = 'Chop down trees for wood.'; a.cooldown = 30; a.resource = wood }
-Action.find_or_create_by(name: 'Quarry Stone') { |a| a.description = 'Quarry for stone.'; a.cooldown = 45; a.resource = stone }
+mine_gold = Action.find_or_create_by(name: 'Mine Gold') { |a| a.description = 'Mine for gold.'; a.cooldown = 60 }
+chop_wood = Action.find_or_create_by(name: 'Chop Wood') { |a| a.description = 'Chop down trees for wood.'; a.cooldown = 30 }
+quarry_stone = Action.find_or_create_by(name: 'Quarry Stone') { |a| a.description = 'Quarry for stone.'; a.cooldown = 45 }
+
+# Associate Resources with Actions
+gold.update(action: mine_gold)
+wood.update(action: chop_wood)
+stone.update(action: quarry_stone)
 
 # Create Skills
 Skill.find_or_create_by(name: 'Golden Touch') { |s| s.description = 'Increase gold gained from all actions by 10%.'; s.cost = 1; s.effect = 'increase_gold_gain' }
