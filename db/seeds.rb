@@ -7,19 +7,21 @@
 #   Character.create(name: "Luke", movie: movies.first)
 
 # Create Resources
-gold = Resource.find_or_create_by(name: 'Gold') { |r| r.description = 'The currency of the realm.'; r.base_amount = 10 }
+gold_coins = Resource.find_or_create_by(name: 'Gold Coins') { |r| r.description = 'The currency of the realm.'; r.base_amount = 10 }
 wood = Resource.find_or_create_by(name: 'Wood') { |r| r.description = 'A common building material.'; r.base_amount = 5 }
 stone = Resource.find_or_create_by(name: 'Stone') { |r| r.description = 'A sturdy building material.'; r.base_amount = 5 }
+coal = Resource.find_or_create_by(name: 'Coal') { |r| r.description = 'A fuel source for smelting and crafting.'; r.base_amount = 2 }
 
 # Create Actions
-mine_gold = Action.find_or_create_by(name: 'Mine Gold') { |a| a.description = 'Mine for gold.'; a.cooldown = 60 }
+taxes = Action.find_or_create_by(name: 'Taxes') { |a| a.description = 'Gather taxes from your citizens.'; a.cooldown = 60 }
 chop_wood = Action.find_or_create_by(name: 'Chop Wood') { |a| a.description = 'Chop down trees for wood.'; a.cooldown = 30 }
 quarry_stone = Action.find_or_create_by(name: 'Quarry Stone') { |a| a.description = 'Quarry for stone.'; a.cooldown = 45 }
 
 # Associate Resources with Actions
-gold.update(action: mine_gold)
+gold_coins.update(action: taxes)
 wood.update(action: chop_wood)
 stone.update(action: quarry_stone)
+coal.update(action: quarry_stone)
 
 # Create Skills
 Skill.find_or_create_by(name: 'Golden Touch') { |s| s.description = 'Increase gold gained from all actions by 10%.'; s.cost = 1; s.effect = 'increase_gold_gain' }
@@ -32,7 +34,7 @@ scroll_of_haste = Item.find_or_create_by(name: 'Scroll of Haste') { |i| i.descri
 
 # Create Recipes
 recipe1 = Recipe.find_or_create_by(item: potion_of_luck) { |r| r.quantity = 1 }
-RecipeResource.find_or_create_by(recipe: recipe1, resource: gold) { |rr| rr.quantity = 10 }
+RecipeResource.find_or_create_by(recipe: recipe1, resource: gold_coins) { |rr| rr.quantity = 10 }
 RecipeResource.find_or_create_by(recipe: recipe1, resource: wood) { |rr| rr.quantity = 5 }
 
 recipe2 = Recipe.find_or_create_by(item: scroll_of_haste) { |r| r.quantity = 1 }

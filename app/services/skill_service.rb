@@ -26,17 +26,17 @@ class SkillService
   private
 
   def increase_gold_gain(action, cooldown, amount)
-    amount *= 1.1 if action.resources.any? { |r| r.name == 'Gold' }
+    amount *= 1.1 if action.resources.any? { |r| r.name == 'Gold Coins' } # Do not use a hardcoded string
     [cooldown, amount]
   end
 
   def decrease_wood_cooldown(action, cooldown, amount)
-    cooldown *= 0.9 if action.resources.any? { |r| r.name == 'Wood' }
+    cooldown *= 0.9 if action.resources.any? { |r| r.name == 'Wood' } # Do not use a hardcoded string
     [cooldown, amount]
   end
 
   def increase_stone_gain(action, cooldown, amount)
-    amount *= 1.1 if action.resources.any? { |r| r.name == 'Stone' }
+    amount *= 1.1 if action.resources.any? { |r| r.name == 'Stone' } # Do not use a hardcoded string
     [cooldown, amount]
   end
 end
