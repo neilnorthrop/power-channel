@@ -7,7 +7,7 @@ class ActionServiceTest < ActiveSupport::TestCase
     @user = users(:one)
     @action = actions(:one)
     @resource = resources(:one)
-    @action.update(resource: @resource)
+    @resource.update(action: @action)
   end
 
   test 'should perform action and gain experience' do
@@ -19,7 +19,7 @@ class ActionServiceTest < ActiveSupport::TestCase
 
     assert result[:success]
     assert_equal initial_experience + 10, @user.reload.experience
-    assert_equal initial_resource_amount + @action.resource.base_amount, @user.user_resources.find_by(resource: @resource).amount
+    assert_equal initial_resource_amount + @resource.base_amount, @user.user_resources.find_by(resource: @resource).amount
   end
 
   test 'should not perform action if on cooldown' do
