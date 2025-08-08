@@ -60,6 +60,5 @@ module ActiveSupport
     #     password_confirmation: "password123"
     #   ) unless User.exists?(email: "default_test@gmail.com")
     # end
-
   end
 end

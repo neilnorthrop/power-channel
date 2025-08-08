@@ -46,7 +46,7 @@ class User < ApplicationRecord
   # For level 1, it returns 100; for level 2, it returns 200, and so on.
   #
   # This method is used to determine when the user should level up based on their experience.
-  # It is called in the `gain_experience` method to check if the user has enough experience to level up.  
+  # It is called in the `gain_experience` method to check if the user has enough experience to level up.
   #
   # Example:
   #   user.experience_for_next_level # => 100 for level 1, 200 for level 2, etc.

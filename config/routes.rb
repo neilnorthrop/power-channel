@@ -1,20 +1,20 @@
 Rails.application.routes.draw do
   root "game#index"
-  devise_for :users, controllers: { registrations: 'api/v1/registrations' }
+  devise_for :users, controllers: { registrations: "api/v1/registrations" }
 
   namespace :api do
     namespace :v1 do
-      post 'authenticate', to: 'authentication#create'
-      resources :resources, only: [:index]
-      resources :user_resources, only: [:index]
-      resources :actions, only: [:index, :create, :update]
-      get '/user', to: 'users#show'
-      resources :skills, only: [:index, :create]
-      resources :items, only: [:index, :create] do
-        post 'use', on: :member
+      post "authenticate", to: "authentication#create"
+      resources :resources, only: [ :index ]
+      resources :user_resources, only: [ :index ]
+      resources :actions, only: [ :index, :create, :update ]
+      get "/user", to: "users#show"
+      resources :skills, only: [ :index, :create ]
+      resources :items, only: [ :index, :create ] do
+        post "use", on: :member
       end
-      resources :crafting, only: [:index, :create]
-      resources :buildings, only: [:index, :create, :update]
+      resources :crafting, only: [ :index, :create ]
+      resources :buildings, only: [ :index, :create, :update ]
     end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -29,5 +29,5 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-  get '/favicon.ico', to: 'application#favicon'
+  get "/favicon.ico", to: "application#favicon"
 end

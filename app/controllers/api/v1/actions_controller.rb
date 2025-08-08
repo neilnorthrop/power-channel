@@ -6,7 +6,7 @@ class Api::V1::ActionsController < Api::ApiController
 
   def index
     user_actions = @current_user.user_actions
-    options = { include: [:action] }
+    options = { include: [ :action ] }
     render json: UserActionSerializer.new(user_actions, options).serializable_hash.to_json
   end
 
@@ -28,7 +28,7 @@ class Api::V1::ActionsController < Api::ApiController
     if user_action.upgrade
       render json: { message: "#{user_action.action.name} upgraded successfully." }
     else
-      render json: { error: 'Failed to upgrade action.' }, status: :unprocessable_entity
+      render json: { error: "Failed to upgrade action." }, status: :unprocessable_entity
     end
   end
 end

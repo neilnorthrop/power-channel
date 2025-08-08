@@ -6,7 +6,7 @@ class Api::V1::CraftingController < Api::ApiController
 
   def index
     recipes = Recipe.all
-    options = { include: [:item] }
+    options = { include: [ :item ] }
     render json: RecipeSerializer.new(recipes, options).serializable_hash.to_json
   end
 

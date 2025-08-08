@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class ActionServiceTest < ActiveSupport::TestCase
   def setup
@@ -10,7 +10,7 @@ class ActionServiceTest < ActiveSupport::TestCase
     @resource.update(action: @action)
   end
 
-  test 'should perform action and gain experience' do
+  test "should perform action and gain experience" do
     service = ActionService.new(@user)
     initial_experience = @user.experience
     initial_resource_amount = @user.user_resources.find_by(resource: @resource)&.amount || 0
@@ -22,12 +22,12 @@ class ActionServiceTest < ActiveSupport::TestCase
     assert_equal initial_resource_amount + @resource.base_amount, @user.user_resources.find_by(resource: @resource).amount
   end
 
-  test 'should not perform action if on cooldown' do
+  test "should not perform action if on cooldown" do
     service = ActionService.new(@user)
     service.perform_action(@action.id)
     result = service.perform_action(@action.id)
 
     assert_not result[:success]
-    assert_equal 'Action is on cooldown.', result[:error]
+    assert_equal "Action is on cooldown.", result[:error]
   end
 end

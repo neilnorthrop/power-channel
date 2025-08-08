@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class Api::V1::BuildingsControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -9,21 +9,21 @@ class Api::V1::BuildingsControllerTest < ActionDispatch::IntegrationTest
     @building = buildings(:one)
   end
 
-  test 'should get index' do
+  test "should get index" do
     get api_v1_buildings_url, headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success
   end
 
-  test 'should create building' do
+  test "should create building" do
     @user.user_buildings.destroy_all
-    assert_difference('UserBuilding.count') do
+    assert_difference("UserBuilding.count") do
       post api_v1_buildings_url, params: { building_id: @building.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
     end
 
     assert_response :success
   end
 
-  test 'should update building' do
+  test "should update building" do
     user_building = @user.user_buildings.create(building: @building)
     patch api_v1_building_url(user_building), headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success
