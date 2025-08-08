@@ -13,7 +13,7 @@ class ActionService
 
     if user_action.last_performed_at.nil? || Time.current > user_action.last_performed_at + cooldown.seconds
       action.resources.each do |resource|
-        if rand <= resource.drop_chance
+        if rand.round(4) <= resource.drop_chance
           amount = resource.base_amount
           skill_service = SkillService.new(@user)
           cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, amount)
