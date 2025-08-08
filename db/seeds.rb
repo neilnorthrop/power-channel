@@ -45,3 +45,19 @@ RecipeResource.find_or_create_by(recipe: recipe2, resource: wood) { |rr| rr.quan
 Building.find_or_create_by(name: 'Lumber Mill') { |b| b.description = 'Increases wood production by 10% per level.'; b.level = 1; b.effect = 'increase_wood_production' }
 Building.find_or_create_by(name: 'Mine') { |b| b.description = 'Increases gold production by 10% per level.'; b.level = 1; b.effect = 'increase_gold_production' }
 Building.find_or_create_by(name: 'Quarry') { |b| b.description = 'Increases stone production by 10% per level.'; b.level = 1; b.effect = 'increase_stone_production' }
+
+# Data migrations
+Resource.find_by(name: 'Gold')&.update(name: 'Gold Coins')
+action = Action.find_by(name: 'Mine Gold')
+if action
+  action.update(name: 'Taxes', description: 'Gather taxes from your citizens.')
+  Resource.find_or_create_by(name: 'Gold Coins').update(action: action)
+end
+
+Resource.find_or_create_by(name: 'Gold Coins')&.update(drop_chance: 1.0)
+Resource.find_or_create_by(name: 'Wood')&.update(drop_chance: 1.0)
+Resource.find_or_create_by(name: 'Stone')&.update(drop_chance: 1.0)
+Resource.find_or_create_by(name: 'Coal')&.update(drop_chance: 0.33)
+
+Item.find_or_create_by(name: 'Minor Potion of Luck')&.update(drop_chance: 0.001)
+Item.find_or_create_by(name: 'Scroll of Haste')&.update(drop_chance: 0.002)

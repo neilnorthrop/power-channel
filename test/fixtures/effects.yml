@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  description: MyText
+  target_attribute: MyString
+  modifier_type: MyString
+  modifier_value: 1.5
+  duration: 1
+  effectable: one
+  effectable_type: Effectable
+
+two:
+  name: MyString
+  description: MyText
+  target_attribute: MyString
+  modifier_type: MyString
+  modifier_value: 1.5
+  duration: 1
+  effectable: two
+  effectable_type: Effectable

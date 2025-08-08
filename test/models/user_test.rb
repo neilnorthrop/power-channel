@@ -71,4 +71,17 @@ class UserTest < ActiveSupport::TestCase
     @user.level = 2
     assert_equal 200, @user.send(:experience_for_next_level)
   end
+
+  test "gain_experience handles multiple level ups" do
+    @user.level = 1
+    @user.experience = 0
+    @user.skill_points = 0
+    @user.save!
+
+    # Gain enough experience to level up twice
+    @user.gain_experience(300)
+    assert_equal 3, @user.level
+    assert_equal 0, @user.experience
+    assert_equal 2, @user.skill_points
+  end
 end

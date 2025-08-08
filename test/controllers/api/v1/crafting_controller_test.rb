@@ -10,6 +10,7 @@ class Api::V1::CraftingControllerTest < ActionDispatch::IntegrationTest
     @resource = resources(:one)
     @recipe.recipe_resources.create(resource: @resource, quantity: 1)
     @user.user_resources.create(resource: @resource, amount: 1)
+    @user.items.destroy_all
   end
 
   test "should get index" do

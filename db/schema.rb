@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_08_225136) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "active_effects", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "effect_id", null: false
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["effect_id"], name: "index_active_effects_on_effect_id"
+    t.index ["expires_at"], name: "index_active_effects_on_expires_at"
+    t.index ["user_id"], name: "index_active_effects_on_user_id"
+  end
+
   create_table "buildings", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -29,6 +40,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
     t.string "effect"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "effects", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.string "target_attribute"
+    t.string "modifier_type"
+    t.float "modifier_value"
+    t.integer "duration"
+    t.string "effectable_type", null: false
+    t.bigint "effectable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["effectable_type", "effectable_id"], name: "index_effects_on_effectable"
   end
 
   create_table "items", force: :cascade do |t|
@@ -104,6 +129,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
     t.bigint "item_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "quantity", default: 0
     t.index ["item_id"], name: "index_user_items_on_item_id"
     t.index ["user_id"], name: "index_user_items_on_user_id"
   end
@@ -142,6 +168,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "active_effects", "effects"
+  add_foreign_key "active_effects", "users"
   add_foreign_key "recipe_resources", "recipes"
   add_foreign_key "recipe_resources", "resources"
   add_foreign_key "recipes", "items"

@@ -30,4 +30,12 @@ class ActionServiceTest < ActiveSupport::TestCase
     assert_not result[:success]
     assert_equal "Action is on cooldown.", result[:error]
   end
+
+  test "should not perform action if action does not exist" do
+    service = ActionService.new(@user)
+    result = service.perform_action(999)
+
+    assert_not result[:success]
+    assert_equal "Action not found.", result[:error]
+  end
 end

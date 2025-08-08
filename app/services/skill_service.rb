@@ -7,6 +7,7 @@ class SkillService
 
   def unlock_skill(skill_id)
     skill = Skill.find(skill_id)
+    return { success: false, error: "Skill already unlocked." } if @user.skills.include?(skill)
     if @user.skill_points >= skill.cost
       @user.skills << skill
       @user.decrement!(:skill_points, skill.cost)

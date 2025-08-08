@@ -14,6 +14,8 @@ class User < ApplicationRecord
   has_many :items, through: :user_items
   has_many :user_buildings
   has_many :buildings, through: :user_buildings
+  has_many :active_effects, dependent: :destroy
+  has_many :effects, through: :active_effects
 
   # Gain experience and level up if the threshold is reached.
   # This method increases the user's experience by the specified amount,
@@ -34,7 +36,9 @@ class User < ApplicationRecord
   #
   def gain_experience(amount)
     self.experience += amount
-    level_up if experience >= experience_for_next_level
+    while experience >= experience_for_next_level
+      level_up
+    end
   end
 
   private
@@ -85,8 +89,8 @@ class User < ApplicationRecord
   #
   # @see User#gain_experience
   def level_up
+    self.experience -= (100 * level)
     self.level += 1
-    self.experience = 0
     self.skill_points += 1
   end
 

@@ -21,7 +21,9 @@ class CraftingService
         user_resource = @user.user_resources.find_by(resource: recipe_resource.resource)
         user_resource.decrement!(:amount, recipe_resource.quantity)
       end
-      @user.items << recipe.item
+      user_item = @user.user_items.find_or_initialize_by(item: recipe.item)
+      user_item.quantity = user_item.quantity.to_i + 1
+      user_item.save!
       @user.save
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(@user.user_items).serializable_hash })

@@ -8,6 +8,7 @@ class Api::V1::SkillsControllerTest < ActionDispatch::IntegrationTest
     @token = JsonWebToken.encode(user_id: @user.id)
     @skill = skills(:one)
     @user.update(skill_points: 1)
+    @user.skills.destroy_all
   end
 
   test "should get index" do

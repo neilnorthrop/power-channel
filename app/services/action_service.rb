@@ -6,7 +6,9 @@ class ActionService
   end
 
   def perform_action(action_id)
-    action = Action.find(action_id)
+    action = Action.find_by(id: action_id)
+    return { success: false, error: "Action not found." } unless action
+
     user_action = @user.user_actions.find_or_create_by(action: action)
 
     cooldown = action.cooldown
