@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_07_183846) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_07_212501) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,6 +37,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_183846) do
     t.string "effect"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "drop_chance", default: 1.0
   end
 
   create_table "recipe_resources", force: :cascade do |t|
@@ -64,6 +65,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_07_183846) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "action_id"
+    t.float "drop_chance", default: 1.0
     t.index ["action_id"], name: "index_resources_on_action_id"
   end
 
