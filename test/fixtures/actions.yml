@@ -1,11 +1,16 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  name: MyString
-  description: MyText
-  cooldown: 1
+gather_taxes:
+  name: Taxes
+  description: Collect taxes from the peasants.
+  cooldown: 60
 
-two:
-  name: MyString
-  description: MyText
-  cooldown: 1
+gather_wood:
+  name: Wood
+  description: Chop wood from the forest.
+  cooldown: 30
+
+gather_stone:
+  name: Stone
+  description: Mine stone from the quarry.
+  cooldown: 45

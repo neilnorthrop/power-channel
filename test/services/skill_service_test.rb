@@ -37,4 +37,52 @@ class SkillServiceTest < ActiveSupport::TestCase
     assert_not result[:success]
     assert_equal "Not enough skill points.", result[:error]
   end
+
+  test "should apply skill effects correctly" do
+    service = SkillService.new(@user)
+    initial_cooldown = 100
+    initial_amount = 10
+
+    # Test tax gain skill
+    @user.skills << skills(:one) # Tax Lawyer
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_taxes), initial_cooldown, initial_amount)
+    assert_equal initial_cooldown, cooldown
+    assert_equal 11, amount
+    @user.skills.destroy_all
+
+    # Test wood cooldown skill
+    @user.skills << skills(:two) # Lumberjack
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_wood), initial_cooldown, initial_amount)
+    assert_equal 90, cooldown
+    assert_equal initial_amount, amount
+    @user.skills.destroy_all
+
+    # Test wood gain skill
+    @user.skills << skills(:three) # Woodcutter
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_wood), initial_cooldown, initial_amount)
+    assert_equal initial_cooldown, cooldown
+    assert_equal 11, amount
+    @user.skills.destroy_all
+
+    # Test tax cooldown skill
+    @user.skills << skills(:four) # Tax Collector
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_taxes), initial_cooldown, initial_amount)
+    assert_equal 90, cooldown
+    assert_equal initial_amount, amount
+    @user.skills.destroy_all
+
+    # Test stone gain skill
+    @user.skills << skills(:five) # Stone Gatherer
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_stone), initial_cooldown, initial_amount)
+    assert_equal initial_cooldown, cooldown
+    assert_equal 11, amount
+    @user.skills.destroy_all
+
+    # Test stone cooldown skill
+    @user.skills << skills(:six) # Stone Mason
+    cooldown, amount = service.apply_skills_to_action(actions(:gather_stone), initial_cooldown, initial_amount)
+    assert_equal 90, cooldown
+    assert_equal initial_amount, amount
+    @user.skills.destroy_all
+  end
 end

@@ -1,13 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  name: MyString
-  description: MyText
-  base_amount: 1
-  action: one
+gold:
+  name: Taxes
+  description: Gold coins from taxes.
+  base_amount: 10
+  action: gather_taxes
 
-two:
-  name: MyString
-  description: MyText
-  base_amount: 1
-  action: two
+wood:
+  name: Wood
+  description: Logs from the forest.
+  base_amount: 5
+  action: gather_wood
+
+stone:
+  name: Stone
+  description: Rocks from the quarry.
+  base_amount: 3
+  action: gather_stone
