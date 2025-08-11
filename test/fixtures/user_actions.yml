@@ -2,10 +2,10 @@
 
 one:
   user: one
-  action: one
+  action: gather_taxes
   last_performed_at: 2025-07-01 15:38:06
 
 two:
   user: two
-  action: two
+  action: gather_wood
   last_performed_at: 2025-07-01 15:38:06

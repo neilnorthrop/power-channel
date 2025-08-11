@@ -29,43 +29,23 @@ class SkillService
   # @return [Array(Numeric, Numeric)] The modified cooldown and amount after all skills have been applied.
   def apply_skills_to_action(action, cooldown, amount)
     @user.skills.each do |skill|
-      cooldown, amount = send(skill.effect, action, cooldown, amount)
+      cooldown, amount = apply_skill_effect(skill, action, cooldown, amount)
     end
     [ cooldown, amount ]
   end
 
   private
 
-  def method_missing(method_name, *args)
-    modification, action_name, attributes = method_name.to_s.split("_", 3)
-    action, cooldown, amount = args
+  def apply_skill_effect(skill, action, cooldown, amount)
+    modification, resource_name, attribute = skill.effect.split("_", 3)
+    effect_class_name = "SkillEffects::#{modification.camelize}#{attribute.camelize}Effect"
 
-    change = if modification == "increase"
-                        1.1
-    elsif modification == "decrease"
-                        0.9
+    begin
+      effect_class = effect_class_name.constantize
+      effect_class.apply(action, cooldown, amount, resource_name.capitalize, skill.multiplier)
+    rescue NameError
+      # Handle cases where the effect class doesn't exist
+      [ cooldown, amount ]
     end
-
-    if attributes == "gain"
-      amount *= change if action.resources.any? { |r| r.name == action_name.capitalize }
-    elsif attributes == "cooldown"
-      cooldown *= change if action.resources.any? { |r| r.name == action_name.capitalize }
-    end
-    [ cooldown, amount ]
   end
-
-  # def increase_gold_gain(action, cooldown, amount)
-  #   amount *= 1.1 if action.resources.any? { |r| r.name == "Gold Coins" } # Do not use a hardcoded string
-  #   [ cooldown, amount ]
-  # end
-
-  # def decrease_wood_cooldown(action, cooldown, amount)
-  #   cooldown *= 0.9 if action.resources.any? { |r| r.name == "Wood" } # Do not use a hardcoded string
-  #   [ cooldown, amount ]
-  # end
-
-  # def increase_stone_gain(action, cooldown, amount)
-  #   amount *= 1.1 if action.resources.any? { |r| r.name == "Stone" } # Do not use a hardcoded string
-  #   [ cooldown, amount ]
-  # end
 end

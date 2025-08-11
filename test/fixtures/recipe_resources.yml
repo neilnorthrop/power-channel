@@ -1,1 +1,21 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+lucky_charm_gold:
+  recipe: lucky_charm_recipe
+  resource: gold
+  quantity: 5
+
+lucky_charm_stone:
+  recipe: lucky_charm_recipe
+  resource: stone
+  quantity: 2
+
+cooldown_potion_wood:
+  recipe: cooldown_potion_recipe
+  resource: wood
+  quantity: 10
+
+cooldown_potion_stone:
+  recipe: cooldown_potion_recipe
+  resource: stone
+  quantity: 5

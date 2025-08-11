@@ -2,10 +2,10 @@
 
 one:
   user: one
-  resource: one
-  amount: 1
+  resource: gold
+  amount: 10
 
 two:
   user: two
-  resource: two
-  amount: 1
+  resource: wood
+  amount: 5

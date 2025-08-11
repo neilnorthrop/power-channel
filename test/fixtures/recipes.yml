@@ -1,1 +1,9 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+lucky_charm_recipe:
+  item: one
+  quantity: 1
+
+cooldown_potion_recipe:
+  item: two
+  quantity: 1

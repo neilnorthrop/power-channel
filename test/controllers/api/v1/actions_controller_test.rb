@@ -6,7 +6,7 @@ class Api::V1::ActionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @token = JsonWebToken.encode(user_id: @user.id)
-    @action = actions(:one)
+    @action = actions(:gather_taxes)
   end
 
   test "should get index" do

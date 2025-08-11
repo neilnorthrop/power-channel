@@ -4,26 +4,35 @@ require "test_helper"
 
 class SkillServiceTest < ActiveSupport::TestCase
   def setup
-    @user = users(:one)
-    @skill = skills(:one)
-    @user.skills.destroy_all
+    @user = User.create!(email: "test@example.com", password: "password", skill_points: 10)
+    @action_taxes = Action.create!(name: "Taxes", description: "Collect taxes", cooldown: 60)
+    @resource_taxes = Resource.create!(name: "Taxes", description: "Taxes", base_amount: 10, action: @action_taxes)
+    @action_wood = Action.create!(name: "Wood", description: "Chop wood", cooldown: 30)
+    @resource_wood = Resource.create!(name: "Wood", description: "Wood", base_amount: 5, action: @action_wood)
+    @action_stone = Action.create!(name: "Stone", description: "Mine stone", cooldown: 45)
+    @resource_stone = Resource.create!(name: "Stone", description: "Stone", base_amount: 3, action: @action_stone)
+
+    @skill_tax_gain = Skill.create!(name: "Tax Lawyer", description: "Increase tax gain by 10%", cost: 1, effect: "increase_taxes_gain", multiplier: 1.1)
+    @skill_wood_cooldown = Skill.create!(name: "Lumberjack", description: "Decrease wood cooldown by 10%", cost: 1, effect: "decrease_wood_cooldown", multiplier: 0.9)
+    @skill_wood_gain = Skill.create!(name: "Woodcutter", description: "Increase wood gain by 10%", cost: 1, effect: "increase_wood_gain", multiplier: 1.1)
+    @skill_tax_cooldown = Skill.create!(name: "Tax Collector", description: "Decrease tax cooldown by 10%", cost: 1, effect: "decrease_taxes_cooldown", multiplier: 0.9)
+    @skill_stone_gain = Skill.create!(name: "Stone Gatherer", description: "Increase stone gain by 10%", cost: 1, effect: "increase_stone_gain", multiplier: 1.1)
+    @skill_stone_cooldown = Skill.create!(name: "Stone Mason", description: "Decrease stone cooldown by 10%", cost: 1, effect: "decrease_stone_cooldown", multiplier: 0.9)
   end
 
   test "should unlock skill" do
-    @user.update(skill_points: 1)
     service = SkillService.new(@user)
-    result = service.unlock_skill(@skill.id)
+    result = service.unlock_skill(@skill_tax_gain.id)
 
     assert result[:success]
-    assert @user.skills.include?(@skill)
-    assert_equal 0, @user.skill_points
+    assert @user.skills.include?(@skill_tax_gain)
+    assert_equal 9, @user.skill_points
   end
 
   test "should not unlock skill if already unlocked" do
-    @user.skills << @skill
-    @user.update(skill_points: 1)
+    @user.skills << @skill_tax_gain
     service = SkillService.new(@user)
-    result = service.unlock_skill(@skill.id)
+    result = service.unlock_skill(@skill_tax_gain.id)
 
     assert_not result[:success]
     assert_equal "Skill already unlocked.", result[:error]
@@ -32,7 +41,7 @@ class SkillServiceTest < ActiveSupport::TestCase
   test "should not unlock skill if not enough skill points" do
     @user.update(skill_points: 0)
     service = SkillService.new(@user)
-    result = service.unlock_skill(@skill.id)
+    result = service.unlock_skill(@skill_tax_gain.id)
 
     assert_not result[:success]
     assert_equal "Not enough skill points.", result[:error]
@@ -44,44 +53,44 @@ class SkillServiceTest < ActiveSupport::TestCase
     initial_amount = 10
 
     # Test tax gain skill
-    @user.skills << skills(:one) # Tax Lawyer
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_taxes), initial_cooldown, initial_amount)
+    @user.skills << @skill_tax_gain
+    cooldown, amount = service.apply_skills_to_action(@action_taxes, initial_cooldown, initial_amount)
     assert_equal initial_cooldown, cooldown
-    assert_equal 11, amount
+    assert_in_delta 11, amount
     @user.skills.destroy_all
 
     # Test wood cooldown skill
-    @user.skills << skills(:two) # Lumberjack
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_wood), initial_cooldown, initial_amount)
-    assert_equal 90, cooldown
+    @user.skills << @skill_wood_cooldown
+    cooldown, amount = service.apply_skills_to_action(@action_wood, initial_cooldown, initial_amount)
+    assert_in_delta 90, cooldown
     assert_equal initial_amount, amount
     @user.skills.destroy_all
 
     # Test wood gain skill
-    @user.skills << skills(:three) # Woodcutter
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_wood), initial_cooldown, initial_amount)
+    @user.skills << @skill_wood_gain
+    cooldown, amount = service.apply_skills_to_action(@action_wood, initial_cooldown, initial_amount)
     assert_equal initial_cooldown, cooldown
-    assert_equal 11, amount
+    assert_in_delta 11, amount
     @user.skills.destroy_all
 
     # Test tax cooldown skill
-    @user.skills << skills(:four) # Tax Collector
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_taxes), initial_cooldown, initial_amount)
-    assert_equal 90, cooldown
+    @user.skills << @skill_tax_cooldown
+    cooldown, amount = service.apply_skills_to_action(@action_taxes, initial_cooldown, initial_amount)
+    assert_in_delta 90, cooldown
     assert_equal initial_amount, amount
     @user.skills.destroy_all
 
     # Test stone gain skill
-    @user.skills << skills(:five) # Stone Gatherer
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_stone), initial_cooldown, initial_amount)
+    @user.skills << @skill_stone_gain
+    cooldown, amount = service.apply_skills_to_action(@action_stone, initial_cooldown, initial_amount)
     assert_equal initial_cooldown, cooldown
-    assert_equal 11, amount
+    assert_in_delta 11, amount
     @user.skills.destroy_all
 
     # Test stone cooldown skill
-    @user.skills << skills(:six) # Stone Mason
-    cooldown, amount = service.apply_skills_to_action(actions(:gather_stone), initial_cooldown, initial_amount)
-    assert_equal 90, cooldown
+    @user.skills << @skill_stone_cooldown
+    cooldown, amount = service.apply_skills_to_action(@action_stone, initial_cooldown, initial_amount)
+    assert_in_delta 90, cooldown
     assert_equal initial_amount, amount
     @user.skills.destroy_all
   end

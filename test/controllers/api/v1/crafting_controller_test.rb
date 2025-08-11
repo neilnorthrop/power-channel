@@ -6,10 +6,10 @@ class Api::V1::CraftingControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     @token = JsonWebToken.encode(user_id: @user.id)
-    @recipe = recipes(:one)
-    @resource = resources(:one)
-    @recipe.recipe_resources.create(resource: @resource, quantity: 1)
-    @user.user_resources.create(resource: @resource, amount: 1)
+    @recipe = recipes(:lucky_charm_recipe)
+    # Ensure user has enough resources to craft
+    @user.user_resources.find_by(resource: resources(:gold))&.update(amount: 10)
+    @user.user_resources.find_or_create_by(resource: resources(:stone))&.update(amount: 10)
     @user.items.destroy_all
   end
 

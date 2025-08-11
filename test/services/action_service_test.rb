@@ -5,12 +5,16 @@ require "test_helper"
 class ActionServiceTest < ActiveSupport::TestCase
   def setup
     @user = users(:one)
-    @action = actions(:one)
-    @resource = resources(:one)
-    @resource.update(action: @action)
+    @action = actions(:gather_taxes)
+    @resource = resources(:gold)
+    @user.user_skills.destroy_all
   end
 
   test "should perform action and gain experience" do
+    mock_skill_service = mock("skill_service")
+    mock_skill_service.stubs(:apply_skills_to_action).returns([ @action.cooldown, @resource.base_amount ])
+    SkillService.stubs(:new).returns(mock_skill_service)
+
     service = ActionService.new(@user)
     initial_experience = @user.experience
     initial_resource_amount = @user.user_resources.find_by(resource: @resource)&.amount || 0

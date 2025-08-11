@@ -5,33 +5,39 @@ one:
   description: Increase tax gain by 10%
   cost: 1
   effect: increase_taxes_gain
+  multiplier: 1.1
 
 two:
   name: Lumberjack
   description: Decrease wood cooldown by 10%
   cost: 1
   effect: decrease_wood_cooldown
+  multiplier: 0.9
 
 three:
   name: Woodcutter
   description: Increase wood gain by 10%
   cost: 1
   effect: increase_wood_gain
+  multiplier: 1.1
 
 four:
   name: Tax Collector
   description: Decrease tax cooldown by 10%
   cost: 1
   effect: decrease_taxes_cooldown
+  multiplier: 0.9
 
 five:
   name: Stone Gatherer
   description: Increase stone gain by 10%
   cost: 1
   effect: increase_stone_gain
+  multiplier: 1.1
 
 six:
   name: Stone Mason
   description: Decrease stone cooldown by 10%
   cost: 1
-  effect: decrease_stone_cooldown 
+  effect: decrease_stone_cooldown
+  multiplier: 0.9
