@@ -18,6 +18,7 @@ class SkillServiceTest < ActiveSupport::TestCase
     @skill_tax_cooldown = Skill.create!(name: "Tax Collector", description: "Decrease tax cooldown by 10%", cost: 1, effect: "decrease_taxes_cooldown", multiplier: 0.9)
     @skill_stone_gain = Skill.create!(name: "Stone Gatherer", description: "Increase stone gain by 10%", cost: 1, effect: "increase_stone_gain", multiplier: 1.1)
     @skill_stone_cooldown = Skill.create!(name: "Stone Mason", description: "Decrease stone cooldown by 10%", cost: 1, effect: "decrease_stone_cooldown", multiplier: 0.9)
+    @skill_critical = Skill.create!(name: "Critical Focus", description: "Double all gains", cost: 1, effect: "critical_all_gain", multiplier: 2.0)
   end
 
   test "should unlock skill" do
@@ -92,6 +93,21 @@ class SkillServiceTest < ActiveSupport::TestCase
     cooldown, amount = service.apply_skills_to_action(@action_stone, initial_cooldown, initial_amount)
     assert_in_delta 90, cooldown
     assert_equal initial_amount, amount
+    @user.skills.destroy_all
+
+    # Test applying multiple skills simultaneously
+    @user.skills << @skill_wood_cooldown
+    @user.skills << @skill_wood_gain
+    cooldown, amount = service.apply_skills_to_action(@action_wood, initial_cooldown, initial_amount)
+    assert_in_delta 90, cooldown
+    assert_in_delta 11, amount
+    @user.skills.destroy_all
+
+    # Test critical gain skill
+    @user.skills << @skill_critical
+    cooldown, amount = service.apply_skills_to_action(@action_taxes, initial_cooldown, initial_amount)
+    assert_equal initial_cooldown, cooldown
+    assert_in_delta 20, amount
     @user.skills.destroy_all
   end
 end
