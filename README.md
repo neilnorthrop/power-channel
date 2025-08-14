@@ -1,115 +1,168 @@
-# AetherForge
+# Aetherium Ascent
 
-AetherForge is a web-based crafting and progression game where players perform actions to gather resources, craft items, and unlock new skills and abilities.
+Aetherium Ascent is a turn‑based resource and crafting game built with Ruby 3.4 and Rails 8.0, designed around a JSON API and a lightweight browser UI.
+
+---
 
 ## Core Game Concepts
 
-The primary gameplay loop revolves around the following concepts:
+* **Actions** – user-triggered tasks that produce resources and can be upgraded
+* **Resources** – consumable materials tied to actions and crafting recipes, each with a drop chance and base amount
+* **Skills** – permanent upgrades purchased with skill points that modify action cooldowns or resource gains via strategy-style effect classes
+* **Items** – inventory objects with one-off effects (e.g., reset cooldown) and drop probabilities
+* **Crafting** – combines resources into items through recipes that specify required quantities
+* **Buildings** – structures owned by users that can be upgraded for additional bonuses
+* **Effects** – temporary modifiers stored in `active_effects` and applied via Action Cable updates
 
-*   **Actions:** The primary way users interact with the game. Actions, such as "Gather Wood" or "Collect Taxes," have a cooldown and grant resources and experience to the user.
-*   **Resources:** Materials gathered from actions. Resources are used to craft items.
-*   **Items:** Craftable objects that can provide passive benefits or active effects.
-*   **Crafting:** The process of turning resources into items, based on recipes.
-*   **Skills:** Passive abilities that users can unlock to improve their actions, such as increasing resource gain or decreasing cooldowns.
-*   **Effects:** Temporary buffs or debuffs that can be applied to users, often from items.
-*   **Buildings:** Structures that users can build to unlock new actions or provide other benefits.
+---
 
 ## System Architecture
 
-The application is a standard Ruby on Rails application with a PostgreSQL database. The core business logic is encapsulated in service objects, which are called by the controllers. The frontend is a simple, server-rendered application that communicates with the backend through a JSON API. Real-time updates are pushed to the client using Action Cable.
+```mermaid
+graph LR
+  A[Client] -- HTTP --> B[Controllers]
+  B --> C[Services]
+  C --> D[Models]
+  B --> E[Serializers]
+  A <-- WebSocket --> F[UserUpdatesChannel]
+  F --> B
+```
+
+* **Controllers** authenticate requests, delegate to services and render JSON through serializers
+* **Services** house game logic (actions, crafting, skills, buildings, user init)
+* **Action Cable** streams real‑time updates to clients (resources, items, skills, buildings)
+
+---
 
 ## Data Models
 
-The following is a breakdown of the core data models in the application:
+| Model | Key Attributes | Associations |
+|-------|----------------|--------------|
+| **Action** | name, description, cooldown | has many resources, user_actions, effects |
+| **Resource** | name, base_amount, drop_chance, action_id | belongs_to action; used in recipes and user_resources |
+| **Item** | name, effect, drop_chance | has_one recipe; many effects; through user_items |
+| **Recipe / RecipeResource** | item_id, quantity / resource_id, quantity | recipe has many recipe_resources and belongs_to item |
+| **Skill** | name, cost, effect, multiplier | unlocked via user_skills |
+| **Building** | name, description, level, effect | owned via user_buildings |
+| **User** | email, level, experience, skill_points | has many resources, actions, skills, items, buildings, active_effects |
+| **Join Tables** | user_actions, user_resources, user_items, user_skills, user_buildings track ownership and quantities |
 
-*   **User:** The central model of the application. It is associated with all other core models and contains the logic for experience gain and leveling up.
-    *   **Attributes:** `email`, `encrypted_password`, `level`, `experience`, `skill_points`.
-*   **Action:** Represents an activity a user can perform.
-    *   **Attributes:** `name`, `description`, `cooldown`.
-    *   **Associations:** `has_many :resources`, `has_many :effects`.
-*   **Resource:** Represents a material that can be gathered.
-    *   **Attributes:** `name`, `description`, `base_amount`, `drop_chance`.
-    *   **Associations:** `belongs_to :action`, `has_many :recipe_resources`.
-*   **Item:** A craftable object.
-    *   **Attributes:** `name`, `description`.
-    *   **Associations:** `has_one :recipe`, `has_many :effects`.
-*   **Recipe:** Defines the resources required to craft an item.
-    *   **Attributes:** `quantity`.
-    *   **Associations:** `belongs_to :item`, `has_many :recipe_resources`.
-*   **RecipeResource:** A join model that specifies the quantity of a resource needed for a recipe.
-*   **Skill:** A passive ability that can be unlocked by a user.
-    *   **Attributes:** `name`, `description`, `cost`, `effect`, `multiplier`.
-*   **Effect:** A temporary buff or debuff.
-    *   **Attributes:** `name`, `description`, `duration`.
-    *   **Associations:** `belongs_to :effectable, polymorphic: true`.
-*   **ActiveEffect:** A join model that applies an effect to a user with an expiration time.
-*   **Building:** A structure that can be built by a user.
-    *   **Attributes:** `name`, `description`, `cost`.
+---
+
+## API Endpoints (JSON)
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/v1/authenticate` – Obtain JWT token |
+| `GET /api/v1/user` – Current user stats |
+| `GET /api/v1/resources` – All resources for user |
+| `GET /api/v1/user_resources` – Detailed user resource amounts |
+| `GET/POST/PATCH /api/v1/actions` – List, perform, and upgrade actions |
+| `GET/POST /api/v1/skills` – List and unlock skills |
+| `GET/POST /api/v1/items`, `POST /api/v1/items/:id/use` – Inventory and item usage |
+| `GET/POST /api/v1/crafting` – List and craft recipes |
+| `GET/POST/PATCH /api/v1/buildings` – Manage buildings |
+
+Authentication is required for all endpoints except registration and token issuance; clients send the token in the `Authorization` header. Tokens are decoded by the `Authenticable` concern using the `JsonWebToken` helper.
+
+---
 
 ## Getting Started
 
-### Prerequisites
+1. **Ruby version** – Install Ruby 3.4.0 and Bundler
+2. **Dependencies** – PostgreSQL, Node/JS runtime (for Rails), and gems from the Gemfile (`bundle install`)
+3. **Configuration** – Set `rails credentials:edit` and add `jwt_secret_key` for token signing
+4. **Database setup** – `bin/rails db:setup` or `bin/rails db:create db:migrate db:seed` (seeds create initial actions, resources, skills, items, recipes, buildings)
+5. **Run the server** – `bin/rails server`; visit `/` for the demo UI or use the API directly.
+6. **Run the test suite** – `bin/rails test` (Minitest with fixtures and mocha)
+7. **Linting** – `bundle exec rubocop` (rails‑omakase rules)
 
-*   Ruby 3.4.0
-*   PostgreSQL
+---
 
-### Installation and Setup
+## Services
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/neilnorthrop/power-channel.git
-    cd AetherForge
-    ```
+* **ActionService** – validates cooldowns, rolls drops, applies skill effects and grants experience
+* **SkillService** – unlocks skills and applies strategy-based effects to actions
+* **CraftingService** – verifies resources and produces items while updating inventory
+* **BuildingService** – constructs and upgrades user buildings (placeholder cost logic)
+* **ItemService** – executes item effects (stubs for luck and cooldown)
+* **UserInitializationService** – assigns starting resources and actions for new users
 
-2.  **Install dependencies:**
-    ```bash
-    bundle install
-    ```
+---
 
-3.  **Create and set up the database:**
-    ```bash
-    rails db:create
-    rails db:migrate
-    rails db:seed
-    ```
+## Adding a New Game Element
 
-4.  **Run the test suite:**
-    ```bash
-    rails test
-    ```
+Use the following checklists when introducing new content. Most data lives in `db/seeds.rb`, but remember to write tests for any new logic.
 
-5.  **Start the server:**
-    ```bash
-    rails server
-    ```
+### Actions
+1. **Seed the action** – add an `Action.create!` entry in `db/seeds.rb` with `name`, `description` and `cooldown`.
+2. **Seed produced resources** – create `Resource` records for any drops and associate them via `action.resources <<` or by setting `action_id`.
+3. **Initial user access** – if new users should start with the action, add it to `UserInitializationService`.
+4. **Front‑end** – expose the action in the relevant view or API response.
 
-## How to Add a New Game Element
+### Resources
+1. **Seed the resource** – create a record with `name`, `base_amount` and `drop_chance`; set `action_id` if gathered from an action.
+2. **Wire into recipes** – update any `RecipeResource` entries that should consume this resource.
+3. **Broadcast updates** – ensure resources are streamed through `UserUpdatesChannel` if they affect real‑time data.
 
-This section provides a step-by-step guide for adding a new interactive element to the game.
+### Items
+1. **Seed the item** – add a new `Item.create!` block to `db/seeds.rb`.
+2. **Define the crafting recipe** – create a `Recipe` for the item and one or more `RecipeResource` entries specifying required resources.
+3. **Implement item effect** – extend `ItemService` with logic for the item’s effect (e.g., cooldown reset). Create an effect class if needed.
+4. **Expose via API/UI** – update serializers and views so players can craft and use the item.
 
-### Adding a New Action
+### Skills
+1. **Seed the skill** – add a `Skill` record with `cost`, `effect` and `multiplier`.
+2. **Implement effect class** – create a class under `app/services/skill_effects/` implementing the desired behavior.
+3. **Register the effect** – map the skill’s `effect` attribute to the new class in `SkillService`.
+4. **Test unlocking** – add service tests to verify the skill works and interacts with actions as expected.
 
-1.  **Create a new Action record:** Add a new entry to `db/seeds.rb` for your action.
-2.  **Create a new Resource record:** Add a new entry to `db/seeds.rb` for the resource that the action will grant. Make sure to associate it with the new action.
-3.  **Run the seeds:** `rails db:seed`
-4.  **Update the frontend:** Add the new action to the appropriate view so that users can interact with it.
+### Effects
+1. **Seed the effect** – create an `Effect` record with `name`, `description` and `duration`.
+2. **Effect logic** – implement the effect in an item or skill service, or create a dedicated effect class if complex.
+3. **Apply to users** – ensure the effect is added to `ActiveEffect` when triggered and removed after expiration.
 
-### Adding a New Item
+### Buildings
+1. **Seed the building** – add a `Building` record with `cost` and any stat bonuses.
+2. **Service logic** – extend `BuildingService` to handle construction or level upgrades and their effects.
+3. **Initial state** – grant starting buildings in `UserInitializationService` if appropriate.
+4. **Expose in UI** – update views/serializers and broadcast changes to users.
 
-1.  **Create a new Item record:** Add a new entry to `db/seeds.rb`.
-2.  **Create a new Recipe record:** Add a new entry to `db/seeds.rb`, associating it with the new item.
-3.  **Create RecipeResource records:** Add entries to `db/seeds.rb` to specify the resources and quantities needed for the recipe.
-4.  **Run the seeds:** `rails db:seed`
-5.  **Update the frontend:** Add the new item and recipe to the crafting interface.
+### Crafting & Recipes
+1. **Recipe setup** – create the `Recipe` and associated `RecipeResource` records that define input resources and quantities.
+2. **Item availability** – ensure the crafted item exists and is referenced by the recipe.
+3. **Service updates** – add any new crafting validations or outcomes to `CraftingService`.
+4. **Testing** – write unit tests for crafting the new recipe and confirm the item appears in inventories.
 
-## Architectural Principles
+---
 
-*   **Service-Oriented Logic:** Core business logic is encapsulated in service objects (e.g., `ActionService`, `CraftingService`) to keep controllers thin and logic organized.
-*   **Data-Driven Design:** Game elements are designed to be configurable through the database (e.g., skill multipliers) to allow for easy balancing and expansion.
-*   **Strategy Pattern for Extensibility:** Complex, polymorphic logic (like skill effects) is handled by the Strategy pattern to ensure maintainability and extensibility.
+## Deployment
 
-## Developer Workflow
+* Standard Rails deployment (e.g., `bin/rails server` or containerized).
+* Kamal/Docker support is available through the provided `Dockerfile` and `kamal` gem for container builds and deploys.
 
-*   **Code Style:** This project uses `rubocop-rails-omakase`. Please run `bundle exec rubocop` before submitting code.
-*   **Testing:** All new models and services should be accompanied by unit tests.
-*   **Seeding:** The `db/seeds.rb` file is the source of truth for game data. Use it to populate your development environment.
+---
+
+## Additional Onboarding Notes
+
+* **Code Style** – RuboCop Rails Omakase is the canonical style; run `bundle exec rubocop` before committing.
+* **Testing Philosophy** – Use fixtures and service/controller tests to cover new logic; mocha is available for mocking.
+* **Seeding Data** – `db/seeds.rb` provides a rich set of starter data for dev environments.
+* **Game Loop** – Perform actions → gather resources → craft items → unlock skills/buildings → stronger actions, with experience leading to level-ups.
+* **Real‑time Updates** – Client subscribes to `UserUpdatesChannel` using JWT token; server pushes resource, item, skill and building changes instantly.
+* **Authentication** – Devise handles registration; JWT tokens authenticate API/WebSocket requests via the `Authenticable` concern and `JsonWebToken` utility.
+* **Future Roadmap** – expand effect classes, implement item logic, add balancing (resource costs, skill multipliers) and flesh out building effects.
+
+---
+
+## Gotchas & Common Pitfalls
+
+* Fixtures are tightly linked; modify them carefully to avoid cascading test failures.
+* Never edit existing migrations—create new ones to evolve the schema.
+* Ensure cooldown and drop-chance logic is deterministic in tests (use mocking/stubbing).
+* Remember to broadcast changes when adding features that affect client state.
+
+---
+
+Happy hacking, and welcome to the ascent!
+
