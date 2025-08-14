@@ -17,6 +17,8 @@ class User < ApplicationRecord
   has_many :active_effects, dependent: :destroy
   has_many :effects, through: :active_effects
 
+  after_create :initialize_defaults
+
   # Gain experience and level up if the threshold is reached.
   # This method increases the user's experience by the specified amount,
   # checks if the user has enough experience to level up, and updates the user's level and skill points accordingly.
@@ -94,23 +96,7 @@ class User < ApplicationRecord
     self.skill_points += 1
   end
 
-  # Assigns default resources and actions to the user.
-  # This method is called during the user creation process to ensure
-  # that the user has the necessary resources and actions available.
-  # It iterates through all available resources and actions,
-  # creating user-specific records for each.
-  #
-  # @return [void]
-  # This method is typically called after the user is created to ensure they
-  # start with the necessary resources and actions.
-  # It is defined as a private method in the model to encapsulate the logic
-  # for assigning default resources and actions.
-  #
-  # @example
-  #   user = User.create!(email: "test_user@example.com", password: "password123")
-  #   # This will automatically call assign_default_resources_and_actions
-  #   # and set up the user with default resources and actions.
-  #  # @note This method is called automatically after the user is created,
-  #       as defined in the `after_create` callback.
-  #
+  def initialize_defaults
+    UserInitializationService.new(self).initialize_defaults
+  end
 end

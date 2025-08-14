@@ -13,12 +13,18 @@ class ItemService
   private
 
   def increase_luck
-    # This is a placeholder. The actual implementation will depend on how
-    # rare resource drops are calculated.
+    apply_item_effect
   end
 
   def reset_cooldown
-    # This is a placeholder. The actual implementation will depend on how
-    # action cooldowns are managed.
+    apply_item_effect
+  end
+
+  def apply_item_effect
+    effect = @item.effects.first
+    return { success: false, error: "No effect associated with item." } unless effect
+
+    EffectService.new(@user, effect).apply
+    { success: true, message: "#{effect.name} applied." }
   end
 end
