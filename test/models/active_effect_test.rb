@@ -27,6 +27,6 @@ class ActiveEffectTest < ActiveSupport::TestCase
     active.update(expires_at: 1.hour.from_now)
     expired.update(expires_at: 1.hour.ago)
 
-    assert_equal [active], ActiveEffect.active.to_a
+    assert_equal [ active ], ActiveEffect.active.to_a
   end
 end
