@@ -38,4 +38,16 @@ class ItemServiceTest < ActiveSupport::TestCase
       service.use
     end
   end
+
+  test "use calls increase_luck effect" do
+    service = ItemService.new(@user, @luck_item)
+    service.expects(:increase_luck)
+    service.use
+  end
+
+  test "use calls reset_cooldown effect" do
+    service = ItemService.new(@user, @cooldown_item)
+    service.expects(:reset_cooldown)
+    service.use
+  end
 end
