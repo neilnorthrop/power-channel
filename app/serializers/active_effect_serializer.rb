@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-class UserItemSerializer
+class ActiveEffectSerializer
   include JSONAPI::Serializer
-  attributes :id, :user_id, :item_id, :quantity
+  attributes :id, :expires_at
 
   attribute :name do |object|
-    object.item.name
+    object.effect.name
   end
 
   attribute :description do |object|
-    object.item.description
+    object.effect.description
   end
 end
