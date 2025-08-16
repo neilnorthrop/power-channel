@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Citadel Community Hall</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="hall">
+    <div class="table" id="table">
+      <div class="seat" data-seat="1">Seat 1</div>
+      <div class="seat" data-seat="2">Seat 2</div>
+      <div class="seat" data-seat="3">Seat 3</div>
+    </div>
+    <div class="avatar" id="avatar">&#9813;</div>
+  </div>
+  <div class="conversations" id="conversations">
+    <div class="card">Trade Routes</div>
+    <div class="card">Guild Alliances</div>
+    <div class="card">Tavern Tales</div>
+  </div>
+  <div class="nav">
+    <button id="prev">&#8592;</button>
+    <button id="next">&#8594;</button>
+  </div>
+  <button id="summon">Summon Advisor</button>
+  <div id="advisor" class="advisor hidden">The wizard suggests patience in negotiations.</div>
+  <script src="script.js"></script>
+</body>
+</html>

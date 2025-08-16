@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quest Marketplace & Trade Bazaar</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="quest-board">
+    <h2>Quest Board</h2>
+    <ul id="quests">
+      <li data-detail="Collect 10 herbs for the royal alchemist">Herbalist Needed</li>
+      <li data-detail="Escort the caravan to the northern outpost">Caravan Escort</li>
+    </ul>
+    <div id="quest-detail" class="detail"></div>
+  </div>
+  <div class="market">
+    <div class="stall" id="stall1">
+      <h3>Metals</h3>
+      <div class="item" draggable="true">Iron</div>
+      <div class="item" draggable="true">Silver</div>
+    </div>
+    <div class="stall" id="stall2">
+      <h3>Spices</h3>
+      <div class="item" draggable="true">Saffron</div>
+      <div class="item" draggable="true">Pepper</div>
+    </div>
+    <div class="cart" id="cart">Trade Cart</div>
+  </div>
+  <div id="advisor" class="advisor hidden">Beware of overpaying for spices!</div>
+  <script src="script.js"></script>
+</body>
+</html>
