@@ -1,0 +1,52 @@
+body {
+  background: #e2d8b7;
+  font-family: 'Times New Roman', serif;
+  color: #2c2c2c;
+  padding: 1rem;
+}
+.quest-board {
+  background: #f8f1dc;
+  border: 3px solid #b08d57;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.quest-board li {
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+.detail {
+  margin-top: 1rem;
+  font-style: italic;
+}
+.market {
+  display: flex;
+  gap: 1rem;
+}
+.stall {
+  background: #d6b98c;
+  padding: 1rem;
+  flex: 1;
+}
+.item {
+  background: #fff;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  cursor: grab;
+}
+.cart {
+  background: #c2a97e;
+  padding: 1rem;
+  width: 150px;
+  text-align: center;
+}
+.cart.over {
+  outline: 3px dashed #000;
+}
+.advisor {
+  margin-top: 1rem;
+  background: #fff3cd;
+  padding: 0.5rem;
+}
+.hidden {
+  display: none;
+}
