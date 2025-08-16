@@ -3,7 +3,9 @@
 one:
   user: one
   item: one
+  quantity: 1
 
 two:
   user: two
   item: two
+  quantity: 1

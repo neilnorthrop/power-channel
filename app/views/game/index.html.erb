@@ -23,6 +23,9 @@
 <h2>Inventory</h2>
 <div id="inventory"></div>
 
+<h2>Active Effects</h2>
+<div id="active-effects"></div>
+
 <h2>Crafting</h2>
 <div id="crafting"></div>
 
@@ -38,9 +41,11 @@
     const actionsDiv = document.getElementById('actions');
     const skillsDiv = document.getElementById('skills');
     const inventoryDiv = document.getElementById('inventory');
+    const activeEffectsDiv = document.getElementById('active-effects');
     const craftingDiv = document.getElementById('crafting');
     const buildingsDiv = document.getElementById('buildings');
     const toastContainer = document.getElementById('toast-container');
+    const resourceBase = {};
 
     const showToast = (message, type = 'success') => {
       console.log('Showing toast:', message, type);
@@ -75,7 +80,7 @@
     };
 
     const fetchResources = () => {
-      fetch('/api/v1/user_resources', {
+      return fetch('/api/v1/user_resources', {
         headers: {
           'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
         }
@@ -83,7 +88,12 @@
       .then(response => response.json())
       .then(data => {
         resourcesDiv.innerHTML = '';
+        const included = data.included || [];
         data.data.forEach(resource => {
+          const related = included.find(inc => inc.id === resource.relationships.resource.data.id);
+          if (related) {
+            resourceBase[resource.attributes.name] = related.attributes.base_amount;
+          }
           const resourceDiv = document.createElement('div');
           resourceDiv.innerHTML = `<strong>${resource.attributes.name}:</strong> ${resource.attributes.amount}`;
           resourcesDiv.appendChild(resourceDiv);
@@ -191,12 +201,13 @@
       .then(data => {
         inventoryDiv.innerHTML = '';
         data.data.forEach(item => {
+          const attrs = item.attributes;
           const itemDiv = document.createElement('div');
-          itemDiv.innerHTML = `<strong>${item.attributes.name}</strong>: ${item.attributes.description}`;
+          itemDiv.innerHTML = `<strong>${attrs.name}</strong> x${attrs.quantity}: ${attrs.description}`;
           const useButton = document.createElement('button');
           useButton.innerText = 'Use';
           useButton.addEventListener('click', () => {
-            useItem(item.id);
+            useItem(attrs.item_id);
           });
           itemDiv.appendChild(useButton);
           inventoryDiv.appendChild(itemDiv);
@@ -229,6 +240,34 @@
       });
     };
 
+    const fetchActiveEffects = () => {
+      fetch('/api/v1/active_effects', {
+        headers: {
+          'Authorization': `Bearer <%= JsonWebToken.encode(user_id: current_user.id) %>`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        activeEffectsDiv.innerHTML = '';
+        data.data.forEach(effect => {
+          const attrs = effect.attributes;
+          const effectDiv = document.createElement('div');
+          activeEffectsDiv.appendChild(effectDiv);
+          const updateTimer = () => {
+            const expires = new Date(attrs.expires_at);
+            const remaining = Math.max(0, Math.ceil((expires - new Date()) / 1000));
+            effectDiv.innerHTML = `<strong>${attrs.name}</strong>: ${remaining}s`;
+            if (remaining > 0) {
+              setTimeout(updateTimer, 1000);
+            } else {
+              fetchActiveEffects();
+            }
+          };
+          updateTimer();
+        });
+      });
+    };
+
     const fetchBuildings = () => {
       fetch('/api/v1/buildings', {
         headers: {
@@ -239,8 +278,11 @@
       .then(data => {
         buildingsDiv.innerHTML = '';
         data.data.forEach(building => {
+          const level = building.attributes.level;
+          const nextLevel = level + 1;
+          const cost = Object.entries(resourceBase).map(([name, base]) => `${name}: ${base * nextLevel}`).join(', ');
           const buildingDiv = document.createElement('div');
-          buildingDiv.innerHTML = `<strong>${building.attributes.name}</strong> (Level ${building.attributes.level}): ${building.attributes.description}`;
+          buildingDiv.innerHTML = `<strong>${building.attributes.name}</strong> (Level ${level}): ${building.attributes.description} - Upgrade Cost: ${cost}`;
           const upgradeButton = document.createElement('button');
           upgradeButton.innerText = 'Upgrade';
           upgradeButton.addEventListener('click', () => {
@@ -325,6 +367,7 @@
         } else {
           showToast(data.message);
           fetchInventory();
+          fetchActiveEffects();
         }
       });
     };
@@ -362,17 +405,18 @@
           showToast(data.error, 'error');
         } else {
           showToast(data.message);
+          fetchResources().then(() => fetchBuildings());
         }
       });
     };
 
     fetchUser();
-    fetchResources();
+    fetchResources().then(() => fetchBuildings());
     fetchActions();
     fetchSkills();
     fetchInventory();
     fetchCrafting();
-    fetchBuildings();
+    fetchActiveEffects();
 
     const cable = ActionCable.createConsumer('/cable?token=<%= JsonWebToken.encode(user_id: current_user.id) %>');
 
@@ -391,6 +435,8 @@
           fetchResources();
         } else if (data.type === 'user_item_update') {
           fetchInventory();
+        } else if (data.type === 'user_effect_update') {
+          fetchActiveEffects();
         } else if (data.type === 'user_building_update') {
           fetchBuildings();
         } else if (data.type === 'user_skill_update') {
