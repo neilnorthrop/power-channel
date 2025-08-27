@@ -34,3 +34,4 @@
 /config/master.key
 
 /cline_docs/*
+/node_modules/*
