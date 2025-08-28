@@ -5,7 +5,7 @@
     "@hotwired/stimulus": "/assets/stimulus-d59b3b7f.js",
     "@hotwired/stimulus-loading": "/assets/stimulus-loading-1fc53fe7.js",
     "controllers/application": "/assets/controllers/application-2752e690.js",
-    "controllers": "/assets/controllers/index-f8c71864.js",
+    "controllers": "/assets/controllers/index-c6c716a3.js",
     "controllers/sidebar_controller": "/assets/controllers/sidebar_controller-6156fcbf.js"
   }
 }
@@ -16,7 +16,7 @@
     "@hotwired/stimulus": "/assets/stimulus-d59b3b7f.js",
     "@hotwired/stimulus-loading": "/assets/stimulus-loading-1fc53fe7.js",
     "controllers/application": "/assets/controllers/application-2752e690.js",
-    "controllers": "/assets/controllers/index-f8c71864.js",
+    "controllers": "/assets/controllers/index-c6c716a3.js",
     "controllers/sidebar_controller": "/assets/controllers/sidebar_controller-6156fcbf.js"
   }
 }
