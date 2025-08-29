@@ -1,0 +1,22 @@
+{
+  "imports": {
+    "application": "/assets/application-d8a8613a.js",
+    "@hotwired/turbo-rails": "/assets/turbo-a1e3a50a.js",
+    "@hotwired/stimulus": "/assets/stimulus-d59b3b7f.js",
+    "@hotwired/stimulus-loading": "/assets/stimulus-loading-1fc53fe7.js",
+    "controllers/application": "/assets/controllers/application-2752e690.js",
+    "controllers": "/assets/controllers/index-c6c716a3.js",
+    "controllers/sidebar_controller": "/assets/controllers/sidebar_controller-58dec02e.js"
+  }
+}
+{
+  "imports": {
+    "application": "/assets/application-d8a8613a.js",
+    "@hotwired/turbo-rails": "/assets/turbo-a1e3a50a.js",
+    "@hotwired/stimulus": "/assets/stimulus-d59b3b7f.js",
+    "@hotwired/stimulus-loading": "/assets/stimulus-loading-1fc53fe7.js",
+    "controllers/application": "/assets/controllers/application-2752e690.js",
+    "controllers": "/assets/controllers/index-c6c716a3.js",
+    "controllers/sidebar_controller": "/assets/controllers/sidebar_controller-58dec02e.js"
+  }
+}

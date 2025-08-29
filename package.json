@@ -1,0 +1,19 @@
+{
+  "name": "aetherforge",
+  "version": "1.0.0",
+  "description": "Aetherium Ascent is a turn‑based resource and crafting game built with Ruby 3.4 and Rails 8.0, designed around a JSON API and a lightweight browser UI.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tailwindcss": "^4.1.12"
+  }
+}

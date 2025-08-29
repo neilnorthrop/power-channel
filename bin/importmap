@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
-require_relative "../config/boot"
-require "importmap-rails"
+
+# Load the Rails environment so importmap commands that reference Rails
+# (e.g., to read config) have the Rails constant available.
+require_relative "../config/environment"
 require "importmap/commands"
+
 Importmap::Commands.start

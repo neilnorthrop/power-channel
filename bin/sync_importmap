@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+# bin/sync_importmap
+# Reads public/assets/.manifest.json and prints recommended `pin` lines for
+# config/importmap.rb. If you set WRITE=1, it will attempt to replace the
+# `pin "application"` and `pin "controllers/application"` lines in
+# config/importmap.rb (backing up the original file first).
+
+require 'json'
+require 'fileutils'
+
+ROOT = File.expand_path('..', __dir__)
+# project root is ROOT, manifest lives under public/assets/.manifest.json
+manifest_path = File.join(ROOT, 'public', 'assets', '.manifest.json')
+importmap_path = File.join(ROOT, 'config', 'importmap.rb')
+
+unless File.exist?(manifest_path)
+  STDERR.puts "manifest not found at #{manifest_path}"
+  exit 1
+end
+
+manifest = JSON.parse(File.read(manifest_path))
+
+# helpers
+get_asset = lambda do |logical|
+  # logical expected like "application.js" or "controllers/application.js"
+  manifest[logical]
+end
+
+application_asset = get_asset.call('application.js')
+controllers_application_asset = get_asset.call('controllers/application.js')
+
+puts "Detected manifest entries (partial):"
+puts "  application.js -> #{application_asset || 'MISSING'}"
+puts "  controllers/application.js -> #{controllers_application_asset || 'MISSING'}"
+puts
+
+pins = []
+if application_asset
+  pins << "pin \"application\", to: \"/assets/#{application_asset}\", preload: true"
+end
+if controllers_application_asset
+  pins << "pin \"controllers/application\", to: \"/assets/#{controllers_application_asset}\""
+end
+
+if pins.empty?
+  puts "No pins to suggest. Ensure assets are precompiled."
+  exit 0
+end
+
+puts "Suggested pins to add to config/importmap.rb:"
+puts
+puts pins.join("\n")
+puts
+puts "To write these into #{importmap_path} automatically, run:"
+puts "  WRITE=1 #{File.join('.', 'bin', 'sync_importmap')}"
+
+if ENV['WRITE']
+  unless File.exist?(importmap_path)
+    STDERR.puts "importmap.rb not found at #{importmap_path}"
+    exit 1
+  end
+
+  backup = importmap_path + '.bak'
+  FileUtils.cp(importmap_path, backup)
+  puts "Backed up #{importmap_path} -> #{backup}"
+
+  content = File.read(importmap_path)
+
+  # Replace application pin (simple heuristic)
+  content.gsub!(/pin\s+"application"[^
+]*/m, pins.find {|p| p.include?('application') } || 'pin "application"')
+  content.gsub!(/pin\s+"controllers\/application"[^
+]*/m, pins.find {|p| p.include?('controllers/application') } || 'pin "controllers/application"')
+
+  File.write(importmap_path, content)
+  puts "Updated #{importmap_path} with suggested pins."
+end
