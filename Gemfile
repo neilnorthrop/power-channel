@@ -56,6 +56,7 @@ group :development do
   gem "web-console"
   gem "pry-rails", "~> 0.3.9"
   gem "rubocop", "~> 1.0", require: false
+  gem "rdoc", "~> 6.14.2"
 end
 
 group :test do
