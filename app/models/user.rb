@@ -17,7 +17,7 @@ class User < ApplicationRecord
   has_many :active_effects, dependent: :destroy
   has_many :effects, through: :active_effects
 
-  after_create :initialize_defaults
+  after_create :initialize_defaults, unless: -> { Rails.env.test? }
 
   # Gain experience and level up if the threshold is reached.
   # This method increases the user's experience by the specified amount,
