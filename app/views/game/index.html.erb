@@ -29,9 +29,10 @@
   <h2>Buildings</h2>
   <div id="buildings"></div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const levelSpan = document.getElementById('level');
+  <%# Front-end JS moved to app/javascript/game/index.js and loads via importmap %>
+  <%# The previous inline script that handled fetching and Action Cable has been removed. %>
+  <%# See app/javascript/game/index.js for the implementation. %>
+<!-- Inline JS moved to modules
       const experienceSpan = document.getElementById('experience');
       const skillPointsSpan = document.getElementById('skill-points');
       const resourcesDiv = document.getElementById('resources');
@@ -403,8 +404,7 @@
 
   // mobile sidebar toggle handled in application layout
     });
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/@rails/actioncable@7.0.0/app/assets/javascripts/actioncable.js"></script>
+-->
     </main>
   </div>
 </div>

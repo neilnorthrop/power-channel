@@ -20,10 +20,11 @@
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-    <%# Ensure controllers are imported via importmap so Stimulus controllers boot reliably %>
-    <script type="module">
-      import "controllers"
-    </script>
+
+    <%# Expose JWT for frontend modules via meta tag %>
+    <% if user_signed_in? %>
+      <meta name="jwt-token" content="<%= JsonWebToken.encode(user_id: current_user.id) %>">
+    <% end %>
   </head>
 
   <body class="">

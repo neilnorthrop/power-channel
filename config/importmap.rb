@@ -1,8 +1,15 @@
 # Pin npm packages by running ./bin/importmap
 
-pin "application", to: "/assets/application-d8a8613a.js", preload: true
-pin "@hotwired/turbo-rails", to: "/assets/turbo-a1e3a50a.js", preload: true
-pin "@hotwired/stimulus", to: "/assets/stimulus-d59b3b7f.js", preload: true
-pin "@hotwired/stimulus-loading", to: "/assets/stimulus-loading-1fc53fe7.js", preload: true
-pin "controllers/application", to: "/assets/controllers/application-2752e690.js"
+# Map bare specifiers to asset paths
+pin "application", to: "application.js", preload: true
+pin "@hotwired/turbo-rails", to: "turbo.min.js", preload: true
+pin "@hotwired/stimulus", to: "stimulus.min.js", preload: true
+pin "@hotwired/stimulus-loading", to: "stimulus-loading.js", preload: true
+pin "@rails/actioncable", to: "actioncable.esm.js"
+
+# Stimulus controllers
+pin "controllers", to: "controllers/index.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
+
+# Game bootstrap module
+pin "game", to: "game/index.js"
