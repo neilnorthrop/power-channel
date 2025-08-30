@@ -22,6 +22,7 @@ class SkillServiceTest < ActiveSupport::TestCase
   end
 
   test "should unlock skill" do
+    @user.update(skill_points: 10)
     service = SkillService.new(@user)
     result = service.unlock_skill(@skill_tax_gain.id)
 
