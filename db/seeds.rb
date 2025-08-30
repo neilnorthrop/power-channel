@@ -2,10 +2,133 @@
 # - Does not destroy or modify user-owned data (User*, except reference joins like RecipeResource)
 # - Updates existing definitions and adds new ones without bespoke code each time
 
+
+# -----------------------------------------------------------------------------
+# How To Change Reference Models Safely (Modify/Add/Delete, incl. renames)
+# -----------------------------------------------------------------------------
+# This app treats Actions, Resources, Skills, Items, Buildings, and Recipes as
+# reference data. User-owned rows (UserResource, UserBuilding, etc.) are NOT
+# mutated by seeds. Follow this checklist when changing reference data.
+#
+# 0) Principles
+#    - Idempotent seeds: running db:seed many times should converge to the same
+#      database state for reference rows.
+#    - Non-destructive: do not alter or delete user-owned rows in seeds.
+#    - Validations + unique indexes: enforce uniqueness (typically on `name`) at
+#      the DB level to avoid duplicates (see “Uniqueness” below).
+#
+# 1) Modifying attributes (without renaming)
+#    - Update the corresponding entry in the arrays above (e.g., `resources`,
+#      `skills`, etc.). The upsert helper will update changed attributes.
+#    - If you add new attributes/columns:
+#      a) Create a Rails migration adding the column with a sensible default.
+#      b) If existing rows need backfill, write a data migration (or include a
+#         one-off backfill step) to set correct values for current production.
+#      c) Add the attribute to the data arrays here so seeds maintain it going
+#         forward.
+#    - Run: bin/rails db:migrate && bin/rails db:seed
+#
+# 2) Renaming a record (changing `name`)
+#    - If `name` is a natural key with a unique index, a rename should be
+#      considered a “data migration” rather than a seed update, because other
+#      rows may reference it by id and business logic/clients may refer to it by
+#      name.
+#    - Recommended process:
+#      a) Add an explicit data migration to rename the row in place, e.g.:
+#           old = Resource.find_by(name: "Gold")
+#           old&.update!(name: "Gold Coins")
+#      b) Update the seed arrays to use the new name so future seeds don’t
+#         regress it.
+#    - If frequent renames are expected, introduce a stable `slug` column with a
+#      unique index. Use `slug` as the upsert key and treat `name` as
+#      user-facing display. Seeds upsert by `slug`, and you may change `name`
+#      freely.
+#
+# 3) Adding a new record
+#    - Append a new hash to the relevant array; include all required attributes.
+#    - Ensure any relationships exist (e.g., when a Resource has `action_name`,
+#      that action is also present in `actions`).
+#    - Run seeds; the row is created.
+#
+# 4) Deleting a definition (removing a record)
+#    - Soft deprecation is safer than deletion because users might already own
+#      the record (e.g., a building users constructed, or an item in recipes).
+#    - Strategy options:
+#      a) Deprecated flag: add a boolean `deprecated` column; hide it from UI and
+#         exclude it from new content while keeping data intact.
+#      b) Prune mode (advanced): implement an optional ENV-guarded “prune” path
+#         that deletes rows no longer present in seed files. Only enable when
+#         you are certain it’s safe and you’ve handled orphaning/cascades.
+#    - If you must delete, write a migration or maintenance task that:
+#      - Validates there are no dependent records (or handles them),
+#      - Removes the reference row,
+#      - Is reviewed carefully in code review.
+#
+# 5) Changing relationships
+#    - This file resolves associations by names (e.g., Resource.action by
+#      `action_name`). If you move a resource to a different action:
+#      - Update the `action_name` in the resources array.
+#      - Ensure the target action exists in the actions array.
+#      - Run seeds to update the association.
+#    - For recipes, use the ensure helpers to adjust quantities or switch
+#      components.
+#
+# 6) Uniqueness and data integrity
+#    - Add unique indexes on natural keys, e.g.:
+#        add_index :actions,   :name, unique: true
+#        add_index :resources, :name, unique: true
+#        add_index :skills,    :name, unique: true
+#        add_index :items,     :name, unique: true
+#        add_index :buildings, :name, unique: true
+#      For joins like RecipeResource, add composite unique indexes (recipe_id,
+#      resource_id) to prevent duplicates.
+#
+# 7) Testing your changes
+#    - Locally: bin/rails db:migrate db:seed
+#    - In CI: consider seeding as part of test setup to catch validation errors.
+#    - Consider a dry-run mode that prints a diff (see roadmap above) before
+#      applying changes.
+#
+# 8) Rollouts and safety
+#    - Wrap changes behind feature flags if the UI depends on new definitions.
+#    - Consider progressive rollout: seed in staging, verify, then seed in prod.
+#    - Keep seeds idempotent; avoid any writes to user tables here.
+#
+# 9) Performance
+#    - When data grows large, use bulk upserts with unique_by indices.
+#    - Preload name→id maps for referenced models to avoid N+1 lookups.
+#
+# 10) Documentation and ownership
+#    - Document intent and business impact in PRs that modify these arrays.
+#    - If content has a product owner, route reviews to them.
+#
+# With these practices, you can safely evolve reference data over time without
+# disrupting user data, while maintaining a simple, auditable seeding story.
+# -----------------------------------------------------------------------------
+
+# Upsert helper: upserts rows into model based on keys in `by`.
+# - `by` can be a single symbol or an array of symbols for composite keys.
+# - Updates existing records and creates new ones as needed.
+# - Does not delete any records.
+# - Raises on validation errors.
+#
+# Example:
+#   upsert(Action, by: :name, rows: [{ name: "Chop Wood", description: "..." }])
+#
+#   upsert(Resource, by: [:name, :action_name], rows: [...])
+#
+# Note: for relationships, resolve by name after upsert (see Resources below).
+# For large datasets, consider bulk upsert_all with unique indexes.
+# For join tables, consider composite unique indexes to prevent dupes.
+# Wrap in transactions if needed for atomicity.
+# Handle validations and errors as appropriate for your app.
+# This is a simple implementation; adapt as needed.
+# -----------------------------------------------------------------------------
+
 def upsert(model, by:, rows:)
   Array(rows).each do |attrs|
     keys = Array(by)
-    find_hash = keys.to_h { |k| [k, attrs.fetch(k)] }
+    find_hash = keys.to_h { |k| [ k, attrs.fetch(k) ] }
     rec = model.find_or_initialize_by(find_hash)
     rec.assign_attributes(attrs.except(*keys))
     rec.save!
