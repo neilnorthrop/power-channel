@@ -20,30 +20,32 @@
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-    <%# Ensure controllers are imported via importmap so Stimulus controllers boot reliably %>
-    <script type="module">
-      import "controllers"
-    </script>
+    <%= yield :page_js %>
+    <% if user_signed_in? %>
+      <meta name="jwt-token" content="<%= JsonWebToken.encode(user_id: current_user.id) %>">
+    <% end %>
+    <!-- application module will import Turbo + Stimulus controllers -->
   </head>
 
   <body class="">
     <div class="container mx-auto p-4 min-h-screen bg-white">
-    <div class="flex gap-6" data-controller="sidebar">
-  <aside id="sidebar"
-         role="dialog"
-         aria-modal="true"
-         aria-label="Main sidebar"
-         aria-hidden="true"
-         class="fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full md:static md:translate-x-0 md:block transition-transform duration-200 ease-in-out">
-          <% if content_for?(:sidebar) %>
-            <%= yield :sidebar %>
-          <% else %>
-            <%= render partial: 'game/sidebar' %>
-          <% end %>
+    <% if user_signed_in? %>
+      <div class="flex gap-6" data-controller="sidebar">
+        <aside id="sidebar"
+               role="dialog"
+               aria-modal="true"
+               aria-label="Main sidebar"
+               aria-hidden="true"
+               class="fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full md:static md:translate-x-0 md:block transition-transform duration-200 ease-in-out">
+                <% if content_for?(:sidebar) %>
+                  <%= yield :sidebar %>
+                <% else %>
+                  <%= render partial: 'game/sidebar' %>
+                <% end %>
 
-          <!-- close button visible on mobile -->
-          <button data-action="click->sidebar#close" class="md:hidden absolute top-3 right-3 p-1 rounded bg-gray-100" aria-label="Close sidebar">✕</button>
-  </aside>
+                <!-- close button visible on mobile -->
+                <button data-action="click->sidebar#close" class="md:hidden absolute top-3 right-3 p-1 rounded bg-gray-100" aria-label="Close sidebar">✕</button>
+        </aside>
 
         <!-- backdrop for mobile sidebar -->
         <div id="sidebar-backdrop" data-sidebar-target="backdrop" data-action="click->sidebar#close" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
@@ -51,30 +53,35 @@
         <main class="flex-1">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
-                <button id="sidebar-toggle" data-action="click->sidebar#toggle" class="md:hidden inline-flex items-center justify-center p-2 rounded bg-gray-100 hover:bg-gray-200">
-                  <span class="sr-only">Open sidebar</span>
-                  ☰
-                </button>
+              <button id="sidebar-toggle" data-action="click->sidebar#toggle" class="md:hidden inline-flex items-center justify-center p-2 rounded bg-gray-100 hover:bg-gray-200">
+                <span class="sr-only">Open sidebar</span>
+                ☰
+              </button>
 
-                <% if content_for?(:header) %>
-                  <%= yield :header %>
-                <% else %>
-                  <h1 class="text-2xl font-bold">Aetherium Ascent</h1>
-                <% end %>
-              </div>
+              <% if content_for?(:header) %>
+                <%= yield :header %>
+              <% else %>
+                <h1 class="text-2xl font-bold">Aetherium Ascent</h1>
+              <% end %>
+            </div>
 
-              <div>
-                <% if content_for?(:header_actions) %>
-                  <%= yield :header_actions %>
-                <% else %>
-                  <%= button_to "Sign Out", destroy_user_session_path, method: :delete %>
-                <% end %>
-              </div>
+            <div>
+              <% if content_for?(:header_actions) %>
+                <%= yield :header_actions %>
+              <% else %>
+                <%= button_to "Sign Out", destroy_user_session_path, method: :delete %>
+              <% end %>
+            </div>
           </div>
 
           <%= yield %>
         </main>
       </div>
+    <% else %>
+      <main class="max-w-md mx-auto py-8">
+        <%= yield %>
+      </main>
+    <% end %>
     </div>
   </body>
 

@@ -3,4 +3,9 @@ class GameController < ApplicationController
 
   def index
   end
+
+  def inventory; end
+  def skills; end
+  def crafting; end
+  def buildings; end
 end

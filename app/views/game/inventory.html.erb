@@ -1,0 +1,11 @@
+<div id="toast-container"></div>
+
+<h2 class="text-xl font-semibold mb-2">Resources</h2>
+<div id="resources" class="space-y-1 mb-6"></div>
+
+<h2 class="text-xl font-semibold mb-2">Inventory</h2>
+<div id="inventory" class="space-y-1"></div>
+
+<% content_for :page_js do %>
+  <script type="module">import "pages/inventory"</script>
+<% end %>
