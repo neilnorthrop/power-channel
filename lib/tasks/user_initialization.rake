@@ -49,6 +49,81 @@ namespace :users do
     end
   end
 
+  # Create missing user_resources for all current Resources, setting amount to
+  # the resource's base_amount. Returns the number of associations created.
+  def ensure_resources_for_user(user)
+    existing_ids = user.user_resources.pluck(:resource_id).to_set
+    to_create = []
+    now = Time.current
+    Resource.find_each do |resource|
+      next if existing_ids.include?(resource.id)
+      to_create << { user_id: user.id, resource_id: resource.id, amount: resource.base_amount, created_at: now, updated_at: now }
+    end
+    if to_create.any?
+      UserResource.insert_all(to_create)
+      to_create.length
+    else
+      0
+    end
+  end
+
+  # Optionally create missing user_items rows with quantity=0 for completeness.
+  # By default, does nothing unless create_zero=true is passed.
+  def ensure_items_for_user(user, create_zero: false, default_quantity: 0)
+    return 0 unless create_zero
+    existing_ids = user.user_items.pluck(:item_id).to_set
+    to_create = []
+    now = Time.current
+    Item.find_each do |item|
+      next if existing_ids.include?(item.id)
+      to_create << { user_id: user.id, item_id: item.id, quantity: default_quantity, created_at: now, updated_at: now }
+    end
+    if to_create.any?
+      UserItem.insert_all(to_create)
+      to_create.length
+    else
+      0
+    end
+  end
+
+  # Optionally grant all skills to a user (generally not recommended) unless
+  # auto_grant=true is passed. Returns the number of skills granted.
+  def ensure_skills_for_user(user, auto_grant: false)
+    return 0 unless auto_grant
+    existing_ids = user.user_skills.pluck(:skill_id).to_set
+    to_create = []
+    now = Time.current
+    Skill.find_each do |skill|
+      next if existing_ids.include?(skill.id)
+      to_create << { user_id: user.id, skill_id: skill.id, created_at: now, updated_at: now }
+    end
+    if to_create.any?
+      UserSkill.insert_all(to_create)
+      to_create.length
+    else
+      0
+    end
+  end
+
+  # Optionally grant all buildings to a user at a given level (default 1) unless
+  # auto_grant=true is passed. Returns the number of buildings granted.
+  def ensure_buildings_for_user(user, auto_grant: false, level: 1)
+    return 0 unless auto_grant
+    existing_ids = user.user_buildings.pluck(:building_id).to_set
+    to_create = []
+    now = Time.current
+    Building.find_each do |building|
+      next if existing_ids.include?(building.id)
+      to_create << { user_id: user.id, building_id: building.id, level: level, created_at: now, updated_at: now }
+    end
+    if to_create.any?
+      UserBuilding.insert_all(to_create)
+      to_create.length
+    else
+      0
+    end
+  end
+
   desc "Initialize defaults for all users. Skips users that already have defaults."
   task init_all: :environment do
     total = 0
@@ -172,6 +247,109 @@ namespace :users do
     end
     puts "[users:ensure_actions] Processed #{total_users} users. Total user_actions created: #{total_created}. Skipped (not initialized): #{not_initialized}."
   end
+
+  # Ensure user_resources for a single user
+  desc "Ensure missing user_resources for a single user. Usage: rake users:ensure_resources_one[ID]"
+  task :ensure_resources_one, [:id] => :environment do |_t, args|
+    id = args[:id]
+    abort "Usage: rake users:ensure_resources_one[ID]" if id.nil?
+    user = User.find_by(id: id)
+    abort "User with id=#{id} not found" unless user
+    unless defaults_already_set?(user)
+      puts "[users:ensure_resources_one] Skipping user #{user.id} (#{user.email}) — defaults are not initialized."
+      next
+    end
+    created = ensure_resources_for_user(user)
+    puts "[users:ensure_resources_one] User #{user.id} (#{user.email}): created #{created} missing user_resources."
+  end
+
+  # Ensure user_resources for all users
+  desc "Ensure missing user_resources for all users (idempotent)."
+  task ensure_resources: :environment do
+    total_users = 0
+    total_created = 0
+    not_initialized = 0
+    User.find_each do |user|
+      total_users += 1
+      unless defaults_already_set?(user)
+        not_initialized += 1
+        puts "[users:ensure_resources] Skipping user #{user.id} (#{user.email}) — defaults are not initialized."
+        next
+      end
+      total_created += ensure_resources_for_user(user)
+    end
+    puts "[users:ensure_resources] Processed #{total_users} users. Total user_resources created: #{total_created}. Skipped (not initialized): #{not_initialized}."
+  end
+
+  # Ensure user_items rows exist with quantity=0 (opt-in via ITEMS_CREATE_ZERO=1)
+  desc "Ensure missing user_items for all users (quantity=0). Set ITEMS_CREATE_ZERO=1 to enable."
+  task ensure_items: :environment do
+    create_zero = ActiveModel::Type::Boolean.new.cast(ENV["ITEMS_CREATE_ZERO"]) || false
+    unless create_zero
+      puts "[users:ensure_items] Skipping — set ITEMS_CREATE_ZERO=1 to create zero-quantity user_items."
+      next
+    end
+    total_users = 0
+    total_created = 0
+    not_initialized = 0
+    User.find_each do |user|
+      total_users += 1
+      unless defaults_already_set?(user)
+        not_initialized += 1
+        puts "[users:ensure_items] Skipping user #{user.id} (#{user.email}) — defaults are not initialized."
+        next
+      end
+      total_created += ensure_items_for_user(user, create_zero: true)
+    end
+    puts "[users:ensure_items] Processed #{total_users} users. Total user_items created: #{total_created}. Skipped (not initialized): #{not_initialized}."
+  end
+
+  # Ensure user_skills (unlock all) — opt-in via AUTO_GRANT=1 (generally not recommended)
+  desc "Ensure missing user_skills for all users (unlock all). Set AUTO_GRANT=1 to enable."
+  task ensure_skills: :environment do
+    auto = ActiveModel::Type::Boolean.new.cast(ENV["AUTO_GRANT"]) || false
+    unless auto
+      puts "[users:ensure_skills] Skipping — set AUTO_GRANT=1 to grant all skills to users."
+      next
+    end
+    total_users = 0
+    total_created = 0
+    not_initialized = 0
+    User.find_each do |user|
+      total_users += 1
+      unless defaults_already_set?(user)
+        not_initialized += 1
+        puts "[users:ensure_skills] Skipping user #{user.id} (#{user.email}) — defaults are not initialized."
+        next
+      end
+      total_created += ensure_skills_for_user(user, auto_grant: true)
+    end
+    puts "[users:ensure_skills] Processed #{total_users} users. Total user_skills created: #{total_created}. Skipped (not initialized): #{not_initialized}."
+  end
+
+  # Ensure user_buildings — opt-in via AUTO_GRANT=1 and optional LEVEL
+  desc "Ensure missing user_buildings for all users. Set AUTO_GRANT=1 to grant, LEVEL=<int> to choose level (default 1)."
+  task ensure_buildings: :environment do
+    auto = ActiveModel::Type::Boolean.new.cast(ENV["AUTO_GRANT"]) || false
+    level = (ENV["LEVEL"].presence || 1).to_i
+    unless auto
+      puts "[users:ensure_buildings] Skipping — set AUTO_GRANT=1 to grant buildings to users."
+      next
+    end
+    total_users = 0
+    total_created = 0
+    not_initialized = 0
+    User.find_each do |user|
+      total_users += 1
+      unless defaults_already_set?(user)
+        not_initialized += 1
+        puts "[users:ensure_buildings] Skipping user #{user.id} (#{user.email}) — defaults are not initialized."
+        next
+      end
+      total_created += ensure_buildings_for_user(user, auto_grant: true, level: level)
+    end
+    puts "[users:ensure_buildings] Processed #{total_users} users. Total user_buildings created: #{total_created}. Skipped (not initialized): #{not_initialized}."
+  end
 end
 
 # Composite task to seed reference data and then ensure user actions
@@ -193,6 +371,54 @@ namespace :app do
   task seed_and_ensure_actions: :environment do
     %w[db:seed users:ensure_actions].each do |t|
       Rake::Task[t].reenable # allow re-running within the same process if needed
+      Rake::Task[t].invoke
+    end
+  end
+
+  desc "Run db:seed and users:ensure_resources (idempotent)"
+  task seed_and_ensure_resources: :environment do
+    %w[db:seed users:ensure_resources].each do |t|
+      Rake::Task[t].reenable
+      Rake::Task[t].invoke
+    end
+  end
+
+  desc "Run db:seed and users:ensure_items (idempotent; requires ITEMS_CREATE_ZERO=1)"
+  task seed_and_ensure_items: :environment do
+    %w[db:seed users:ensure_items].each do |t|
+      Rake::Task[t].reenable
+      Rake::Task[t].invoke
+    end
+  end
+
+  desc "Run db:seed and users:ensure_skills (idempotent; requires AUTO_GRANT=1)"
+  task seed_and_ensure_skills: :environment do
+    %w[db:seed users:ensure_skills].each do |t|
+      Rake::Task[t].reenable
+      Rake::Task[t].invoke
+    end
+  end
+
+  desc "Run db:seed and users:ensure_buildings (idempotent; requires AUTO_GRANT=1)"
+  task seed_and_ensure_buildings: :environment do
+    %w[db:seed users:ensure_buildings].each do |t|
+      Rake::Task[t].reenable
+      Rake::Task[t].invoke
+    end
+  end
+
+  desc "Run db:seed and all ensure tasks (actions, resources, items, skills, buildings)"
+  task seed_and_ensure_all: :environment do
+    tasks = %w[
+      db:seed
+      users:ensure_actions
+      users:ensure_resources
+      users:ensure_items
+      users:ensure_skills
+      users:ensure_buildings
+    ]
+    tasks.each do |t|
+      Rake::Task[t].reenable
       Rake::Task[t].invoke
     end
   end
