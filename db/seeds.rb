@@ -138,18 +138,24 @@ end
 # Actions
 actions = [
   { name: "Taxes", description: "Gather taxes from your citizens.", cooldown: 60 },
-  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: 30 },
-  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: 45 }
+  { name: "Gather", description: "Gather basic resources.", cooldown: 60 },
+  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: 60 },
+  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: 60 }
 ]
+
 upsert(Action, by: :name, rows: actions)
 
 # Resources (action by name)
 resources = [
   { name: "Gold Coins", description: "The currency of the realm.", base_amount: 10, drop_chance: 1.0, action_name: "Taxes" },
-  { name: "Wood", description: "A common building material.", base_amount: 5, drop_chance: 1.0, action_name: "Chop Wood" },
+  { name: "Stick", description: "A basic crafting material.", base_amount: 5, drop_chance: 0.85, action_name: "Gather" },
+  { name: "Stone", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.75, action_name: "Gather" },
+  { name: "Weeds", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.5, action_name: "Gather" },
+  { name: "Wood", description: "A common building material.", base_amount: 1, drop_chance: 1.0, action_name: "Chop Wood" },
   { name: "Stone", description: "A sturdy building material.", base_amount: 5, drop_chance: 1.0, action_name: "Quarry Stone" },
   { name: "Coal", description: "A fuel source for smelting and crafting.", base_amount: 2, drop_chance: 0.33, action_name: "Quarry Stone" }
 ]
+
 resources.each do |attrs|
   action_name = attrs.delete(:action_name)
   rec = Resource.find_or_initialize_by(name: attrs[:name])
@@ -164,6 +170,7 @@ skills = [
   { name: "Lumberjack", description: "Decrease wood action cooldown by 10%.", cost: 1, effect: "decrease_wood_cooldown", multiplier: 0.9 },
   { name: "Stone Mason", description: "Increase stone gained from all actions by 10%.", cost: 1, effect: "increase_stone_gain", multiplier: 1.1 }
 ]
+
 upsert(Skill, by: :name, rows: skills)
 
 # Items
@@ -171,6 +178,7 @@ items = [
   { name: "Minor Potion of Luck", description: "Slightly increases the chance of finding rare resources.", effect: "increase_luck", drop_chance: 0.001 },
   { name: "Scroll of Haste", description: "Instantly completes the cooldown of a single action.", effect: "reset_cooldown", drop_chance: 0.002 }
 ]
+
 upsert(Item, by: :name, rows: items)
 
 # Buildings (definitions)
@@ -179,6 +187,7 @@ buildings = [
   { name: "Mine", description: "Increases gold production by 10% per level.", level: 1, effect: "increase_gold_production" },
   { name: "Quarry", description: "Increases stone production by 10% per level.", level: 1, effect: "increase_stone_production" }
 ]
+
 upsert(Building, by: :name, rows: buildings)
 
 # Recipes
