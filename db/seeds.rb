@@ -1,111 +1,58 @@
 # Idempotent, non-destructive seeding for reference data.
 # - Does not destroy or modify user-owned data (User*, except reference joins like RecipeResource)
 # - Updates existing definitions and adds new ones without bespoke code each time
-
-
+#
 # -----------------------------------------------------------------------------
-# How To Change Reference Models Safely (Modify/Add/Delete, incl. renames)
+# Reference Data Guide (modify/add/delete, incl. renames)
 # -----------------------------------------------------------------------------
-# This app treats Actions, Resources, Skills, Items, Buildings, and Recipes as
-# reference data. User-owned rows (UserResource, UserBuilding, etc.) are NOT
-# mutated by seeds. Follow this checklist when changing reference data.
+# Scope: Actions, Resources, Skills, Items, Buildings, Recipes are reference
+# data. Seeds do not touch user-owned rows (User* tables).
 #
-# 0) Principles
-#    - Idempotent seeds: running db:seed many times should converge to the same
-#      database state for reference rows.
-#    - Non-destructive: do not alter or delete user-owned rows in seeds.
-#    - Validations + unique indexes: enforce uniqueness (typically on `name`) at
-#      the DB level to avoid duplicates (see “Uniqueness” below).
+# Principles
+# - Idempotent and non‑destructive: multiple runs converge without harming user data.
+# - Enforce uniqueness (usually on `name`) with DB indexes + validations.
 #
-# 1) Modifying attributes (without renaming)
-#    - Update the corresponding entry in the arrays above (e.g., `resources`,
-#      `skills`, etc.). The upsert helper will update changed attributes.
-#    - If you add new attributes/columns:
-#      a) Create a Rails migration adding the column with a sensible default.
-#      b) If existing rows need backfill, write a data migration (or include a
-#         one-off backfill step) to set correct values for current production.
-#      c) Add the attribute to the data arrays here so seeds maintain it going
-#         forward.
-#    - Run: bin/rails db:migrate && bin/rails db:seed
+# Modify attributes
+# - Edit the arrays below (e.g., `resources`, `skills`) and run:
+#     bin/rails db:migrate db:seed
+# - When adding columns, ship a migration (with default/backfill if needed), then
+#   include the attribute in seeds so it stays updated.
 #
-# 2) Renaming a record (changing `name`)
-#    - If `name` is a natural key with a unique index, a rename should be
-#      considered a “data migration” rather than a seed update, because other
-#      rows may reference it by id and business logic/clients may refer to it by
-#      name.
-#    - Recommended process:
-#      a) Add an explicit data migration to rename the row in place, e.g.:
-#           old = Resource.find_by(name: "Gold")
-#           old&.update!(name: "Gold Coins")
-#      b) Update the seed arrays to use the new name so future seeds don’t
-#         regress it.
-#    - If frequent renames are expected, introduce a stable `slug` column with a
-#      unique index. Use `slug` as the upsert key and treat `name` as
-#      user-facing display. Seeds upsert by `slug`, and you may change `name`
-#      freely.
+# Rename a record
+# - Prefer a data migration to rename in place, then update seeds.
+# - If renames are common, add a stable `slug` (unique) and upsert by `slug` so
+#   `name` can change freely.
 #
-# 3) Adding a new record
-#    - Append a new hash to the relevant array; include all required attributes.
-#    - Ensure any relationships exist (e.g., when a Resource has `action_name`,
-#      that action is also present in `actions`).
-#    - Run seeds; the row is created.
+# Add a record
+# - Append to the relevant array (include required attributes). Ensure related
+#   records exist (e.g., Resource `action_name`). Seed to create.
 #
-# 4) Deleting a definition (removing a record)
-#    - Soft deprecation is safer than deletion because users might already own
-#      the record (e.g., a building users constructed, or an item in recipes).
-#    - Strategy options:
-#      a) Deprecated flag: add a boolean `deprecated` column; hide it from UI and
-#         exclude it from new content while keeping data intact.
-#      b) Prune mode (advanced): implement an optional ENV-guarded “prune” path
-#         that deletes rows no longer present in seed files. Only enable when
-#         you are certain it’s safe and you’ve handled orphaning/cascades.
-#    - If you must delete, write a migration or maintenance task that:
-#      - Validates there are no dependent records (or handles them),
-#      - Removes the reference row,
-#      - Is reviewed carefully in code review.
+# Delete / deprecate
+# - Prefer deprecation (e.g., `deprecated` boolean) over delete; users may own it.
+# - If removal is required, write a migration/maintenance task that handles
+#   dependencies and is reviewed carefully.
 #
-# 5) Changing relationships
-#    - This file resolves associations by names (e.g., Resource.action by
-#      `action_name`). If you move a resource to a different action:
-#      - Update the `action_name` in the resources array.
-#      - Ensure the target action exists in the actions array.
-#      - Run seeds to update the association.
-#    - For recipes, use the ensure helpers to adjust quantities or switch
-#      components.
+# Relationships
+# - Associations are resolved by names here (e.g., Resource.action via `action_name`).
+#   Update the name and rerun seeds to move relationships. For recipes, adjust
+#   components/quantities via the helpers below.
 #
-# 6) Uniqueness and data integrity
-#    - Add unique indexes on natural keys, e.g.:
-#        add_index :actions,   :name, unique: true
-#        add_index :resources, :name, unique: true
-#        add_index :skills,    :name, unique: true
-#        add_index :items,     :name, unique: true
-#        add_index :buildings, :name, unique: true
-#      For joins like RecipeResource, add composite unique indexes (recipe_id,
-#      resource_id) to prevent duplicates.
+# Uniqueness & integrity
+# - Add unique indexes on natural keys; e.g.:
+#     add_index :actions,   :name, unique: true
+#     add_index :resources, :name, unique: true
+#     add_index :skills,    :name, unique: true
+#     add_index :items,     :name, unique: true
+#     add_index :buildings, :name, unique: true
+#   For joins (RecipeResource), add a composite unique index (recipe_id, resource_id).
 #
-# 7) Testing your changes
-#    - Locally: bin/rails db:migrate db:seed
-#    - In CI: consider seeding as part of test setup to catch validation errors.
-#    - Consider a dry-run mode that prints a diff (see roadmap above) before
-#      applying changes.
-#
-# 8) Rollouts and safety
-#    - Wrap changes behind feature flags if the UI depends on new definitions.
-#    - Consider progressive rollout: seed in staging, verify, then seed in prod.
-#    - Keep seeds idempotent; avoid any writes to user tables here.
-#
-# 9) Performance
-#    - When data grows large, use bulk upserts with unique_by indices.
-#    - Preload name→id maps for referenced models to avoid N+1 lookups.
-#
-# 10) Documentation and ownership
-#    - Document intent and business impact in PRs that modify these arrays.
-#    - If content has a product owner, route reviews to them.
-#
-# With these practices, you can safely evolve reference data over time without
-# disrupting user data, while maintaining a simple, auditable seeding story.
+# Test, rollout, performance
+# - Test locally (db:migrate db:seed); consider CI seeding.
+# - Feature‑flag UI that uses new definitions; validate in staging before prod.
+# - For large datasets, consider bulk `upsert_all` with unique indexes and preloaded
+#   lookups to avoid N+1.
 # -----------------------------------------------------------------------------
-
+#
 # Upsert helper: upserts rows into model based on keys in `by`.
 # - `by` can be a single symbol or an array of symbols for composite keys.
 # - Updates existing records and creates new ones as needed.
@@ -124,6 +71,58 @@
 # Handle validations and errors as appropriate for your app.
 # This is a simple implementation; adapt as needed.
 # -----------------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+# Seeding + Backfill Workflow With Rake Tasks
+# -----------------------------------------------------------------------------
+# The seeds in this file define and upsert reference data (Actions, Resources,
+# Skills, Items, Buildings, Recipes) without touching user-owned data. When new
+# content is added, you have several rake tasks that can “backfill” missing
+# associations for existing users in an idempotent way.
+#
+# Typical workflow when adding content
+# 1) Edit db/seeds.rb (or external data later, if adopted) to add/modify
+#    definitions (e.g., new Action/Resource/Skill/Item/Building/Recipe).
+# 2) Run db:seed to upsert definitions:
+#      bin/rails db:seed
+# 3) Backfill associations for existing users, as needed:
+#    - Actions (recommended when new global Action is added):
+#        bin/rails users:ensure_actions
+#    - Resources (recommended if users should always track all resources):
+#        bin/rails users:ensure_resources
+#    - Items (optional; creates zero-quantity rows to make inventories complete):
+#        ITEMS_CREATE_ZERO=1 bin/rails users:ensure_items
+#    - Skills (optional; unlock-all, generally not recommended):
+#        AUTO_GRANT=1 bin/rails users:ensure_skills
+#    - Buildings (optional; grant-all at level N):
+#        AUTO_GRANT=1 LEVEL=1 bin/rails users:ensure_buildings
+#
+# Composite “seed + ensure” shortcuts (namespace: app)
+# - Run seeds then ensure specific associations in one go:
+#     bin/rails app:seed_and_ensure_actions
+#     bin/rails app:seed_and_ensure_resources
+#     ITEMS_CREATE_ZERO=1 bin/rails app:seed_and_ensure_items
+#     AUTO_GRANT=1 bin/rails app:seed_and_ensure_skills
+#     AUTO_GRANT=1 LEVEL=1 bin/rails app:seed_and_ensure_buildings
+# - Or run them all in order (items/skills/buildings obey env flags and will
+#   no‑op if flags are not set):
+#     bin/rails app:seed_and_ensure_all
+#
+# One-off / targeted backfills
+# - Single user variants:
+#     bin/rails users:ensure_actions_one[USER_ID]
+#     bin/rails users:ensure_resources_one[USER_ID]
+# - Inspect current initialization:
+#     bin/rails users:status
+#
+# Behavior notes
+# - “Ensure” tasks are idempotent (safe to run repeatedly) and skip users whose
+#   defaults are not initialized; they only create missing rows.
+# - Items/Skills/Buildings tasks are opt-in (env flags) to avoid unintended
+#   global grants; Actions/Resources default to on because they’re commonly
+#   universal.
+# - For large user bases, the tasks use batched insert_all under the hood for
+#   efficiency.
 
 def upsert(model, by:, rows:)
   Array(rows).each do |attrs|
