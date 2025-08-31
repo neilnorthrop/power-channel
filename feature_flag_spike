@@ -1,0 +1,96 @@
+Here’s a data-driven flags (gating) spike for AetherForge.
+
+Goals
+- Gate content via clear, seedable, testable prerequisites.
+- Enforce gates server-side; clients are not trusted.
+- Idempotent updates; easy backfill for existing users.
+
+Data Model
+- Flag: name, slug (unique), description — capability milestone (e.g., can_chop).
+- UserFlag: user_id, flag_id — unique index [user_id, flag_id].
+- Unlockable association (choose one):
+  - Simple: add nullable flag_id on each unlockable (actions, items, skills, buildings, recipes).
+  - Flexible: polymorphic join unlockables(flag_id, unlockable_type, unlockable_id) with unique index.
+- FlagRequirement: flag_id, requirement_type, requirement_id, quantity — supports Resource, Item, Building, Flag, Skill (optional: Action/ActionCompletion).
+
+Migrations (sketch)
+- create_flags
+- create_user_flags (unique [user_id, flag_id])
+- create_flag_requirements (indexes by flag and requirement)
+- Either: add flag_id to unlockable tables OR create unlockables polymorphic join.
+
+Seeding
+- Define flags + prerequisites in db/seeds.rb:
+  - Flags: can_chop, can_fish, can_mine, can_farm, can_hunt, can_explore, can_tax
+  - Requirements examples:
+    - can_chop: Item Hatchet
+    - can_fish: Item Fishing Rod
+    - can_mine: Item Pickaxe
+    - can_farm: Item Hoe (and/or Seeds)
+    - can_hunt: Item Spear
+    - can_explore: Building Scout Camp
+    - can_tax: Building Town Hall
+- Tie unlockables to flags (simple path): set flag_id on Action/Building/…; ungated remains NULL.
+
+Unlock Flow (Awarding Flags)
+- CraftingService: after crafting, check flags with Item requirements; grant if satisfied.
+- BuildingService: after construct/upgrade, check flags with Building requirements; grant if satisfied.
+- (Optional) ActionService: after completions/resources, check flags with those requirement types.
+- Backfill helper: recompute all flags for a user based on current state (idempotent).
+
+Enforcement (Using Gated Content)
+- Before performing gated action: require user.user_flags.exists?(flag_id: action.flag_id) when flag_id present.
+- Return friendly error listing missing requirements.
+
+API & Serialization
+- Actions index includes unlocked: true/false and requirements summary for gated actions (extend to items/skills/buildings as needed).
+- Optional: endpoint to preview requirements for an unlockable.
+
+UI
+- Locked entries: gray/tooltip with requirements + CTAs to craft/build.
+
+Rake Tasks (Backfill)
+- users:ensure_flags — recompute/grant missing flags for all users (idempotent).
+- users:ensure_flags_one[ID] — single user.
+- app:seed_and_ensure_flags — seeds then recomputes flags.
+- Order: ensure flags before users:ensure_actions so action gates reflect flags.
+
+How To Add A Gate (Checklist)
+1) Add flag (slug, name, description) to seeds.
+2) Add requirements for the flag (items/buildings/resources/flags/skills with quantities).
+3) Tie unlockable to flag (e.g., set action.flag_id).
+4) Seed + backfill:
+   - bin/rails db:seed
+   - bin/rails users:ensure_flags
+   - bin/rails users:ensure_actions (if gating actions)
+5) UI: show requirements summary.
+6) Tests: award, enforce, backfill.
+
+Examples
+- Chop (can_chop): craft Hatchet → unlock Action: Chop Wood
+- Fish (can_fish): craft Fishing Rod → unlock Action: Fish
+- Mine (can_mine): craft Pickaxe → unlock Action: Quarry/Mine
+- Farm (can_farm): craft Hoe (and/or own Seeds) → unlock Action: Farm
+- Hunt (can_hunt): craft Spear → unlock Action: Hunt
+- Explore (can_explore): build Scout Camp → unlock Action: Explore
+- Tax (can_tax): build Town Hall → unlock Action: Taxes
+
+Testing
+- Awarding: Crafting/Building services grant expected flags.
+- Enforcement: ActionService denies without flags; allows with flags.
+- Backfill: users:ensure_flags grants flags to users satisfying requirements.
+
+Performance & Indexing
+- Index: flags.slug, FKs, [user_id, flag_id], [flag_id, unlockable_type, unlockable_id] (if polymorphic), [flag_id], [requirement_type, requirement_id].
+- Batch: use insert_all in ensure tasks.
+- Cache: user’s flags per request to reduce DB hits.
+
+Schema Choice
+- Simple per-model flag_id: simple joins, fast to ship.
+- Polymorphic unlockables: more flexible; one place to attach flags.
+
+Next Steps
+- Pick schema option; scaffold migrations/models.
+- Seed initial flags + prerequisites; wire Actions to flags.
+- Implement service hooks + backfill tasks.
+- Add UI affordances for locked content and requirement previews.

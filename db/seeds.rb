@@ -156,12 +156,14 @@ def upsert(model, by:, rows:)
   end
 end
 
+cooldown = Rails.env.development? ? 1 : 60
+
 # Actions
 actions = [
-  { name: "Taxes", description: "Gather taxes from your citizens.", cooldown: 60 },
-  { name: "Gather", description: "Gather basic resources.", cooldown: 60 },
-  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: 60 },
-  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: 60 }
+  { name: "Taxes", description: "Gather taxes from your citizens.", cooldown: cooldown },
+  { name: "Gather", description: "Gather basic resources.", cooldown: cooldown },
+  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: cooldown },
+  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: cooldown }
 ]
 
 upsert(Action, by: :name, rows: actions)

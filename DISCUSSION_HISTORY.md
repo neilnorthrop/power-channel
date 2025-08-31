@@ -64,3 +64,9 @@ Note: If you want a different structure (strict chronology, or per-sprint sectio
 ## Seeds Roadmap & Governance Docs
 - Added detailed comments in `db/seeds.rb` covering: externalized data (YAML/JSON), uniqueness + bulk upserts, dry-run & summaries, env overlays, versioning, declarative relationships, CI hooks, performance, multi-tenant, rollback/audit, I18n, security, and authoring practices.
 
+## Feature Flags (Gating) Spike
+- Brainstorm: Proposed a data-driven flags system to gate actions and other content behind prerequisites (crafted items, built buildings, resources, etc.).
+- Scope: New tables (`flags`, `user_flags`, `flag_requirements`) and either per-model `flag_id` or a polymorphic `unlockables` join.
+- Flow: Award flags on craft/build/other events; enforce gates before using a gated unlockable; include unlock status + requirements in API.
+- Backfill: Add `users:ensure_flags` and composite `app:seed_and_ensure_flags`; run flags ensure before `users:ensure_actions`.
+- Reference doc: Added `feature_flag_spike` in the repo root with details, examples, and next steps.
