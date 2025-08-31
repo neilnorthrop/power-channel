@@ -2,6 +2,28 @@
 # - Does not destroy or modify user-owned data (User*, except reference joins like RecipeResource)
 # - Updates existing definitions and adds new ones without bespoke code each time
 #
+# Quick Start
+# 1) Define content below (Actions, Resources with action_name, Skills, Items, Buildings, Recipes).
+# 2) Apply definitions:
+#      bin/rails db:seed
+# 3) Backfill for existing users (idempotent):
+#      bin/rails users:ensure_actions
+#      bin/rails users:ensure_resources
+#    Optional (env‑gated):
+#      ITEMS_CREATE_ZERO=1 bin/rails users:ensure_items
+#      AUTO_GRANT=1         bin/rails users:ensure_skills
+#      AUTO_GRANT=1 LEVEL=1 bin/rails users:ensure_buildings
+# 4) One‑liners that chain seed + ensure:
+#      bin/rails app:seed_and_ensure_actions
+#      bin/rails app:seed_and_ensure_resources
+#      bin/rails app:seed_and_ensure_all  # obeys env flags for items/skills/buildings
+# 5) Single user and status:
+#      bin/rails users:ensure_actions_one[USER_ID]
+#      bin/rails users:ensure_resources_one[USER_ID]
+#      bin/rails users:status
+# Notes: Safe to re‑run; seeds never alter user‑owned rows. For renames, prefer a
+# data migration or introduce a stable `slug` and upsert by that key.
+#
 # -----------------------------------------------------------------------------
 # Reference Data Guide (modify/add/delete, incl. renames)
 # -----------------------------------------------------------------------------
