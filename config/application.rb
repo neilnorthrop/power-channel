@@ -24,6 +24,10 @@ module AetherForge
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # JWT signing secret: read from environment variable.
+    # Configure `JWT_SECRET` in your environment (see README for `.env` usage).
+    # There is intentionally no fallback to Rails credentials to keep one
+    # source of truth across environments.
     config.jwt_secret = ENV["JWT_SECRET"]
   end
 end

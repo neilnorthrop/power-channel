@@ -71,7 +71,7 @@ Authentication is required for all endpoints except registration and token issua
 
 1. **Ruby version** – Install Ruby 3.4.0 and Bundler
 2. **Dependencies** – PostgreSQL, Node/JS runtime (for Rails), and gems from the Gemfile (`bundle install`)
-3. **Configuration** – Set `rails credentials:edit` and add `jwt_secret_key` for token signing
+3. **Configuration** – Set the `JWT_SECRET` environment variable (see "JWT Secret & .env" below)
 4. **Database setup** – `bin/rails db:setup` or `bin/rails db:create db:migrate db:seed` (seeds create initial actions, resources, skills, items, recipes, buildings)
 5. **Run the server** – `bin/rails server`; visit `/` for the demo UI or use the API directly.
 6. **Run the test suite** – `bin/rails test` (Minitest with fixtures and mocha)
@@ -151,6 +151,34 @@ Use the following checklists when introducing new content. Most data lives in `d
 * **Game Loop** – Perform actions → gather resources → craft items → unlock skills/buildings → stronger actions, with experience leading to level-ups.
 * **Real‑time Updates** – Client subscribes to `UserUpdatesChannel` using JWT token; server pushes resource, item, skill and building changes instantly.
 * **Authentication** – Devise handles registration; JWT tokens authenticate API/WebSocket requests via the `Authenticable` concern and `JsonWebToken` utility.
+
+---
+
+## JWT Secret & .env
+
+- **What:** The app signs and verifies JWTs with a secret read from `ENV['JWT_SECRET']` (see `config/application.rb`).
+- **Where:** Provide it via your environment in production and locally via a shell-exported `.env` file.
+
+### Generate a strong secret
+- OpenSSL: `openssl rand -hex 64`
+- Ruby: `ruby -rsecurerandom -e 'puts SecureRandom.hex(64)'`
+
+### Create a `.env` file (development)
+- Location: project root (same folder as `Gemfile`)
+- Contents (key=value, one per line):
+  - `JWT_SECRET=your_long_random_hex_string_here`
+
+Alternatively, copy the template and edit:
+- `cp .env.example .env` and fill in the values.
+
+### Load the `.env` into your shell session
+- Bash/Zsh (export all keys from `.env`):
+  - `set -a; source .env; set +a`
+- Verify: `echo $JWT_SECRET` prints your value
+
+Notes
+- `.env` is ignored by Git (`.gitignore`). Do not commit secrets.
+- Set real environment variables in production (Heroku, Render, Fly, Docker/Kamal, etc.) rather than using `.env`.
 * **Future Roadmap** – expand effect classes, implement item logic, add balancing (resource costs, skill multipliers) and flesh out building effects.
 
 ---
@@ -165,4 +193,3 @@ Use the following checklists when introducing new content. Most data lives in `d
 ---
 
 Happy hacking, and welcome to the ascent!
-
