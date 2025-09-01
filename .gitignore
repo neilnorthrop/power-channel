@@ -35,3 +35,4 @@
 
 /cline_docs/*
 /node_modules/*
+.env

@@ -1,9 +1,10 @@
 import { getJwt, authHeaders } from "pages/util"
 
-document.addEventListener('DOMContentLoaded', () => {
+function initInventory() {
   const token = getJwt()
   const resourcesDiv = document.getElementById('resources')
   const inventoryDiv = document.getElementById('inventory')
+  if (!resourcesDiv || !inventoryDiv) return
 
   const fetchResources = () => {
     fetch('/api/v1/user_resources', { headers: authHeaders(token) })
@@ -41,4 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fetchResources()
   fetchInventory()
-})
+}
+
+// Initialize on Turbo visits and full loads
+document.addEventListener('turbo:load', initInventory)
+document.addEventListener('DOMContentLoaded', initInventory)

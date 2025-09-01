@@ -1,8 +1,9 @@
 import { getJwt, authHeaders } from "pages/util"
 
-document.addEventListener('DOMContentLoaded', () => {
+function initBuildings() {
   const token = getJwt()
   const buildingsDiv = document.getElementById('buildings')
+  if (!buildingsDiv) return
 
   const fetchBuildings = () => {
     fetch('/api/v1/buildings', { headers: authHeaders(token) })
@@ -26,4 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   fetchBuildings()
-})
+}
+
+// Initialize on Turbo visits and full loads
+document.addEventListener('turbo:load', initBuildings)
+document.addEventListener('DOMContentLoaded', initBuildings)

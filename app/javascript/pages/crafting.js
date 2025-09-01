@@ -1,8 +1,9 @@
 import { getJwt, authHeaders } from "pages/util"
 
-document.addEventListener('DOMContentLoaded', () => {
+function initCrafting() {
   const token = getJwt()
   const craftingDiv = document.getElementById('crafting')
+  if (!craftingDiv) return
 
   const fetchCrafting = () => {
     fetch('/api/v1/crafting', { headers: authHeaders(token) })
@@ -28,4 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   fetchCrafting()
-})
+}
+
+// Initialize on Turbo visits and full loads
+document.addEventListener('turbo:load', initCrafting)
+document.addEventListener('DOMContentLoaded', initCrafting)

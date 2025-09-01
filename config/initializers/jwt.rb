@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class JsonWebToken
-  SECRET_KEY = Rails.application.credentials.jwt_secret_key
+  SECRET_KEY = Rails.application.config.jwt_secret
 
   def self.encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i

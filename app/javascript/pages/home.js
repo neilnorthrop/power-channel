@@ -1,12 +1,13 @@
 import { getJwt, authHeaders } from "pages/util"
 import { createConsumer } from "@rails/actioncable"
 
-document.addEventListener('DOMContentLoaded', () => {
+function initHome() {
   const token = getJwt()
   const levelSpan = document.getElementById('level')
   const experienceSpan = document.getElementById('experience')
   const skillPointsSpan = document.getElementById('skill-points')
   const actionsDiv = document.getElementById('actions')
+  if (!levelSpan || !experienceSpan || !skillPointsSpan || !actionsDiv) return
 
   const fetchUser = () => {
     fetch('/api/v1/user', { headers: authHeaders(token) })
@@ -97,4 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
   }
-})
+}
+
+// Initialize on Turbo visits and full loads
+document.addEventListener('turbo:load', initHome)
+document.addEventListener('DOMContentLoaded', initHome)

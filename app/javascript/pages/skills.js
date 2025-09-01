@@ -1,8 +1,9 @@
 import { getJwt, authHeaders } from "pages/util"
 
-document.addEventListener('DOMContentLoaded', () => {
+function initSkills() {
   const token = getJwt()
   const skillsDiv = document.getElementById('skills')
+  if (!skillsDiv) return
 
   const fetchSkills = () => {
     fetch('/api/v1/skills', { headers: authHeaders(token) })
@@ -26,4 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   fetchSkills()
-})
+}
+
+// Initialize on Turbo visits and full loads
+document.addEventListener('turbo:load', initSkills)
+document.addEventListener('DOMContentLoaded', initSkills)
