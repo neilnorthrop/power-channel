@@ -166,7 +166,7 @@ Use the following checklists when introducing new content. Most data lives in `d
 ### Create a `.env` file (development)
 - Location: project root (same folder as `Gemfile`)
 - Contents (key=value, one per line):
-  - `JWT_SECRET=your_long_random_hex_string_here`
+  - `export JWT_SECRET=your_long_random_hex_string_here`
 
 Alternatively, copy the template and edit:
 - `cp .env.example .env` and fill in the values.
