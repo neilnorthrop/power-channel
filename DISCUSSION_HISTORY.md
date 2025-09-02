@@ -70,3 +70,7 @@ Note: If you want a different structure (strict chronology, or per-sprint sectio
 - Flow: Award flags on craft/build/other events; enforce gates before using a gated unlockable; include unlock status + requirements in API.
 - Backfill: Add `users:ensure_flags` and composite `app:seed_and_ensure_flags`; run flags ensure before `users:ensure_actions`.
 - Reference doc: Added `feature_flag_spike` in the repo root with details, examples, and next steps.
+ - Update: Implemented OR semantics via `FlagRequirement.logic` ('AND'/'OR').
+ - Note: Future extension could add a `group_key` to support grouped OR logic
+   like (A or B) AND (C or D). Semantics: all ANDs must pass; each group_key
+   represents an OR-bucket where at least one requirement in that group must pass.

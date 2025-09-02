@@ -41,7 +41,7 @@ graph LR
 | **Action** | name, description, cooldown | has many resources, user_actions, effects |
 | **Resource** | name, base_amount, drop_chance, action_id | belongs_to action; used in recipes and user_resources |
 | **Item** | name, effect, drop_chance | has_one recipe; many effects; through user_items |
-| **Recipe / RecipeResource** | item_id, quantity / resource_id, quantity | recipe has many recipe_resources and belongs_to item |
+| **Recipe / RecipeResource** | item_id, quantity / component_type, component_id, quantity | recipe has many recipe_resources; each component can be a Resource or Item |
 | **Skill** | name, cost, effect, multiplier | unlocked via user_skills |
 | **Building** | name, description, level, effect | owned via user_buildings |
 | **User** | email, level, experience, skill_points | has many resources, actions, skills, items, buildings, active_effects |
@@ -102,12 +102,12 @@ Use the following checklists when introducing new content. Most data lives in `d
 
 ### Resources
 1. **Seed the resource** – create a record with `name`, `base_amount` and `drop_chance`; set `action_id` if gathered from an action.
-2. **Wire into recipes** – update any `RecipeResource` entries that should consume this resource.
+2. **Wire into recipes** – update `RecipeResource` entries that should consume this resource as components.
 3. **Broadcast updates** – ensure resources are streamed through `UserUpdatesChannel` if they affect real‑time data.
 
 ### Items
 1. **Seed the item** – add a new `Item.create!` block to `db/seeds.rb`.
-2. **Define the crafting recipe** – create a `Recipe` for the item and one or more `RecipeResource` entries specifying required resources.
+2. **Define the crafting recipe** – create a `Recipe` for the item and one or more `RecipeResource` entries specifying required components (Resources or Items).
 3. **Implement item effect** – extend `ItemService` with logic for the item’s effect (e.g., cooldown reset). Create an effect class if needed.
 4. **Expose via API/UI** – update serializers and views so players can craft and use the item.
 
@@ -129,7 +129,7 @@ Use the following checklists when introducing new content. Most data lives in `d
 4. **Expose in UI** – update views/serializers and broadcast changes to users.
 
 ### Crafting & Recipes
-1. **Recipe setup** – create the `Recipe` and associated `RecipeResource` records that define input resources and quantities.
+1. **Recipe setup** – create the `Recipe` and associated `RecipeResource` records that define input components and quantities.
 2. **Item availability** – ensure the crafted item exists and is referenced by the recipe.
 3. **Service updates** – add any new crafting validations or outcomes to `CraftingService`.
 4. **Testing** – write unit tests for crafting the new recipe and confirm the item appears in inventories.

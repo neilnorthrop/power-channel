@@ -95,160 +95,6 @@
 # -----------------------------------------------------------------------------
 #
 # -----------------------------------------------------------------------------
-# Seeding + Backfill Workflow With Rake Tasks
-# -----------------------------------------------------------------------------
-# The seeds in this file define and upsert reference data (Actions, Resources,
-# Skills, Items, Buildings, Recipes) without touching user-owned data. When new
-# content is added, you have several rake tasks that can “backfill” missing
-# associations for existing users in an idempotent way.
-#
-# Typical workflow when adding content
-# 1) Edit db/seeds.rb (or external data later, if adopted) to add/modify
-#    definitions (e.g., new Action/Resource/Skill/Item/Building/Recipe).
-# 2) Run db:seed to upsert definitions:
-#      bin/rails db:seed
-# 3) Backfill associations for existing users, as needed:
-#    - Actions (recommended when new global Action is added):
-#        bin/rails users:ensure_actions
-#    - Resources (recommended if users should always track all resources):
-#        bin/rails users:ensure_resources
-#    - Items (optional; creates zero-quantity rows to make inventories complete):
-#        ITEMS_CREATE_ZERO=1 bin/rails users:ensure_items
-#    - Skills (optional; unlock-all, generally not recommended):
-#        AUTO_GRANT=1 bin/rails users:ensure_skills
-#    - Buildings (optional; grant-all at level N):
-#        AUTO_GRANT=1 LEVEL=1 bin/rails users:ensure_buildings
-#
-# Composite “seed + ensure” shortcuts (namespace: app)
-# - Run seeds then ensure specific associations in one go:
-#     bin/rails app:seed_and_ensure_actions
-#     bin/rails app:seed_and_ensure_resources
-#     ITEMS_CREATE_ZERO=1 bin/rails app:seed_and_ensure_items
-#     AUTO_GRANT=1 bin/rails app:seed_and_ensure_skills
-#     AUTO_GRANT=1 LEVEL=1 bin/rails app:seed_and_ensure_buildings
-# - Or run them all in order (items/skills/buildings obey env flags and will
-#   no‑op if flags are not set):
-#     bin/rails app:seed_and_ensure_all
-#
-# One-off / targeted backfills
-# - Single user variants:
-#     bin/rails users:ensure_actions_one[USER_ID]
-#     bin/rails users:ensure_resources_one[USER_ID]
-# - Inspect current initialization:
-#     bin/rails users:status
-#
-# Behavior notes
-# - “Ensure” tasks are idempotent (safe to run repeatedly) and skip users whose
-#   defaults are not initialized; they only create missing rows.
-# - Items/Skills/Buildings tasks are opt-in (env flags) to avoid unintended
-#   global grants; Actions/Resources default to on because they’re commonly
-#   universal.
-# - For large user bases, the tasks use batched insert_all under the hood for
-#   efficiency.
-
-def upsert(model, by:, rows:)
-  Array(rows).each do |attrs|
-    keys = Array(by)
-    find_hash = keys.to_h { |k| [ k, attrs.fetch(k) ] }
-    rec = model.find_or_initialize_by(find_hash)
-    rec.assign_attributes(attrs.except(*keys))
-    rec.save!
-  end
-end
-
-cooldown = Rails.env.development? ? 1 : 60
-
-# Actions
-actions = [
-  { name: "Taxes", description: "Gather taxes from your citizens.", cooldown: cooldown },
-  { name: "Gather", description: "Gather basic resources.", cooldown: cooldown },
-  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: cooldown },
-  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: cooldown }
-]
-
-upsert(Action, by: :name, rows: actions)
-
-# Resources (action by name)
-resources = [
-  { name: "Gold Coins", description: "The currency of the realm.", base_amount: 10, drop_chance: 1.0, action_name: "Taxes" },
-  { name: "Stick", description: "A basic crafting material.", base_amount: 5, drop_chance: 0.85, action_name: "Gather" },
-  { name: "Stone", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.75, action_name: "Gather" },
-  { name: "Weeds", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.5, action_name: "Gather" },
-  { name: "Wood", description: "A common building material.", base_amount: 1, drop_chance: 1.0, action_name: "Chop Wood" },
-  { name: "Stone", description: "A sturdy building material.", base_amount: 5, drop_chance: 1.0, action_name: "Quarry Stone" },
-  { name: "Coal", description: "A fuel source for smelting and crafting.", base_amount: 2, drop_chance: 0.33, action_name: "Quarry Stone" }
-]
-
-resources.each do |attrs|
-  action_name = attrs.delete(:action_name)
-  rec = Resource.find_or_initialize_by(name: attrs[:name])
-  rec.assign_attributes(attrs)
-  rec.action = Action.find_by(name: action_name) if action_name
-  rec.save!
-end
-
-# Skills
-skills = [
-  { name: "Golden Touch", description: "Increase gold gained from all actions by 10%.", cost: 1, effect: "increase_gold_gain", multiplier: 1.1 },
-  { name: "Lumberjack", description: "Decrease wood action cooldown by 10%.", cost: 1, effect: "decrease_wood_cooldown", multiplier: 0.9 },
-  { name: "Stone Mason", description: "Increase stone gained from all actions by 10%.", cost: 1, effect: "increase_stone_gain", multiplier: 1.1 }
-]
-
-upsert(Skill, by: :name, rows: skills)
-
-# Items
-items = [
-  { name: "Minor Potion of Luck", description: "Slightly increases the chance of finding rare resources.", effect: "increase_luck", drop_chance: 0.001 },
-  { name: "Scroll of Haste", description: "Instantly completes the cooldown of a single action.", effect: "reset_cooldown", drop_chance: 0.002 }
-]
-
-upsert(Item, by: :name, rows: items)
-
-# Buildings (definitions)
-buildings = [
-  { name: "Lumber Mill", description: "Increases wood production by 10% per level.", level: 1, effect: "increase_wood_production" },
-  { name: "Mine", description: "Increases gold production by 10% per level.", level: 1, effect: "increase_gold_production" },
-  { name: "Quarry", description: "Increases stone production by 10% per level.", level: 1, effect: "increase_stone_production" }
-]
-
-upsert(Building, by: :name, rows: buildings)
-
-# Recipes
-def ensure_recipe(item_name:, quantity: 1)
-  item = Item.find_by!(name: item_name)
-  rec = Recipe.find_or_initialize_by(item: item)
-  rec.quantity = quantity
-  rec.save!
-  rec
-end
-
-def ensure_recipe_resource(recipe:, resource_name:, quantity:)
-  resource = Resource.find_by!(name: resource_name)
-  rr = RecipeResource.find_or_initialize_by(recipe: recipe, resource: resource)
-  rr.quantity = quantity
-  rr.save!
-end
-
-rec1 = ensure_recipe(item_name: "Minor Potion of Luck", quantity: 1)
-ensure_recipe_resource(recipe: rec1, resource_name: "Gold Coins", quantity: 10)
-ensure_recipe_resource(recipe: rec1, resource_name: "Wood", quantity: 5)
-
-rec2 = ensure_recipe(item_name: "Scroll of Haste", quantity: 1)
-ensure_recipe_resource(recipe: rec2, resource_name: "Stone", quantity: 10)
-ensure_recipe_resource(recipe: rec2, resource_name: "Wood", quantity: 10)
-
-# Gentle, idempotent renames
-if (gold = Resource.find_by(name: "Gold"))
-  gold.update(name: "Gold Coins")
-end
-if (mine_gold = Action.find_by(name: "Mine Gold"))
-  mine_gold.update(name: "Taxes", description: "Gather taxes from your citizens.")
-  Resource.find_by(name: "Gold Coins")&.update(action: mine_gold)
-end
-
-puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.count} skills, #{Item.count} items, #{Building.count} buildings, #{Recipe.count} recipes."
-
-# -----------------------------------------------------------------------------
 # Feature Flags (Polymorphic) — Seeding Cheatsheet and Examples
 # -----------------------------------------------------------------------------
 # This app supports data‑driven feature flags that “gate” content (actions,
@@ -307,6 +153,20 @@ puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.coun
 # FlagRequirement.find_or_create_by!(flag: can_fish, requirement_type: 'Item',     requirement_id: fishing_rod.id) { |r| r.quantity = 1 }
 # FlagRequirement.find_or_create_by!(flag: can_fish, requirement_type: 'Building', requirement_id: scout_camp.id)  { |r| r.quantity = 1 }
 # Unlockable.find_or_create_by!(flag: can_fish, unlockable: fish_action)
+
+# Example 1b — OR requirement (any of multiple Items)
+# ---------------------------------------------------
+# To unlock when the user has ItemA OR ItemB OR ItemC, create three
+# FlagRequirement rows with logic: 'OR'. Any additional requirements
+# (e.g., a building) can stay with logic: 'AND' (default).
+#
+# can_gather = Flag.find_or_create_by!(slug: 'can_gather') { |f| f.name = 'Can Gather' }
+# item_a = Item.find_by!(name: 'ItemA')
+# item_b = Item.find_by!(name: 'ItemB')
+# item_c = Item.find_by!(name: 'ItemC')
+# FlagRequirement.find_or_create_by!(flag: can_gather, requirement_type: 'Item', requirement_id: item_a.id) { |r| r.quantity = 1; r.logic = 'OR' }
+# FlagRequirement.find_or_create_by!(flag: can_gather, requirement_type: 'Item', requirement_id: item_b.id) { |r| r.quantity = 1; r.logic = 'OR' }
+# FlagRequirement.find_or_create_by!(flag: can_gather, requirement_type: 'Item', requirement_id: item_c.id) { |r| r.quantity = 1; r.logic = 'OR' }
 
 # Example 2 — One Flag gates Action + Recipe together
 # ---------------------------------------------------
@@ -386,6 +246,189 @@ puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.coun
 # Users who already satisfy requirements will be granted the appropriate flags.
 # New users will acquire flags as they craft/build/collect according to service hooks.
 # -----------------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+# Seeding + Backfill Workflow With Rake Tasks
+# -----------------------------------------------------------------------------
+# The seeds in this file define and upsert reference data (Actions, Resources,
+# Skills, Items, Buildings, Recipes) without touching user-owned data. When new
+# content is added, you have several rake tasks that can “backfill” missing
+# associations for existing users in an idempotent way.
+#
+# Typical workflow when adding content
+# 1) Edit db/seeds.rb (or external data later, if adopted) to add/modify
+#    definitions (e.g., new Action/Resource/Skill/Item/Building/Recipe).
+# 2) Run db:seed to upsert definitions:
+#      bin/rails db:seed
+# 3) Backfill associations for existing users, as needed:
+#    - Actions (recommended when new global Action is added):
+#        bin/rails users:ensure_actions
+#    - Resources (recommended if users should always track all resources):
+#        bin/rails users:ensure_resources
+#    - Items (optional; creates zero-quantity rows to make inventories complete):
+#        ITEMS_CREATE_ZERO=1 bin/rails users:ensure_items
+#    - Skills (optional; unlock-all, generally not recommended):
+#        AUTO_GRANT=1 bin/rails users:ensure_skills
+#    - Buildings (optional; grant-all at level N):
+#        AUTO_GRANT=1 LEVEL=1 bin/rails users:ensure_buildings
+#
+# Composite “seed + ensure” shortcuts (namespace: app)
+# - Run seeds then ensure specific associations in one go:
+#     bin/rails app:seed_and_ensure_actions
+#     bin/rails app:seed_and_ensure_resources
+#     ITEMS_CREATE_ZERO=1 bin/rails app:seed_and_ensure_items
+#     AUTO_GRANT=1 bin/rails app:seed_and_ensure_skills
+#     AUTO_GRANT=1 LEVEL=1 bin/rails app:seed_and_ensure_buildings
+# - Or run them all in order (items/skills/buildings obey env flags and will
+#   no‑op if flags are not set):
+#     bin/rails app:seed_and_ensure_all
+#
+# One-off / targeted backfills
+# - Single user variants:
+#     bin/rails users:ensure_actions_one[USER_ID]
+#     bin/rails users:ensure_resources_one[USER_ID]
+# - Inspect current initialization:
+#     bin/rails users:status
+#
+# Behavior notes
+# - “Ensure” tasks are idempotent (safe to run repeatedly) and skip users whose
+#   defaults are not initialized; they only create missing rows.
+# - Items/Skills/Buildings tasks are opt-in (env flags) to avoid unintended
+#   global grants; Actions/Resources default to on because they’re commonly
+#   universal.
+# - For large user bases, the tasks use batched insert_all under the hood for
+#   efficiency.
+
+def upsert(model, by:, rows:)
+  Array(rows).each do |attrs|
+    keys = Array(by)
+    find_hash = keys.to_h { |k| [ k, attrs.fetch(k) ] }
+    rec = model.find_or_initialize_by(find_hash)
+    rec.assign_attributes(attrs.except(*keys))
+    rec.save!
+  end
+end
+
+cooldown = Rails.env.development? ? 1 : 60
+
+# Actions
+actions = [
+  { name: "Taxes", description: "Gather taxes from your citizens.", cooldown: cooldown },
+  { name: "Gather", description: "Gather basic resources.", cooldown: cooldown },
+  { name: "Chop Wood", description: "Chop down trees for wood.", cooldown: cooldown },
+  { name: "Quarry Stone", description: "Quarry for stone.", cooldown: cooldown }
+]
+
+upsert(Action, by: :name, rows: actions)
+
+# Resources (action by name)
+resources = [
+  { name: "Gold Coins", description: "The currency of the realm.", base_amount: 10, drop_chance: 1.0, action_name: "Taxes" },
+  { name: "Stick", description: "A basic crafting material.", base_amount: 5, drop_chance: 0.85, action_name: "Gather" },
+  { name: "Stone", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.75, action_name: "Gather" },
+  { name: "Weeds", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.5, action_name: "Gather" },
+  { name: "Wood", description: "A basic crafting material.", base_amount: 1, drop_chance: 1.0, action_name: "Chop Wood" },
+  { name: "Stone", description: "A basic crafting material.", base_amount: 5, drop_chance: 1.0, action_name: "Quarry Stone" },
+  { name: "Coal", description: "A fuel source for smelting and crafting.", base_amount: 2, drop_chance: 0.33, action_name: "Quarry Stone" }
+]
+
+resources.each do |attrs|
+  action_name = attrs.delete(:action_name)
+  rec = Resource.find_or_initialize_by(name: attrs[:name])
+  rec.assign_attributes(attrs)
+  rec.action = Action.find_by(name: action_name) if action_name
+  rec.save!
+end
+
+# Skills
+skills = [
+  { name: "Golden Touch", description: "Increase gold gained from all actions by 10%.", cost: 1, effect: "increase_gold_gain", multiplier: 1.1 },
+  { name: "Lumberjack", description: "Decrease wood action cooldown by 10%.", cost: 1, effect: "decrease_wood_cooldown", multiplier: 0.9 },
+  { name: "Stone Mason", description: "Increase stone gained from all actions by 10%.", cost: 1, effect: "increase_stone_gain", multiplier: 1.1 }
+]
+
+upsert(Skill, by: :name, rows: skills)
+
+# Items
+items = [
+  { name: "Twine", description: "A basic crafting material.", effect: "crafting_material", drop_chance: 0.0 },
+  { name: "Hatchet", description: "A basic tool for chopping wood.", effect: "chop_wood", drop_chance: 0.0 },
+  { name: "Minor Potion of Luck", description: "Slightly increases the chance of finding rare resources.", effect: "increase_luck", drop_chance: 0.001 },
+  { name: "Scroll of Haste", description: "Instantly completes the cooldown of a single action.", effect: "reset_cooldown", drop_chance: 0.002 }
+]
+
+puts "Seeding #{items.size} items..."
+puts "  #{items.map { |i| i[:name] }.join(", ")}"
+
+upsert(Item, by: :name, rows: items)
+
+# Buildings (definitions)
+buildings = [
+  { name: "Lumber Mill", description: "Increases wood production by 10% per level.", level: 1, effect: "increase_wood_production" },
+  { name: "Mine", description: "Increases gold production by 10% per level.", level: 1, effect: "increase_gold_production" },
+  { name: "Quarry", description: "Increases stone production by 10% per level.", level: 1, effect: "increase_stone_production" }
+]
+
+upsert(Building, by: :name, rows: buildings)
+
+# Recipes
+def ensure_recipe(item_name:, quantity: 1)
+  item = Item.find_by!(name: item_name)
+  rec = Recipe.find_or_initialize_by(item: item)
+  rec.quantity = quantity
+  rec.save!
+  rec
+end
+
+def ensure_recipe_resource(recipe:, resource_name:, quantity:)
+  resource = Resource.find_by!(name: resource_name)
+  rr = RecipeResource.find_or_initialize_by(recipe: recipe, component: resource)
+  rr.quantity = quantity
+  rr.save!
+end
+
+def ensure_recipe_item(recipe:, item_name:, quantity:)
+  item = Item.find_by!(name: item_name)
+  rr = RecipeResource.find_or_initialize_by(recipe: recipe, component: item)
+  rr.quantity = quantity
+  rr.save!
+end
+
+rec1 = ensure_recipe(item_name: "Minor Potion of Luck", quantity: 1)
+ensure_recipe_resource(recipe: rec1, resource_name: "Gold Coins", quantity: 10)
+ensure_recipe_resource(recipe: rec1, resource_name: "Wood", quantity: 5)
+
+rec2 = ensure_recipe(item_name: "Scroll of Haste", quantity: 1)
+ensure_recipe_resource(recipe: rec2, resource_name: "Stone", quantity: 10)
+ensure_recipe_resource(recipe: rec2, resource_name: "Wood", quantity: 10)
+
+rec3 = ensure_recipe(item_name: "Twine", quantity: 1)
+ensure_recipe_resource(recipe: rec3, resource_name: "Weeds", quantity: 5)
+
+rec4 = ensure_recipe(item_name: "Hatchet", quantity: 1)
+ensure_recipe_resource(recipe: rec4, resource_name: "Wood", quantity: 10)
+ensure_recipe_resource(recipe: rec4, resource_name: "Stone", quantity: 5)
+ensure_recipe_item(recipe: rec4, item_name: "Twine", quantity: 2)
+
+
+# Flag: can_craft_hatchet
+# Requirements: Item 'Stick' (x1) OR Item 'Stone' (x1) OR Item 'Weeds' (x1)
+# Unlockables: Recipe 'Hatchet'
+craft_hatchet = Flag.find_or_create_by!(slug: 'craft_hatchet') do |f|
+  f.name = 'Can Craft Hatchet'
+  f.description = 'Allows crafting a basic hatchet for chopping wood.'
+end
+stick = Resource.find_by!(name: 'Stick')
+stone = Resource.find_by!(name: 'Stone')
+twine = Item.find_by!(name: 'Twine')
+rec_hatchet = Recipe.find_by!(item: Item.find_by!(name: 'Hatchet'))
+
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Resource', requirement_id: stick.id) { |r| r.quantity = 1; r.logic = 'OR' }
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Resource', requirement_id: stone.id) { |r| r.quantity = 1; r.logic = 'OR' }
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Item', requirement_id: twine.id) { |r| r.quantity = 1; r.logic = 'OR' }
+Unlockable.find_or_create_by!(flag: craft_hatchet, unlockable: rec_hatchet)
+
+puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.count} skills, #{Item.count} items, #{Building.count} buildings, #{Recipe.count} recipes, #{Flag.count} flags."
 
 # -----------------------------------------------------------------------------
 # Seeding Roadmap & Options (ideas for later)
@@ -502,6 +545,14 @@ puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.coun
 # 14) Security & governance
 #    - Keep seed files free of secrets. Optional signing of data bundles if you
 #      plan to accept external contributions. Validate inputs carefully.
+#
+# 15) Flag requirement logic groups
+#    - Current model supports `logic` per FlagRequirement with 'AND' (default)
+#      and 'OR'. All AND requirements must be met; at least one OR must be met.
+#    - Future extension: add a `group_key` column to support multiple OR groups,
+#      enabling expressions like (A OR B) AND (C OR D). Semantics: evaluate all
+#      AND requirements; for each non-nil group_key, require any one requirement
+#      in that group to pass. This keeps seeds declarative and avoids custom code.
 #
 # These are ideas to consider incrementally. The current implementation remains
 # code-first, idempotent, and user-safe. When ready, we can factor the loader

@@ -3,6 +3,6 @@
 class RecipeSerializer
   include JSONAPI::Serializer
   attributes :id, :quantity, :item_id
-  has_many :recipe_resources
+  has_many :recipe_resources, serializer: RecipeResourceSerializer
   belongs_to :item, serializer: ItemSerializer
 end

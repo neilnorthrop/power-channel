@@ -36,7 +36,8 @@ class UserActionSerializer
           type: r.requirement_type.downcase,
           id: r.requirement_id,
           name: name,
-          quantity: r.quantity
+          quantity: r.quantity,
+          logic: r.logic
         }
       end
     else

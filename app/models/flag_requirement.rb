@@ -6,5 +6,5 @@ class FlagRequirement < ApplicationRecord
 
   validates :requirement_type, :requirement_id, presence: true
   validates :quantity, numericality: { greater_than: 0 }
+  validates :logic, inclusion: { in: %w[AND OR] }
 end
-

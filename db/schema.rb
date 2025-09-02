@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_02_131500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
     t.index ["effectable_type", "effectable_id"], name: "index_effects_on_effectable"
   end
 
+  create_table "flag_requirements", force: :cascade do |t|
+    t.bigint "flag_id", null: false
+    t.string "requirement_type", null: false
+    t.bigint "requirement_id", null: false
+    t.integer "quantity", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "logic", default: "AND", null: false
+    t.index ["flag_id"], name: "index_flag_requirements_on_flag_id"
+    t.index ["logic"], name: "index_flag_requirements_on_logic"
+    t.index ["requirement_type", "requirement_id"], name: "index_flag_requirements_on_req"
+  end
+
+  create_table "flags", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_flags_on_slug", unique: true
+  end
+
   create_table "items", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -67,12 +89,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
 
   create_table "recipe_resources", force: :cascade do |t|
     t.bigint "recipe_id", null: false
-    t.bigint "resource_id", null: false
     t.integer "quantity"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "component_type", null: false
+    t.bigint "component_id", null: false
+    t.index ["component_type", "component_id"], name: "index_recipe_resources_on_component"
+    t.index ["recipe_id", "component_type", "component_id"], name: "index_recipe_resources_unique_component", unique: true
     t.index ["recipe_id"], name: "index_recipe_resources_on_recipe_id"
-    t.index ["resource_id"], name: "index_recipe_resources_on_resource_id"
   end
 
   create_table "recipes", force: :cascade do |t|
@@ -104,6 +128,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
     t.float "multiplier"
   end
 
+  create_table "unlockables", force: :cascade do |t|
+    t.bigint "flag_id", null: false
+    t.string "unlockable_type", null: false
+    t.bigint "unlockable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["flag_id", "unlockable_type", "unlockable_id"], name: "index_unlockables_unique", unique: true
+    t.index ["flag_id"], name: "index_unlockables_on_flag_id"
+    t.index ["unlockable_type", "unlockable_id"], name: "index_unlockables_on_unlockable"
+  end
+
   create_table "user_actions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "action_id", null: false
@@ -123,6 +158,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
     t.datetime "updated_at", null: false
     t.index ["building_id"], name: "index_user_buildings_on_building_id"
     t.index ["user_id"], name: "index_user_buildings_on_user_id"
+  end
+
+  create_table "user_flags", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "flag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["flag_id"], name: "index_user_flags_on_flag_id"
+    t.index ["user_id", "flag_id"], name: "index_user_flags_on_user_id_and_flag_id", unique: true
+    t.index ["user_id"], name: "index_user_flags_on_user_id"
   end
 
   create_table "user_items", force: :cascade do |t|
@@ -171,14 +216,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_145935) do
 
   add_foreign_key "active_effects", "effects"
   add_foreign_key "active_effects", "users"
+  add_foreign_key "flag_requirements", "flags"
   add_foreign_key "recipe_resources", "recipes"
-  add_foreign_key "recipe_resources", "resources"
   add_foreign_key "recipes", "items"
   add_foreign_key "resources", "actions"
+  add_foreign_key "unlockables", "flags"
   add_foreign_key "user_actions", "actions"
   add_foreign_key "user_actions", "users"
   add_foreign_key "user_buildings", "buildings"
   add_foreign_key "user_buildings", "users"
+  add_foreign_key "user_flags", "flags"
+  add_foreign_key "user_flags", "users"
   add_foreign_key "user_items", "items"
   add_foreign_key "user_items", "users"
   add_foreign_key "user_resources", "resources"

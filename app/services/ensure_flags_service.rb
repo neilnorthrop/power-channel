@@ -37,25 +37,35 @@ class EnsureFlagsService
   end
 
   def requirements_satisfied?(flag)
-    flag.flag_requirements.all? do |req|
-      case req.requirement_type
-      when 'Item'
-        ui = @user.user_items.find_by(item_id: req.requirement_id)
-        ui && ui.quantity.to_i >= req.quantity
-      when 'Building'
-        ub = @user.user_buildings.find_by(building_id: req.requirement_id)
-        ub && (ub.level.to_i >= req.quantity)
-      when 'Resource'
-        ur = @user.user_resources.find_by(resource_id: req.requirement_id)
-        ur && ur.amount.to_i >= req.quantity
-      when 'Flag'
-        @user.user_flags.exists?(flag_id: req.requirement_id)
-      when 'Skill'
-        @user.user_skills.exists?(skill_id: req.requirement_id)
-      else
-        false
-      end
+    reqs = flag.flag_requirements
+
+    and_reqs = reqs.select { |r| r.logic == 'AND' }
+    or_reqs  = reqs.select { |r| r.logic == 'OR' }
+
+    and_ok = and_reqs.all? { |req| requirement_met?(req) }
+    or_ok  = or_reqs.empty? || or_reqs.any? { |req| requirement_met?(req) }
+
+    and_ok && or_ok
+  end
+
+  def requirement_met?(req)
+    case req.requirement_type
+    when 'Item'
+      ui = @user.user_items.find_by(item_id: req.requirement_id)
+      ui && ui.quantity.to_i >= req.quantity
+    when 'Building'
+      ub = @user.user_buildings.find_by(building_id: req.requirement_id)
+      ub && (ub.level.to_i >= req.quantity)
+    when 'Resource'
+      ur = @user.user_resources.find_by(resource_id: req.requirement_id)
+      ur && ur.amount.to_i >= req.quantity
+    when 'Flag'
+      @user.user_flags.exists?(flag_id: req.requirement_id)
+    when 'Skill'
+      @user.user_skills.exists?(skill_id: req.requirement_id)
+    else
+      false
     end
   end
 end
-
+end
