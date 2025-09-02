@@ -9,3 +9,13 @@ two:
   name: Cooldown Potion
   description: Resets the cooldown of all your actions.
   effect: reset_cooldown
+
+twine:
+  name: Twine
+  description: A basic crafting material.
+  effect: crafting_material
+
+hatchet:
+  name: Hatchet
+  description: A basic tool for chopping wood.
+  effect: chop_wood

@@ -50,4 +50,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Provide a stable JWT secret in test to avoid decode errors when ENV is unset.
+  config.jwt_secret = ENV["JWT_SECRET"].presence || "test-secret-key"
 end

@@ -16,6 +16,8 @@ class User < ApplicationRecord
   has_many :buildings, through: :user_buildings
   has_many :active_effects, dependent: :destroy
   has_many :effects, through: :active_effects
+  has_many :user_flags
+  has_many :flags, through: :user_flags
 
   after_create :initialize_defaults
 

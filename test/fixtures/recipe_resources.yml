@@ -2,20 +2,31 @@
 
 lucky_charm_gold:
   recipe: lucky_charm_recipe
-  resource: gold
+  component: gold (Resource)
   quantity: 5
 
 lucky_charm_stone:
   recipe: lucky_charm_recipe
-  resource: stone
+  component: stone (Resource)
   quantity: 2
 
 cooldown_potion_wood:
   recipe: cooldown_potion_recipe
-  resource: wood
+  component: wood (Resource)
   quantity: 10
 
 cooldown_potion_stone:
   recipe: cooldown_potion_recipe
-  resource: stone
+  component: stone (Resource)
   quantity: 5
+
+# Item component example for Hatchet recipe
+hatchet_wood:
+  recipe: hatchet_recipe
+  component: wood (Resource)
+  quantity: 10
+
+hatchet_twine:
+  recipe: hatchet_recipe
+  component: twine (Item)
+  quantity: 2

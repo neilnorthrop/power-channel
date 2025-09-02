@@ -7,3 +7,7 @@ lucky_charm_recipe:
 cooldown_potion_recipe:
   item: two
   quantity: 1
+
+hatchet_recipe:
+  item: hatchet
+  quantity: 1

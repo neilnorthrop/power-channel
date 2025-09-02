@@ -68,4 +68,3 @@ class EnsureFlagsService
     end
   end
 end
-end
