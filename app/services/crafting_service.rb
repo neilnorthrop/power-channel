@@ -25,6 +25,8 @@ class CraftingService
       user_item.quantity = user_item.quantity.to_i + 1
       user_item.save!
       @user.save
+      # Evaluate flags potentially satisfied by crafting this item
+      EnsureFlagsService.evaluate_for(@user, touch: { items: [recipe.item_id] })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(@user.user_items).serializable_hash })
       { success: true, message: "#{recipe.item.name} crafted successfully." }

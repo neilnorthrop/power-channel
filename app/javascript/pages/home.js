@@ -154,7 +154,28 @@ function initHome() {
           wrapper.appendChild(barWrap)
           actionsDiv.appendChild(wrapper)
 
-          updateCooldown(userAction)
+          // Gate UI based on locked flag from API
+          if (userAction.attributes.locked) {
+            const lock = document.createElement('span')
+            lock.className = 'text-xs px-1.5 py-0.5 rounded bg-gray-200 text-gray-700'
+            lock.textContent = 'Locked'
+            titleRow.appendChild(lock)
+
+            actionButton.disabled = true
+            actionButton.classList.add('opacity-50', 'cursor-not-allowed')
+            cooldownBadge.classList.add('hidden')
+
+            // Show requirements inline
+            const reqs = userAction.attributes.requirements || []
+            if (reqs.length > 0) {
+              const reqList = document.createElement('p')
+              reqList.className = 'text-sm text-gray-600'
+              reqList.textContent = 'Requires: ' + reqs.map(r => `${r.name}${r.quantity > 1 ? ' x' + r.quantity : ''}`).join(', ')
+              left.appendChild(reqList)
+            }
+          } else {
+            updateCooldown(userAction)
+          }
         })
       })
   }

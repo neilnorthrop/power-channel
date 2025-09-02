@@ -249,6 +249,145 @@ end
 puts "Seeded: #{Action.count} actions, #{Resource.count} resources, #{Skill.count} skills, #{Item.count} items, #{Building.count} buildings, #{Recipe.count} recipes."
 
 # -----------------------------------------------------------------------------
+# Feature Flags (Polymorphic) — Seeding Cheatsheet and Examples
+# -----------------------------------------------------------------------------
+# This app supports data‑driven feature flags that “gate” content (actions,
+# items, skills, buildings, recipes). The polymorphic schema keeps gating
+# relationships in one place and avoids sprinkling `flag_id` columns across
+# domain tables.
+#
+# Core tables/models
+# - Flag(name, slug, description)
+# - UserFlag(user, flag) — awarded flags per user
+# - FlagRequirement(flag, requirement_type/id, quantity) — prerequisites to earn a flag
+#   • requirement_type ∈ { 'Item', 'Building', 'Resource', 'Flag', 'Skill' }
+#   • quantity means: Item ≥ qty, Building level ≥ qty, Resource amount ≥ qty
+# - Unlockable(flag, unlockable_type/id) — which content is gated by a flag
+#   • unlockable_type ∈ { 'Action', 'Item', 'Skill', 'Building', 'Recipe' }
+#
+# Award flow (implemented in services):
+# - Crafting/Building hooks call EnsureFlagsService.evaluate_for(user, touch: …)
+# - If a user satisfies all requirements for a given flag, a UserFlag is upserted
+#
+# Enforcement (actions):
+# - Before performing an Action, the service checks if an Unlockable ties that
+#   Action to a Flag and if the user has UserFlag for it; otherwise returns an
+#   error listing missing requirements. The Actions API also exposes `locked`
+#   and `requirements` to the UI so buttons can be disabled with guidance.
+#
+# Seeding strategy
+# 1) Upsert or create Flags by slug
+# 2) Define FlagRequirement rows for each Flag (mix types as needed)
+# 3) Attach Unlockables to one or more gated models for that Flag
+# 4) Backfill for existing users: `bin/rails users:ensure_flags`
+#
+# Idempotency tips
+# - Always find/create by stable keys (slug for flags; names for domain rows)
+# - Use find_or_create_by for Unlockable and FlagRequirement rows
+# - Keep examples commented unless you want them active in your environment
+#
+# Examples below use 2–3 different models each to illustrate common scenarios.
+# Uncomment and adapt as needed.
+# -----------------------------------------------------------------------------
+
+# Example 1 — Gate an Action behind Item + Building
+# -------------------------------------------------
+# Flag: can_fish
+# Requirements: Item 'Fishing Rod' (x1), Building 'Scout Camp' (level ≥ 1)
+# Unlockables: Action 'Fish'
+#
+# can_fish = Flag.find_or_create_by!(slug: 'can_fish') do |f|
+#   f.name = 'Can Fish'
+#   f.description = 'Allows fishing once you have basic gear and a camp.'
+# end
+# fishing_rod = Item.find_by!(name: 'Fishing Rod')
+# scout_camp  = Building.find_by!(name: 'Scout Camp')
+# fish_action = Action.find_by!(name: 'Fish')
+#
+# FlagRequirement.find_or_create_by!(flag: can_fish, requirement_type: 'Item',     requirement_id: fishing_rod.id) { |r| r.quantity = 1 }
+# FlagRequirement.find_or_create_by!(flag: can_fish, requirement_type: 'Building', requirement_id: scout_camp.id)  { |r| r.quantity = 1 }
+# Unlockable.find_or_create_by!(flag: can_fish, unlockable: fish_action)
+
+# Example 2 — One Flag gates Action + Recipe together
+# ---------------------------------------------------
+# Flag: woodworker_intro
+# Requirements: Resource 'Wood' (≥ 25)
+# Unlockables: Action 'Chop Wood (Advanced)', Recipe 'Wood Plank'
+#
+# woodworker = Flag.find_or_create_by!(slug: 'woodworker_intro') do |f|
+#   f.name = 'Woodworker Intro'
+#   f.description = 'Unlocks advanced wood chopping and plank crafting.'
+# end
+# wood_res   = Resource.find_by!(name: 'Wood')
+# chop_adv   = Action.find_by!(name: 'Chop Wood (Advanced)')
+# plank_item = Item.find_by!(name: 'Wood Plank')
+# plank      = Recipe.find_by!(item: plank_item)
+#
+# FlagRequirement.find_or_create_by!(flag: woodworker, requirement_type: 'Resource', requirement_id: wood_res.id) { |r| r.quantity = 25 }
+# Unlockable.find_or_create_by!(flag: woodworker, unlockable: chop_adv)
+# Unlockable.find_or_create_by!(flag: woodworker, unlockable: plank)
+
+# Example 3 — Shared prerequisite unlocking two different Flags
+# -------------------------------------------------------------
+# Crafting Item 'Hatchet' should allow both:
+#   - can_chop → Action 'Chop Wood'
+#   - gatherer_path → Recipe 'Bundle of Sticks'
+#
+# hatchet = Item.find_by!(name: 'Hatchet')
+# can_chop = Flag.find_or_create_by!(slug: 'can_chop') { |f| f.name = 'Can Chop'; f.description = 'Basic woodcutting.' }
+# gatherer = Flag.find_or_create_by!(slug: 'gatherer_path') { |f| f.name = 'Gatherer Path'; f.description = 'Gathering introduction.' }
+#
+# FlagRequirement.find_or_create_by!(flag: can_chop,  requirement_type: 'Item', requirement_id: hatchet.id)  { |r| r.quantity = 1 }
+# FlagRequirement.find_or_create_by!(flag: gatherer, requirement_type: 'Item', requirement_id: hatchet.id)  { |r| r.quantity = 1 }
+# Unlockable.find_or_create_by!(flag: can_chop,  unlockable: Action.find_by!(name: 'Chop Wood'))
+# Unlockable.find_or_create_by!(flag: gatherer, unlockable: Recipe.find_by!(item: Item.find_by!(name: 'Bundle of Sticks')))
+
+# Example 4 — Tiered flags (Action + Item per tier)
+# -------------------------------------------------
+# Tier 1 and Tier 2 flags craft a key item and unlock higher-tier action.
+# Requirements for T2 also include Flag T1 (prerequisite) and a higher Building level.
+# Unlockables (per tier): Action 'Delve T{n}', Item 'T{n} Key'
+#
+# t1 = Flag.find_or_create_by!(slug: 'dungeon_tier_1') { |f| f.name = 'Dungeon Tier 1' }
+# t2 = Flag.find_or_create_by!(slug: 'dungeon_tier_2') { |f| f.name = 'Dungeon Tier 2' }
+# camp = Building.find_by!(name: 'Scout Camp')
+# delve1 = Action.find_by!(name: 'Delve T1')
+# delve2 = Action.find_by!(name: 'Delve T2')
+# key1 = Item.find_by!(name: 'Tier 1 Key')
+# key2 = Item.find_by!(name: 'Tier 2 Key')
+#
+# FlagRequirement.find_or_create_by!(flag: t1, requirement_type: 'Building', requirement_id: camp.id) { |r| r.quantity = 1 }
+# Unlockable.find_or_create_by!(flag: t1, unlockable: delve1)
+# Unlockable.find_or_create_by!(flag: t1, unlockable: key1)
+#
+# FlagRequirement.find_or_create_by!(flag: t2, requirement_type: 'Flag',     requirement_id: t1.id)   { |r| r.quantity = 1 }
+# FlagRequirement.find_or_create_by!(flag: t2, requirement_type: 'Building', requirement_id: camp.id) { |r| r.quantity = 2 }
+# Unlockable.find_or_create_by!(flag: t2, unlockable: delve2)
+# Unlockable.find_or_create_by!(flag: t2, unlockable: key2)
+
+# Example 5 — Skill‑based gate with resource threshold
+# ----------------------------------------------------
+# Flag requires Skill 'Lumberjack' and Resource 'Wood' ≥ 100; unlocks Action and Recipe.
+#
+# lumberjack = Skill.find_by!(name: 'Lumberjack')
+# mastery = Flag.find_or_create_by!(slug: 'wood_mastery') { |f| f.name = 'Wood Mastery' }
+# wood = Resource.find_by!(name: 'Wood')
+# adv_action = Action.find_by!(name: 'Master Chop')
+# recipe = Recipe.find_by!(item: Item.find_by!(name: 'Sturdy Shaft'))
+#
+# FlagRequirement.find_or_create_by!(flag: mastery, requirement_type: 'Skill',    requirement_id: lumberjack.id) { |r| r.quantity = 1 }
+# FlagRequirement.find_or_create_by!(flag: mastery, requirement_type: 'Resource', requirement_id: wood.id)       { |r| r.quantity = 100 }
+# Unlockable.find_or_create_by!(flag: mastery, unlockable: adv_action)
+# Unlockable.find_or_create_by!(flag: mastery, unlockable: recipe)
+
+# After adding any of the above and seeding:
+# - bin/rails db:seed
+# - bin/rails users:ensure_flags
+# Users who already satisfy requirements will be granted the appropriate flags.
+# New users will acquire flags as they craft/build/collect according to service hooks.
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # Seeding Roadmap & Options (ideas for later)
 # -----------------------------------------------------------------------------
 # This section outlines potential enhancements to evolve this file into a

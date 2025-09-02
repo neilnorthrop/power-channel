@@ -9,6 +9,27 @@ class ActionService
     action = Action.find_by(id: action_id)
     return { success: false, error: "Action not found." } unless action
 
+    # Gate by flag via polymorphic unlockables
+    if (gate = Unlockable.find_by(unlockable_type: 'Action', unlockable_id: action.id))
+      unless @user.user_flags.exists?(flag_id: gate.flag_id)
+        # Build requirements summary for friendly error
+        reqs = gate.flag.flag_requirements.includes(:requirement).map do |r|
+          name = case r.requirement_type
+                 when 'Item' then Item.find_by(id: r.requirement_id)&.name
+                 when 'Building' then Building.find_by(id: r.requirement_id)&.name
+                 when 'Resource' then Resource.find_by(id: r.requirement_id)&.name
+                 when 'Flag' then Flag.find_by(id: r.requirement_id)&.name
+                 when 'Skill' then Skill.find_by(id: r.requirement_id)&.name
+                 else r.requirement_type
+                 end
+          qty = r.quantity.to_i > 1 ? " x#{r.quantity}" : ""
+          [name, qty].compact.join
+        end.compact
+        msg = "Locked. Requirements: #{reqs.presence || ['Unavailable'] .join(', ')}"
+        return { success: false, error: msg }
+      end
+    end
+
     user_action = @user.user_actions.find_or_create_by(action: action)
 
     cooldown = action.cooldown

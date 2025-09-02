@@ -6,7 +6,7 @@ class Api::V1::ActionsController < Api::ApiController
 
   def index
     user_actions = @current_user.user_actions
-    options = { include: [ :action ] }
+    options = { include: [ :action ], params: { current_user: @current_user } }
     render json: UserActionSerializer.new(user_actions, options).serializable_hash.to_json
   end
 
