@@ -1,0 +1,62 @@
+erDiagram
+  USER ||--o{ USER_FLAG : "has"
+  FLAG ||--o{ USER_FLAG : "granted for user"
+  FLAG ||--o{ FLAG_REQUIREMENT : "has requirements"
+
+  USER {
+    bigint id PK
+    ...
+  }
+
+  FLAG {
+    bigint id PK
+    string name
+    string slug UNIQUE
+    text description
+  }
+
+  USER_FLAG {
+    bigint id PK
+    bigint user_id FK
+    bigint flag_id FK
+    UNIQUE user_id, flag_id
+  }
+
+  FLAG_REQUIREMENT {
+    bigint id PK
+    bigint flag_id FK
+    string requirement_type  "Resource|Item|Building|Flag|Skill"
+    bigint requirement_id
+    integer quantity
+  }
+
+  ACTION {
+    bigint id PK
+    string name
+    bigint flag_id FK "nullable gate"
+  }
+
+  ITEM {
+    bigint id PK
+    string name
+    bigint flag_id FK "nullable gate"
+  }
+
+  SKILL {
+    bigint id PK
+    string name
+    bigint flag_id FK "nullable gate"
+  }
+
+  BUILDING {
+    bigint id PK
+    string name
+    bigint flag_id FK "nullable gate"
+  }
+
+  RECIPE {
+    bigint id PK
+    string name
+    bigint flag_id FK "nullable gate"
+  }
+

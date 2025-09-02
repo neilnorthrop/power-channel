@@ -1,0 +1,20 @@
+erDiagram
+  USER ||--o{ USER_FLAG : "has"
+  FLAG ||--o{ USER_FLAG : "granted for user"
+  FLAG ||--o{ FLAG_REQUIREMENT : "has requirements"
+  FLAG ||--o{ UNLOCKABLE : "gates"
+
+  UNLOCKABLE {
+    bigint id PK
+    bigint flag_id FK
+    string unlockable_type "Action|Item|Skill|Building|Recipe"
+    bigint unlockable_id
+    UNIQUE flag_id, unlockable_type, unlockable_id
+  }
+
+  ACTION { bigint id PK }
+  ITEM { bigint id PK }
+  SKILL { bigint id PK }
+  BUILDING { bigint id PK }
+  RECIPE { bigint id PK }
+

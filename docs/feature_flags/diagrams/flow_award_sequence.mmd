@@ -1,0 +1,20 @@
+sequenceDiagram
+  participant U as User
+  participant C as Controller
+  participant S as Service
+  participant F as FlagEngine
+  participant DB as DB
+
+  U->>C: POST /api/v1/crafting (recipe)
+  C->>S: craft_item(user, recipe)
+  S->>DB: persist item & updates
+  S->>F: evaluate_flags(user)
+  F->>DB: query FLAG_REQUIREMENT for item/building
+  F->>DB: check user state (items/buildings/etc.)
+  alt requirements satisfied
+    F->>DB: insert USER_FLAG (idempotent)
+  end
+  F-->>S: awarded flags (if any)
+  S-->>C: success + message
+  C-->>U: 200 OK (broadcast updates)
+

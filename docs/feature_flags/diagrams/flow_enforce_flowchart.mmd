@@ -1,0 +1,10 @@
+flowchart TD
+  A[Start perform_action] --> B{Action has flag_id?}
+  B -- No --> C[Proceed]
+  B -- Yes --> D[Has USER_FLAG for flag_id?]
+  D -- No --> E[Return 422 with requirements]
+  D -- Yes --> C[Proceed]
+  C --> F[Apply cooldowns/effects]
+  F --> G[Persist + Broadcast]
+  G --> H[Done]
+

@@ -1,0 +1,9 @@
+flowchart TD
+  S[Start users:ensure_flags] --> U[Load users]
+  U --> L[For each user]
+  L --> Q[Compute satisfied flags from current state]
+  Q --> I[insert_all missing USER_FLAG]
+  I --> N{More users?}
+  N -- Yes --> L
+  N -- No --> D[Done]
+
