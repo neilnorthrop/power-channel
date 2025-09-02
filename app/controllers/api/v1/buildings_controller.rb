@@ -6,7 +6,16 @@ class Api::V1::BuildingsController < Api::ApiController
 
   def index
     buildings = Building.all
-    render json: BuildingSerializer.new(buildings).serializable_hash.to_json
+    # Hide gated buildings the user hasn't unlocked yet
+    visible_buildings = buildings.select do |b|
+      if (gate = Unlockable.find_by(unlockable_type: 'Building', unlockable_id: b.id))
+        @current_user.user_flags.exists?(flag_id: gate.flag_id)
+      else
+        true
+      end
+    end
+    options = { params: { current_user: @current_user } }
+    render json: BuildingSerializer.new(visible_buildings, options).serializable_hash.to_json
   end
 
   def create

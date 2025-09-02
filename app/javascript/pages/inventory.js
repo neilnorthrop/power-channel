@@ -42,40 +42,65 @@ function initInventory() {
       .then(data => {
         inventoryDiv.innerHTML = ''
         inventoryDiv.className = 'space-y-3'
-        const items = data.data || []
-        if (items.length === 0) {
+        const userItems = data.data || []
+        const included = data.included || []
+        const itemsById = new Map(included.filter(i => i.type === 'item').map(i => [i.id, i]))
+
+        if (userItems.length === 0) {
           const empty = document.createElement('p')
           empty.className = 'text-sm text-gray-600'
           empty.textContent = 'No items in your inventory.'
           inventoryDiv.appendChild(empty)
           return
         }
-        items.forEach(item => {
+
+        userItems.forEach(ui => {
+          const itemRel = ui.relationships && ui.relationships.item && ui.relationships.item.data
+          const item = itemRel ? itemsById.get(itemRel.id) : null
+
           const card = document.createElement('div')
           card.className = 'rounded-md border border-gray-200 bg-white shadow-sm p-4 flex items-start justify-between gap-3'
 
           const left = document.createElement('div')
+          const titleRow = document.createElement('div')
+          titleRow.className = 'flex items-center gap-2'
           const title = document.createElement('h3')
           title.className = 'font-medium text-gray-900'
-          title.textContent = item.attributes.name
+          title.textContent = item ? item.attributes.name : 'Unknown Item'
+          const qty = document.createElement('span')
+          qty.className = 'text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700'
+          qty.textContent = `x${ui.attributes.quantity ?? 0}`
+          titleRow.appendChild(title)
+          titleRow.appendChild(qty)
+
           const desc = document.createElement('p')
           desc.className = 'text-sm text-gray-600'
-          desc.textContent = item.attributes.description
-          left.appendChild(title)
+          desc.textContent = item ? item.attributes.description : ''
+          left.appendChild(titleRow)
           left.appendChild(desc)
 
           const right = document.createElement('div')
-          const btn = document.createElement('button')
-          btn.className = 'px-3 py-1.5 rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200'
-          btn.textContent = 'Use'
-          btn.addEventListener('click', () => {
-            btn.disabled = true
-            btn.classList.add('opacity-50', 'cursor-not-allowed')
-            fetch(`/api/v1/items/${item.id}/use`, { method: 'POST', headers: authHeaders(token) })
-              .then(r => r.json())
-              .finally(() => fetchInventory())
-          })
-          right.appendChild(btn)
+          const usable = !!ui.attributes.usable
+          if (usable) {
+            const btn = document.createElement('button')
+            btn.className = 'px-3 py-1.5 rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200'
+            btn.textContent = 'Use'
+            btn.disabled = (ui.attributes.quantity ?? 0) <= 0
+            if (btn.disabled) {
+              btn.classList.add('opacity-50', 'cursor-not-allowed')
+              btn.setAttribute('title', 'Not enough quantity')
+              btn.setAttribute('aria-disabled', 'true')
+            }
+            btn.addEventListener('click', () => {
+              btn.disabled = true
+              btn.classList.add('opacity-50', 'cursor-not-allowed')
+              const itemId = itemRel ? itemRel.id : ui.attributes.item_id
+              fetch(`/api/v1/items/${itemId}/use`, { method: 'POST', headers: authHeaders(token) })
+                .then(r => r.json())
+                .finally(() => fetchInventory())
+            })
+            right.appendChild(btn)
+          }
 
           card.appendChild(left)
           card.appendChild(right)

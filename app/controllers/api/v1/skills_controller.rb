@@ -6,7 +6,16 @@ class Api::V1::SkillsController < Api::ApiController
 
   def index
     skills = Skill.all
-    render json: SkillSerializer.new(skills).serializable_hash.to_json
+    # Hide gated skills the user hasn't unlocked yet
+    visible_skills = skills.select do |s|
+      if (gate = Unlockable.find_by(unlockable_type: 'Skill', unlockable_id: s.id))
+        @current_user.user_flags.exists?(flag_id: gate.flag_id)
+      else
+        true
+      end
+    end
+    options = { params: { current_user: @current_user } }
+    render json: SkillSerializer.new(visible_skills, options).serializable_hash.to_json
   end
 
   def create

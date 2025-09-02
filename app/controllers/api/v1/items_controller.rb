@@ -5,8 +5,9 @@ class Api::V1::ItemsController < Api::ApiController
   before_action :authenticate_request
 
   def index
-    items = @current_user.items
-    render json: ItemSerializer.new(items).serializable_hash.to_json
+    user_items = @current_user.user_items.includes(:item)
+    options = { include: [:item], params: { current_user: @current_user } }
+    render json: UserItemSerializer.new(user_items, options).serializable_hash.to_json
   end
 
   def create

@@ -6,8 +6,16 @@ class Api::V1::CraftingController < Api::ApiController
 
   def index
     recipes = Recipe.all
-    options = { include: [ :item ] }
-    render json: RecipeSerializer.new(recipes, options).serializable_hash.to_json
+    # Hide gated recipes the user hasn't unlocked yet
+    visible_recipes = recipes.select do |r|
+      if (gate = Unlockable.find_by(unlockable_type: 'Recipe', unlockable_id: r.id))
+        @current_user.user_flags.exists?(flag_id: gate.flag_id)
+      else
+        true
+      end
+    end
+    options = { include: [ :item ], params: { current_user: @current_user } }
+    render json: RecipeSerializer.new(visible_recipes, options).serializable_hash.to_json
   end
 
   def create
