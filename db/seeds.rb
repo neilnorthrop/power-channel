@@ -351,7 +351,7 @@ upsert(Skill, by: :name, rows: skills)
 
 # Items
 items = [
-  { name: "Twine", description: "A basic crafting material.", effect: "crafting_material", drop_chance: 0.0 },
+  { name: "Twine", description: "A basic crafting material.", effect: "", drop_chance: 0.0 },
   { name: "Hatchet", description: "A basic tool for chopping wood.", effect: "chop_wood", drop_chance: 0.0 },
   { name: "Minor Potion of Luck", description: "Slightly increases the chance of finding rare resources.", effect: "increase_luck", drop_chance: 0.001 },
   { name: "Scroll of Haste", description: "Instantly completes the cooldown of a single action.", effect: "reset_cooldown", drop_chance: 0.002 }

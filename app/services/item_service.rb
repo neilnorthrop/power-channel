@@ -7,7 +7,12 @@ class ItemService
   end
 
   def use
-    send(@item.effect)
+    effect_method = @item.effect.to_s
+    return { success: false, error: "Item is not usable." } if effect_method.blank?
+    unless respond_to?(effect_method, true)
+      return { success: false, error: "Item cannot be used." }
+    end
+    send(effect_method)
   end
 
   private
