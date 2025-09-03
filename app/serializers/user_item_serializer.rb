@@ -5,14 +5,18 @@ class UserItemSerializer
   attributes :id, :user_id, :item_id, :quantity
   belongs_to :item
 
-  attribute :usable do |object|
+  attribute :usable do |object, params|
     item = object.item
-    # Usable if:
-    # - the item.effect maps to a method implemented in ItemService, or
-    # - the item has associated Effect records
     effect_name = item.effect.to_s
     usable_by_method = effect_name.present? && ItemService.instance_methods(false).include?(effect_name.to_sym)
-    usable_by_assoc = item.effects.exists?
-    usable_by_method || usable_by_assoc
+    return true if usable_by_method
+
+    # Optionally use precomputed set to avoid N+1
+    items_with_effects = params && params[:items_with_effects]
+    if items_with_effects
+      items_with_effects.include?(item.id)
+    else
+      item.effects.exists?
+    end
   end
 end

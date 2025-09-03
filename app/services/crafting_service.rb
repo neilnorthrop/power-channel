@@ -54,8 +54,11 @@ class CraftingService
       end
 
       # Broadcast after commit so clients see committed state
+      user_items = @user.user_items.includes(:item)
+      item_ids = user_items.map(&:item_id).uniq
+      items_with_effects = Effect.where(effectable_type: 'Item', effectable_id: item_ids).distinct.pluck(:effectable_id).to_set
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources.includes(:resource)).serializable_hash })
-      UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(@user.user_items.includes(:item)).serializable_hash })
+      UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(user_items, { params: { items_with_effects: items_with_effects } }).serializable_hash })
       { success: true, message: "#{recipe.item.name} crafted successfully." }
     else
       { success: false, error: "Not enough resources." }

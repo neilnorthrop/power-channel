@@ -5,7 +5,7 @@ class Api::V1::ActionsController < Api::ApiController
   before_action :authenticate_request
 
   def index
-    user_actions = @current_user.user_actions
+    user_actions = @current_user.user_actions.includes(:action)
     # Bulk gate check to avoid N+1
     action_ids = user_actions.map(&:action_id)
     gates = Unlockable.where(unlockable_type: 'Action', unlockable_id: action_ids)

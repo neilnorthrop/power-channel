@@ -4,14 +4,19 @@ class RecipeResourceSerializer
   include JSONAPI::Serializer
   attributes :id, :quantity, :recipe_id, :component_type, :component_id
 
-  attribute :component_name do |rr|
-    case rr.component_type
-    when 'Resource'
-      Resource.find_by(id: rr.component_id)&.name
-    when 'Item'
-      Item.find_by(id: rr.component_id)&.name
+  attribute :component_name do |rr, params|
+    names = params && params[:component_names]
+    if names
+      (names[rr.component_type] || {})[rr.component_id]
     else
-      nil
+      case rr.component_type
+      when 'Resource'
+        Resource.find_by(id: rr.component_id)&.name
+      when 'Item'
+        Item.find_by(id: rr.component_id)&.name
+      else
+        nil
+      end
     end
   end
 end
