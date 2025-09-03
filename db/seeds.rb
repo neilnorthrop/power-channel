@@ -324,9 +324,9 @@ upsert(Action, by: :name, rows: actions)
 # Resources (action by name)
 resources = [
   { name: "Gold Coins", description: "The currency of the realm.", base_amount: 10, drop_chance: 1.0, action_name: "Taxes" },
-  { name: "Stick", description: "A basic crafting material.", base_amount: 5, drop_chance: 0.85, action_name: "Gather" },
+  { name: "Stick", description: "A basic crafting material.", base_amount: 3, drop_chance: 0.85, action_name: "Gather" },
   { name: "Stone", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.75, action_name: "Gather" },
-  { name: "Weeds", description: "A basic crafting material.", base_amount: 1, drop_chance: 0.5, action_name: "Gather" },
+  { name: "Weeds", description: "A basic crafting material.", base_amount: 2, drop_chance: 0.5, action_name: "Gather" },
   { name: "Wood", description: "A basic crafting material.", base_amount: 1, drop_chance: 1.0, action_name: "Chop Wood" },
   { name: "Stone", description: "A basic crafting material.", base_amount: 5, drop_chance: 1.0, action_name: "Quarry Stone" },
   { name: "Coal", description: "A fuel source for smelting and crafting.", base_amount: 2, drop_chance: 0.33, action_name: "Quarry Stone" }
@@ -353,6 +353,11 @@ upsert(Skill, by: :name, rows: skills)
 items = [
   { name: "Twine", description: "A basic crafting material.", effect: "", drop_chance: 0.0 },
   { name: "Hatchet", description: "A basic tool for chopping wood.", effect: "chop_wood", drop_chance: 0.0 },
+  { name: "Pick Axe", description: "A basic tool for mining stone.", effect: "quarry_stone", drop_chance: 0.0 },
+  { name: "Bundle of Sticks", description: "A bundle of sticks for crafting.", effect: "", drop_chance: 0.0 },
+  { name: "Wood Plank", description: "A plank of wood for crafting.", effect: "", drop_chance: 0.0 },
+  { name: "Sturdy Shaft", description: "A sturdy shaft for crafting advanced items.", effect: "", drop_chance: 0.0 },
+  { name: "Fishing Rod", description: "A basic rod for fishing.", effect: "", drop_chance: 0.0 },
   { name: "Minor Potion of Luck", description: "Slightly increases the chance of finding rare resources.", effect: "increase_luck", drop_chance: 0.001 },
   { name: "Scroll of Haste", description: "Instantly completes the cooldown of a single action.", effect: "reset_cooldown", drop_chance: 0.002 }
 ]
@@ -405,14 +410,47 @@ ensure_recipe_resource(recipe: rec2, resource_name: "Wood", quantity: 10)
 rec3 = ensure_recipe(item_name: "Twine", quantity: 1)
 ensure_recipe_resource(recipe: rec3, resource_name: "Weeds", quantity: 5)
 
+rec6 = ensure_recipe(item_name: "Bundle of Sticks", quantity: 1)
+ensure_recipe_item(recipe: rec6, item_name: "Twine", quantity: 2)
+ensure_recipe_resource(recipe: rec6, resource_name: "Stick", quantity: 5)
+
 rec4 = ensure_recipe(item_name: "Hatchet", quantity: 1)
-ensure_recipe_resource(recipe: rec4, resource_name: "Wood", quantity: 10)
+ensure_recipe_item(recipe: rec4, item_name: "Bundle of Sticks", quantity: 1)
 ensure_recipe_resource(recipe: rec4, resource_name: "Stone", quantity: 5)
 ensure_recipe_item(recipe: rec4, item_name: "Twine", quantity: 2)
+
+rec5 = ensure_recipe(item_name: "Pick Axe", quantity: 1)
 
 
 # Flag: can_craft_hatchet
 # Requirements: Item 'Stick' (x1) OR Item 'Stone' (x1) OR Item 'Weeds' (x1)
+# Unlockables: Recipe 'Hatchet'
+craft_hatchet = Flag.find_or_create_by!(slug: 'craft_hatchet') do |f|
+  f.name = 'Can Craft Hatchet'
+  f.description = 'Allows crafting a basic hatchet for chopping wood.'
+end
+bundle_of_sticks = Item.find_by!(name: 'Bundle of Sticks')
+stone = Resource.find_by!(name: 'Stone')
+twine = Item.find_by!(name: 'Twine')
+rec_hatchet = Recipe.find_by!(item: Item.find_by!(name: 'Hatchet'))
+
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Item', requirement_id: bundle_of_sticks.id) { |r| r.quantity = 1; r.logic = 'OR' }
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Resource', requirement_id: stone.id) { |r| r.quantity = 1; r.logic = 'OR' }
+FlagRequirement.find_or_create_by!(flag: craft_hatchet, requirement_type: 'Item', requirement_id: twine.id) { |r| r.quantity = 1; r.logic = 'OR' }
+Unlockable.find_or_create_by!(flag: craft_hatchet, unlockable: rec_hatchet)
+
+# Flag: can_chop_wood
+# Requirements: Item 'Hatchet' (x1)
+# Unlockables: Action 'Chop Wood'
+can_chop_wood = Flag.find_or_create_by!(slug: 'can_chop_wood') do |f|
+  f.name = 'Can Chop Wood'
+  f.description = 'Allows chopping wood with a hatchet.'
+end
+hatchet = Item.find_by!(name: 'Hatchet')
+chop_wood_action = Action.find_by!(name: 'Chop Wood')
+FlagRequirement.find_or_create_by!(flag: can_chop_wood, requirement_type: 'Item', requirement_id: hatchet.id) { |r| r.quantity = 1 }
+Unlockable.find_or_create_by!(flag: can_chop_wood, unlockable: chop_wood_action)
+
 # Unlockables: Recipe 'Hatchet'
 craft_hatchet = Flag.find_or_create_by!(slug: 'craft_hatchet') do |f|
   f.name = 'Can Craft Hatchet'
