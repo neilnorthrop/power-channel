@@ -10,20 +10,34 @@ class UserActionSerializer
 
   attribute :locked do |object, params|
     user = params && params[:current_user]
+    gates = params && params[:gates] && params[:gates]['Action']
+    user_flag_ids = params && params[:user_flag_ids]
     if user
-      if (gate = Unlockable.find_by(unlockable_type: 'Action', unlockable_id: object.action_id))
-        !user.user_flags.exists?(flag_id: gate.flag_id)
+      if gates && user_flag_ids
+        flag_id = gates[object.action_id]
+        flag_id.present? && !user_flag_ids.include?(flag_id)
       else
-        false
+        if (gate = Unlockable.find_by(unlockable_type: 'Action', unlockable_id: object.action_id))
+          !user.user_flags.exists?(flag_id: gate.flag_id)
+        else
+          false
+        end
       end
     else
       false
     end
   end
 
-  attribute :requirements do |object|
-    if (gate = Unlockable.find_by(unlockable_type: 'Action', unlockable_id: object.action_id))
-      gate.flag.flag_requirements.map do |r|
+  attribute :requirements do |object, params|
+    gates = params && params[:gates] && params[:gates]['Action']
+    flag = if gates
+      flag_id = gates[object.action_id]
+      flag_id ? Flag.find(flag_id) : nil
+    else
+      (Unlockable.find_by(unlockable_type: 'Action', unlockable_id: object.action_id)&.flag)
+    end
+    if flag
+      flag.flag_requirements.map do |r|
         name = case r.requirement_type
                when 'Item' then Item.find_by(id: r.requirement_id)&.name
                when 'Building' then Building.find_by(id: r.requirement_id)&.name

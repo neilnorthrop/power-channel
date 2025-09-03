@@ -5,7 +5,7 @@ class Api::V1::UserResourcesController < Api::ApiController
   before_action :authenticate_request
 
   def index
-    user_resources = @current_user.user_resources
+    user_resources = @current_user.user_resources.includes(:resource)
     render json: UserResourcesSerializer.new(user_resources).serializable_hash.to_json
   end
 end

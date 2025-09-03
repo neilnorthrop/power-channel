@@ -13,8 +13,9 @@ class EnsureFlagsService
   def evaluate!(touch: {})
     flags = candidate_flags(touch)
     to_grant = []
+    @user_flag_ids ||= @user.user_flags.pluck(:flag_id).to_set
     flags.find_each do |flag|
-      next if @user.user_flags.exists?(flag_id: flag.id)
+      next if @user_flag_ids.include?(flag.id)
       if requirements_satisfied?(flag)
         to_grant << { user_id: @user.id, flag_id: flag.id, created_at: Time.current, updated_at: Time.current }
       end
@@ -33,7 +34,7 @@ class EnsureFlagsService
     req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Resource', requirement_id: touch[:resources])) if touch[:resources].present?
     req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Flag', requirement_id: touch[:flags])) if touch[:flags].present?
     req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Skill', requirement_id: touch[:skills])) if touch[:skills].present?
-    Flag.where(id: req_scope.select(:flag_id))
+    Flag.where(id: req_scope.select(:flag_id)).includes(:flag_requirements)
   end
 
   def requirements_satisfied?(flag)
@@ -49,20 +50,27 @@ class EnsureFlagsService
   end
 
   def requirement_met?(req)
+    # Lazy-memoized user state per requirement type/id to avoid repeated queries
+    @user_flag_ids ||= @user.user_flags.pluck(:flag_id).to_set
+    @user_skill_ids ||= @user.user_skills.pluck(:skill_id).to_set
+
     case req.requirement_type
     when 'Item'
-      ui = @user.user_items.find_by(item_id: req.requirement_id)
+      @user_items_cache ||= {}
+      ui = @user_items_cache[req.requirement_id] ||= @user.user_items.find_by(item_id: req.requirement_id)
       ui && ui.quantity.to_i >= req.quantity
     when 'Building'
-      ub = @user.user_buildings.find_by(building_id: req.requirement_id)
+      @user_buildings_cache ||= {}
+      ub = @user_buildings_cache[req.requirement_id] ||= @user.user_buildings.find_by(building_id: req.requirement_id)
       ub && (ub.level.to_i >= req.quantity)
     when 'Resource'
-      ur = @user.user_resources.find_by(resource_id: req.requirement_id)
+      @user_resources_cache ||= {}
+      ur = @user_resources_cache[req.requirement_id] ||= @user.user_resources.find_by(resource_id: req.requirement_id)
       ur && ur.amount.to_i >= req.quantity
     when 'Flag'
-      @user.user_flags.exists?(flag_id: req.requirement_id)
+      @user_flag_ids.include?(req.requirement_id)
     when 'Skill'
-      @user.user_skills.exists?(skill_id: req.requirement_id)
+      @user_skill_ids.include?(req.requirement_id)
     else
       false
     end

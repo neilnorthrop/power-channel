@@ -6,15 +6,15 @@ class Api::V1::ActionsController < Api::ApiController
 
   def index
     user_actions = @current_user.user_actions
-    # Hide gated actions the user hasn't unlocked yet
+    # Bulk gate check to avoid N+1
+    action_ids = user_actions.map(&:action_id)
+    gates = Unlockable.where(unlockable_type: 'Action', unlockable_id: action_ids)
+                      .pluck(:unlockable_id, :flag_id).to_h
+    user_flag_ids = @current_user.user_flags.pluck(:flag_id).to_set
     visible_user_actions = user_actions.select do |ua|
-      if (gate = Unlockable.find_by(unlockable_type: 'Action', unlockable_id: ua.action_id))
-        @current_user.user_flags.exists?(flag_id: gate.flag_id)
-      else
-        true
-      end
+      (flag_id = gates[ua.action_id]).nil? || user_flag_ids.include?(flag_id)
     end
-    options = { include: [ :action ], params: { current_user: @current_user } }
+    options = { include: [ :action ], params: { current_user: @current_user, gates: { 'Action' => gates }, user_flag_ids: user_flag_ids } }
     render json: UserActionSerializer.new(visible_user_actions, options).serializable_hash.to_json
   end
 
