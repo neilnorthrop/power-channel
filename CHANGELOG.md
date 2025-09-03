@@ -45,3 +45,6 @@ All notable changes are organized by date (YYYY-MM-DD). Newest first.
 - Documentation
   - Added `DISCUSSION_HISTORY.md` (grouped discussion log) to track decisions and changes.
 
+## Future Roadmap
+
+See ROADMAP.md for the full, up-to-date roadmap of features and performance improvements.

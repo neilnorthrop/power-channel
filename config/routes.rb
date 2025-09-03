@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   get "/skills", to: "game#skills", as: :skills
   get "/crafting", to: "game#crafting", as: :crafting
   get "/buildings", to: "game#buildings", as: :buildings
+  get "/events", to: "game#events", as: :events
   devise_for :users, controllers: { registrations: "api/v1/registrations" }
 
   namespace :api do
@@ -19,6 +20,7 @@ Rails.application.routes.draw do
       end
       resources :crafting, only: [ :index, :create ]
       resources :buildings, only: [ :index, :create, :update ]
+      resources :events, only: [ :index ]
     end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

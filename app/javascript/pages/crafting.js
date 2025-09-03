@@ -1,4 +1,4 @@
-import { getJwt, authHeaders } from "pages/util"
+import { getJwt, authHeaders, toast } from "pages/util"
 
 function initCrafting() {
   const token = getJwt()
@@ -43,7 +43,14 @@ function initCrafting() {
             btn.disabled = true
             btn.classList.add('opacity-50', 'cursor-not-allowed')
             fetch('/api/v1/crafting', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify({ recipe_id: recipe.id }) })
-              .then(r => r.json())
+              .then(async r => {
+                const data = await r.json()
+                if (r.ok) {
+                  toast(data.message || 'Item crafted.', 'success')
+                } else {
+                  toast(data.error || 'Failed to craft item.', 'error')
+                }
+              })
               .finally(() => fetchCrafting())
           })
           right.appendChild(btn)

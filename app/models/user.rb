@@ -18,6 +18,7 @@ class User < ApplicationRecord
   has_many :effects, through: :active_effects
   has_many :user_flags
   has_many :flags, through: :user_flags
+  has_many :events, dependent: :destroy
 
   after_create :initialize_defaults
 

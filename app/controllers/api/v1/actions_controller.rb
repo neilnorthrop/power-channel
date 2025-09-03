@@ -14,7 +14,11 @@ class Api::V1::ActionsController < Api::ApiController
     visible_user_actions = user_actions.select do |ua|
       (flag_id = gates[ua.action_id]).nil? || user_flag_ids.include?(flag_id)
     end
-    options = { include: [ :action ], params: { current_user: @current_user, gates: { 'Action' => gates }, user_flag_ids: user_flag_ids } }
+    # Prefetch requirement names for flags used by these gated actions
+    flag_ids = gates.values.compact.uniq
+    requirement_names = RequirementNameLookup.for_flag_ids(flag_ids)
+
+    options = { include: [ :action ], params: { current_user: @current_user, gates: { 'Action' => gates }, user_flag_ids: user_flag_ids, requirement_names: requirement_names } }
     render json: UserActionSerializer.new(visible_user_actions, options).serializable_hash.to_json
   end
 

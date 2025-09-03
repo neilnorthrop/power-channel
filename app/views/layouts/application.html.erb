@@ -28,7 +28,7 @@
   </head>
 
   <body class="">
-    <div class="container mx-auto p-4 min-h-screen bg-white">
+    <div class="container mx-auto p-4 min-h-screen bg-white pb-48">
     <% if user_signed_in? %>
       <div class="flex gap-6" data-controller="sidebar">
         <aside id="sidebar"
@@ -51,6 +51,7 @@
         <div id="sidebar-backdrop" data-sidebar-target="backdrop" data-action="click->sidebar#close" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
 
         <main class="flex-1">
+          <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
               <button id="sidebar-toggle" data-action="click->sidebar#toggle" class="md:hidden inline-flex items-center justify-center p-2 rounded bg-gray-100 hover:bg-gray-200">
@@ -82,6 +83,37 @@
         <%= yield %>
       </main>
     <% end %>
+    </div>
+
+    <!-- Persistent Event Log (bottom panel) -->
+    <div id="event-log" class="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <div class="container mx-auto">
+        <div class="px-4 py-2 text-xs text-gray-600 flex items-center gap-3">
+          <span>Event Log</span>
+          <label class="inline-flex items-center gap-1">
+            <span>Level</span>
+            <select id="event-filter-level" class="border border-gray-300 rounded text-xs px-1 py-0.5">
+              <option value="">All</option>
+              <option value="debug">Debug</option>
+              <option value="info" selected>Info</option>
+              <option value="warning">Warning</option>
+              <option value="error">Error</option>
+              <option value="critical">Critical</option>
+            </select>
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <span>Since (hrs)</span>
+            <input id="event-filter-hours" type="number" min="1" max="168" value="24" class="w-16 border border-gray-300 rounded text-xs px-1 py-0.5" />
+          </label>
+          <label class="inline-flex items-center gap-1 ml-auto">
+            <input id="event-pause" type="checkbox" class="align-middle" />
+            <span>Pause auto-scroll</span>
+          </label>
+          <button id="event-clear" class="text-xs px-2 py-0.5 rounded border border-gray-300">Clear</button>
+          <button id="event-apply" class="text-xs px-2 py-0.5 rounded bg-gray-800 text-white">Apply</button>
+        </div>
+        <div id="event-log-list" class="px-4 pb-3 max-h-44 overflow-y-auto space-y-1"></div>
+      </div>
     </div>
   </body>
 

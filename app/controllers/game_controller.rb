@@ -8,4 +8,5 @@ class GameController < ApplicationController
   def skills; end
   def crafting; end
   def buildings; end
+  def events; end
 end

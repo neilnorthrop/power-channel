@@ -1,5 +1,5 @@
-import { getJwt, authHeaders } from "pages/util"
-import { createConsumer } from "@rails/actioncable"
+import { getJwt, authHeaders, toast } from "pages/util"
+import { getConsumer } from "pages/cable"
 
 function initHome() {
   const token = getJwt()
@@ -19,19 +19,7 @@ function initHome() {
       })
   }
 
-  // lightweight toast helper
-  const toast = (message, type = 'info') => {
-    const container = document.getElementById('toast-container')
-    if (!container || !message) return
-    const el = document.createElement('div')
-    el.className = `rounded-md shadow px-3 py-2 text-sm ${type === 'error' ? 'bg-red-600 text-white' : type === 'success' ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-white'}`
-    el.textContent = message
-    container.appendChild(el)
-    setTimeout(() => {
-      el.classList.add('opacity-0', 'transition-opacity', 'duration-300')
-      setTimeout(() => el.remove(), 300)
-    }, 2000)
-  }
+  // toast imported from pages/util
 
   const updateCooldown = (userAction) => {
     const id = userAction.id || (userAction.data && userAction.data.id)
@@ -211,7 +199,7 @@ function initHome() {
 
   // Action Cable realtime updates
   if (token) {
-    const cable = createConsumer(`/cable?token=${encodeURIComponent(token)}`)
+    const cable = getConsumer(token)
     cable.subscriptions.create('UserUpdatesChannel', {
       received(data) {
         if (data.type === 'user_action_update') {

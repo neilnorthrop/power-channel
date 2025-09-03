@@ -25,7 +25,11 @@ class Api::V1::CraftingController < Api::ApiController
     component_names['Resource'] = Resource.where(id: resource_ids).pluck(:id, :name).to_h if resource_ids.any?
     component_names['Item']     = Item.where(id: item_component_ids).pluck(:id, :name).to_h if item_component_ids.any?
 
-    options = { include: [ :item, :recipe_resources ], params: { current_user: @current_user, gates: { 'Recipe' => gates, 'Item' => item_gates }, user_flag_ids: user_flag_ids, component_names: component_names } }
+    # Prefetch requirement names for recipe flags
+    flag_ids = gates.values.compact.uniq
+    requirement_names = RequirementNameLookup.for_flag_ids(flag_ids)
+
+    options = { include: [ :item, :recipe_resources ], params: { current_user: @current_user, gates: { 'Recipe' => gates, 'Item' => item_gates }, user_flag_ids: user_flag_ids, component_names: component_names, requirement_names: requirement_names } }
     render json: RecipeSerializer.new(visible_recipes, options).serializable_hash.to_json
   end
 

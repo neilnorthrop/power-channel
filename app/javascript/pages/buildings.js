@@ -1,4 +1,4 @@
-import { getJwt, authHeaders } from "pages/util"
+import { getJwt, authHeaders, toast } from "pages/util"
 
 function initBuildings() {
   const token = getJwt()
@@ -50,7 +50,14 @@ function initBuildings() {
             btn.disabled = true
             btn.classList.add('opacity-50', 'cursor-not-allowed')
             fetch(`/api/v1/buildings/${building.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders(token) } })
-              .then(r => r.json())
+              .then(async r => {
+                const data = await r.json()
+                if (r.ok) {
+                  toast(data.message || 'Building upgraded.', 'success')
+                } else {
+                  toast(data.error || 'Failed to upgrade building.', 'error')
+                }
+              })
               .finally(() => fetchBuildings())
           })
           right.appendChild(btn)

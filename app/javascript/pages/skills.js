@@ -1,4 +1,4 @@
-import { getJwt, authHeaders } from "pages/util"
+import { getJwt, authHeaders, toast } from "pages/util"
 
 function initSkills() {
   const token = getJwt()
@@ -62,7 +62,14 @@ function initSkills() {
             btn.disabled = true
             btn.classList.add('opacity-50', 'cursor-not-allowed')
             fetch('/api/v1/skills', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify({ skill_id: skill.id }) })
-              .then(r => r.json())
+              .then(async r => {
+                const data = await r.json()
+                if (r.ok) {
+                  toast(data.message || 'Skill unlocked.', 'success')
+                } else {
+                  toast(data.error || 'Failed to unlock skill.', 'error')
+                }
+              })
               .finally(() => fetchSkills())
           })
 

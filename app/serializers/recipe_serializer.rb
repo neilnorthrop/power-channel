@@ -35,15 +35,17 @@ class RecipeSerializer
       (Unlockable.find_by(unlockable_type: 'Recipe', unlockable_id: object.id)&.flag)
     end
     if flag
+      names = params && params[:requirement_names]
       flag.flag_requirements.map do |r|
-        name = case r.requirement_type
-               when 'Item' then Item.find_by(id: r.requirement_id)&.name
-               when 'Building' then Building.find_by(id: r.requirement_id)&.name
-               when 'Resource' then Resource.find_by(id: r.requirement_id)&.name
-               when 'Flag' then Flag.find_by(id: r.requirement_id)&.name
-               when 'Skill' then Skill.find_by(id: r.requirement_id)&.name
-               else r.requirement_type
-               end
+        name = names ? (names.dig(r.requirement_type, r.requirement_id) || r.requirement_type) :
+                case r.requirement_type
+                when 'Item' then Item.find_by(id: r.requirement_id)&.name
+                when 'Building' then Building.find_by(id: r.requirement_id)&.name
+                when 'Resource' then Resource.find_by(id: r.requirement_id)&.name
+                when 'Flag' then Flag.find_by(id: r.requirement_id)&.name
+                when 'Skill' then Skill.find_by(id: r.requirement_id)&.name
+                else r.requirement_type
+                end
         {
           type: r.requirement_type.downcase,
           id: r.requirement_id,

@@ -12,7 +12,9 @@ class Api::V1::BuildingsController < Api::ApiController
     user_flag_ids = @current_user.user_flags.pluck(:flag_id).to_set
     visible_building_ids = buildings.map(&:id).select { |id| (flag_id = gates[id]).nil? || user_flag_ids.include?(flag_id) }
     visible_buildings = buildings.select { |b| visible_building_ids.include?(b.id) }
-    options = { params: { current_user: @current_user, gates: { 'Building' => gates }, user_flag_ids: user_flag_ids } }
+    flag_ids = gates.values.compact.uniq
+    requirement_names = RequirementNameLookup.for_flag_ids(flag_ids)
+    options = { params: { current_user: @current_user, gates: { 'Building' => gates }, user_flag_ids: user_flag_ids, requirement_names: requirement_names } }
     render json: BuildingSerializer.new(visible_buildings, options).serializable_hash.to_json
   end
 

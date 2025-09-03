@@ -353,19 +353,9 @@ namespace :users do
 end
 
 # Composite task to seed reference data and then ensure user actions
-# NOTE: This is a cross‑cutting orchestration task (not strictly a "users"
-# concern). Consider moving it to a broader namespace/file for clarity:
-#   - lib/tasks/app.rake           -> app:seed_and_ensure_actions
-#   - lib/tasks/data.rake          -> data:seed_and_backfill
-#   - lib/tasks/maintenance.rake   -> maintenance:seed_and_backfill
-# Naming ideas: data:seed_and_backfill (clear intent), app:bootstrap (future
-# bootstrap steps), or ops:seed_and_ensure_actions (ops-focused).
-# Keep user-specific tasks under the users: namespace in this file.
-#
-# Implementation notes to keep in mind if moved/renamed:
-#   - Keep `Rake::Task[t].reenable` to allow re‑invocation in the same process.
-#   - Optional flags: QUIET=1 to suppress logs from ensure step.
-#   - Optional guard for production to avoid accidental destructive runs.
+# Roadmap note: Task organization/naming guidance has moved to ROADMAP.md
+# See: ROADMAP.md › "Tooling, CI/CD, Observability" › Task organization/naming
+# (details include broader namespaces like data:seed_and_backfill, app:bootstrap)
 namespace :app do
   desc "Run db:seed and users:ensure_actions (idempotent)"
   task seed_and_ensure_actions: :environment do

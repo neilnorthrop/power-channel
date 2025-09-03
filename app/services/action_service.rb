@@ -49,8 +49,10 @@ class ActionService
       @user.save
       UserUpdatesChannel.broadcast_to(@user, { type: "user_action_update", data: UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
+      Event.create!(user: @user, level: 'info', message: "Performed action: #{action.name}")
       { success: true, message: "#{action.name} performed successfully." }
     else
+      Event.create!(user: @user, level: 'warning', message: "Attempted action on cooldown: #{action.name}")
       { success: false, error: "Action is on cooldown." }
     end
   end

@@ -1,4 +1,4 @@
-import { getJwt, authHeaders } from "pages/util"
+import { getJwt, authHeaders, toast } from "pages/util"
 
 function initInventory() {
   const token = getJwt()
@@ -96,7 +96,14 @@ function initInventory() {
               btn.classList.add('opacity-50', 'cursor-not-allowed')
               const itemId = itemRel ? itemRel.id : ui.attributes.item_id
               fetch(`/api/v1/items/${itemId}/use`, { method: 'POST', headers: authHeaders(token) })
-                .then(r => r.json())
+                .then(async r => {
+                  const data = await r.json()
+                  if (r.ok) {
+                    toast(data.message || 'Item used.', 'success')
+                  } else {
+                    toast(data.error || 'Failed to use item.', 'error')
+                  }
+                })
                 .finally(() => fetchInventory())
             })
             right.appendChild(btn)
