@@ -21,4 +21,4 @@ pin "pages/buildings", to: "pages/buildings.js"
 pin "pages/util", to: "pages/util.js"
 
 # Action Cable ESM
-pin "@rails/actioncable", to: "actioncable.esm.js"
+pin "@rails/actioncable", to: "https://cdn.jsdelivr.net/npm/@rails/actioncable@7.1.3-2/app/assets/javascripts/actioncable.esm.js"

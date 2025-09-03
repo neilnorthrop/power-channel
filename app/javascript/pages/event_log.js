@@ -4,6 +4,9 @@ import { getConsumer } from "pages/cable"
 function initEventLog() {
   const list = document.getElementById('event-log-list')
   if (!list) return
+  // Prevent double-initialization (DOMContentLoaded + turbo:load)
+  if (list.dataset.initialized === '1') return
+  list.dataset.initialized = '1'
 
   const token = getJwt()
   const limit = 50
