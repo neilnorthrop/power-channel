@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_02_131500) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_03_173000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,6 +54,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_02_131500) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["effectable_type", "effectable_id"], name: "index_effects_on_effectable"
+  end
+
+  create_table "events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "level", default: "info", null: false
+    t.text "message", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["level"], name: "index_events_on_level"
+    t.index ["user_id", "created_at"], name: "index_events_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_events_on_user_id"
   end
 
   create_table "flag_requirements", force: :cascade do |t|
@@ -216,6 +227,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_02_131500) do
 
   add_foreign_key "active_effects", "effects"
   add_foreign_key "active_effects", "users"
+  add_foreign_key "events", "users"
   add_foreign_key "flag_requirements", "flags"
   add_foreign_key "recipe_resources", "recipes"
   add_foreign_key "recipes", "items"
