@@ -20,3 +20,4 @@ class Api::V1::EventsController < Api::ApiController
     render json: EventSerializer.new(events).serializable_hash.to_json
   end
 end
+

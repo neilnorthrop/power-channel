@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   get "/skills", to: "game#skills", as: :skills
   get "/crafting", to: "game#crafting", as: :crafting
   get "/buildings", to: "game#buildings", as: :buildings
-  get "/events", to: "game#events", as: :events
+
   devise_for :users, controllers: { registrations: "api/v1/registrations" }
 
   namespace :api do

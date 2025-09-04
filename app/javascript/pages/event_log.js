@@ -54,7 +54,7 @@ function initEventLog() {
     if (level) params.set('level', level)
     if (before) params.set('before', before)
     fetch(`/api/v1/events?${params.toString()}`, { headers: authHeaders(token) })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) return { data: [] }; return r.json() })
       .then(data => {
         const events = data.data || []
         if (events.length > 0) {
