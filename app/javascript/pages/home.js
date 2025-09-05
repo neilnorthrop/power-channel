@@ -219,3 +219,9 @@ function initHome() {
 // Initialize on Turbo visits and full loads
 document.addEventListener('turbo:load', initHome)
 document.addEventListener('DOMContentLoaded', initHome)
+
+document.addEventListener('turbo:frame-load', (event) => {
+  if (event.target && event.target.id === 'main') {
+    initHome();
+  }
+})

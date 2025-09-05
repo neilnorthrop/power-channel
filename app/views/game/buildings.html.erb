@@ -1,2 +1,9 @@
-<h2 class="text-xl font-semibold mb-2">Buildings</h2>
-<div id="buildings" class="space-y-2"></div>
+<% if turbo_frame_request? %>
+  <%= turbo_frame_tag "main" do %>
+    <h2 class="text-xl font-semibold mb-2">Buildings</h2>
+    <div id="buildings" class="space-y-2"></div>
+  <% end %>
+<% else %>
+  <h2 class="text-xl font-semibold mb-2">Buildings</h2>
+  <div id="buildings" class="space-y-2"></div>
+<% end %>

@@ -123,3 +123,9 @@ function initInventory() {
 // Initialize on Turbo visits and full loads
 document.addEventListener('turbo:load', initInventory)
 document.addEventListener('DOMContentLoaded', initInventory)
+
+document.addEventListener('turbo:frame-load', (event) => {
+  if (event.target && event.target.id === 'main') {
+    initInventory();
+  }
+})

@@ -89,3 +89,9 @@ function initSkills() {
 // Initialize on Turbo visits and full loads
 document.addEventListener('turbo:load', initSkills)
 document.addEventListener('DOMContentLoaded', initSkills)
+
+document.addEventListener('turbo:frame-load', (event) => {
+  if (event.target && event.target.id === 'main') {
+    initSkills();
+  }
+})

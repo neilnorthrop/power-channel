@@ -68,3 +68,9 @@ function initCrafting() {
 // Initialize on Turbo visits and full loads
 document.addEventListener('turbo:load', initCrafting)
 document.addEventListener('DOMContentLoaded', initCrafting)
+
+document.addEventListener('turbo:frame-load', (event) => {
+  if (event.target && event.target.id === 'main') {
+    initCrafting();
+  }
+})

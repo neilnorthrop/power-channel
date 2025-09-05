@@ -1,7 +1,19 @@
-<!-- Toast container is provided in application layout -->
+<% if turbo_frame_request? %>
+  <%= turbo_frame_tag "main" do %>
+    <!-- Toast container is provided in application layout -->
 
-<h2 class="text-xl font-semibold mb-2">Resources</h2>
-<div id="resources" class="space-y-1 mb-6"></div>
+    <h2 class="text-xl font-semibold mb-2">Resources</h2>
+    <div id="resources" class="space-y-1 mb-6"></div>
 
-<h2 class="text-xl font-semibold mb-2">Inventory</h2>
-<div id="inventory" class="space-y-1"></div>
+    <h2 class="text-xl font-semibold mb-2">Inventory</h2>
+    <div id="inventory" class="space-y-1"></div>
+  <% end %>
+<% else %>
+  <!-- Toast container is provided in application layout -->
+
+  <h2 class="text-xl font-semibold mb-2">Resources</h2>
+  <div id="resources" class="space-y-1 mb-6"></div>
+
+  <h2 class="text-xl font-semibold mb-2">Inventory</h2>
+  <div id="inventory" class="space-y-1"></div>
+<% end %>

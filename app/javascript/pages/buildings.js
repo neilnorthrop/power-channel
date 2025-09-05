@@ -75,3 +75,9 @@ function initBuildings() {
 // Initialize on Turbo visits and full loads
 document.addEventListener('turbo:load', initBuildings)
 document.addEventListener('DOMContentLoaded', initBuildings)
+
+document.addEventListener('turbo:frame-load', (event) => {
+  if (event.target && event.target.id === 'main') {
+    initBuildings();
+  }
+})
