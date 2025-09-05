@@ -1,9 +1,4 @@
-<% if turbo_frame_request? %>
-  <%= turbo_frame_tag "main" do %>
-    <h2 class="text-xl font-semibold mb-2">Crafting</h2>
-    <div id="crafting" class="space-y-2"></div>
-  <% end %>
-<% else %>
+<%= main_frame do %>
   <h2 class="text-xl font-semibold mb-2">Crafting</h2>
   <div id="crafting" class="space-y-2"></div>
 <% end %>
