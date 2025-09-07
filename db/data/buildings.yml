@@ -1,0 +1,13 @@
+---
+- name: Lumber Mill
+  description: Increases wood production by 10% per level.
+  level: 1
+  effect: increase_wood_production
+- name: Mine
+  description: Increases gold production by 10% per level.
+  level: 1
+  effect: increase_gold_production
+- name: Quarry
+  description: Increases stone production by 10% per level.
+  level: 1
+  effect: increase_stone_production

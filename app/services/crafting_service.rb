@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CraftingService
+  DEFAULT_QUALITY = 'normal'
+
   def initialize(user)
     @user = user
   end
@@ -13,7 +15,7 @@ class CraftingService
     resource_ids = reqs.select { |rr| rr.component_type == 'Resource' }.map(&:component_id)
     item_ids     = reqs.select { |rr| rr.component_type == 'Item' }.map(&:component_id)
     user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
-    user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids).index_by(&:item_id)           : {}
+    user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids, quality: DEFAULT_QUALITY).index_by(&:item_id) : {}
 
     # Verify availability
     can_craft = reqs.all? do |rr|
@@ -45,7 +47,7 @@ class CraftingService
           end
         end
 
-        user_item = @user.user_items.find_or_initialize_by(item: recipe.item)
+        user_item = @user.user_items.find_or_initialize_by(item: recipe.item, quality: DEFAULT_QUALITY)
         user_item.quantity = user_item.quantity.to_i + 1
         user_item.save!
 

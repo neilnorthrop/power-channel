@@ -90,6 +90,46 @@ Authentication is required for all endpoints except registration and token issua
 
 ---
 
+## Experimental Crafting (Preview)
+
+This repo includes an experimental crafting mode that can be enabled per user to preview a next‑gen crafting flow while reusing the current implementation.
+
+- What: `AdvancedCraftingService < CraftingService` is selected when `users.experimental_crafting` is true. For now it delegates to the base service, so behavior is identical; it exists to allow gradual feature rollout.
+- Inventory quality: `user_items` has a `quality` column (default `normal`) with enum tiers declared in `UserItem`. The base service reads/writes at `quality = 'normal'`.
+
+Enable locally
+- Run migrations and seeds: `bin/rails db:migrate db:seed`
+- Toggle the flag for a user (Rails console):
+  - `u = User.find(1)`
+  - `u.update!(experimental_crafting: true)`
+- Crafting calls for that user will route through `AdvancedCraftingService`.
+
+Planned follow‑ups (no migration yet)
+- Add a composite index on `user_items(user_id, item_id, quality)` to support fast lookups by quality and prepare for unique constraints per tier.
+- Extend `AdvancedCraftingService` with quality rolls, partial/failure outcomes, and skill/tool/building modifiers.
+
+---
+
+## Content Seeding via YAML
+
+Seeds are externalized to YAML files under `db/data`. This makes it easy to add and edit world content without touching Ruby code.
+
+- Files: `db/data/actions.yml`, `resources.yml`, `skills.yml`, `items.yml`, `buildings.yml`, `recipes.yml`, `flags.yml`.
+- Apply: `bin/rails db:seed` (idempotent upserts; no user-owned data is modified).
+- Dry-run: `DRY_RUN=1 bin/rails db:seed` or `bin/rails seeds:dry_run`.
+- Lint: `bin/rails seeds:lint` checks basic shapes and references.
+- Prune: `PRUNE=1` will remove recipe components that aren’t listed in YAML.
+
+Notes
+- Recipes reference components by `type` (`Resource` or `Item`) and `name`.
+- Flags support `requirements` (with `type`, `name`, `quantity`, `logic`) and `unlockables` (`type`, `name`).
+- After changing content, consider running the ensure tasks to backfill user associations.
+
+See also
+- `SEEDS_REFERENCE_GUIDE.md` for detailed guidance, workflows, and flag examples.
+
+---
+
 ## Adding a New Game Element
 
 Use the following checklists when introducing new content. Most data lives in `db/seeds.rb`, but remember to write tests for any new logic.

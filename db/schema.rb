@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_03_173000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_06_153642) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -187,6 +187,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_173000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "quantity", default: 0
+    t.string "quality", default: "normal", null: false
     t.index ["item_id"], name: "index_user_items_on_item_id"
     t.index ["user_id"], name: "index_user_items_on_user_id"
   end
@@ -221,6 +222,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_173000) do
     t.integer "level", default: 1
     t.integer "experience", default: 0
     t.integer "skill_points", default: 0
+    t.boolean "experimental_crafting", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

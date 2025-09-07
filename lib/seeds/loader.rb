@@ -1,0 +1,200 @@
+# frozen_string_literal: true
+
+require 'yaml'
+
+module Seeds
+  module Loader
+    module_function
+
+    def data_dir
+      Rails.root.join('db', 'data')
+    end
+
+    def load_yaml(basename)
+      path = data_dir.join(basename)
+      return [] unless File.exist?(path)
+      YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true) || []
+    end
+
+    def apply!(dry_run: false, prune: false, logger: STDOUT)
+      log = ->(msg) { logger.puts(msg) if logger }
+
+      # Actions
+      actions = load_yaml('actions.yml')
+      actions.each do |attrs|
+        if attrs.key?('cooldown') || attrs.key?(:cooldown)
+          # Use short cooldowns in development for faster iteration
+          attrs = attrs.dup
+          attrs['cooldown'] = 1 if Rails.env.development?
+        end
+        upsert(Action, by: :name, attrs: attrs, dry_run: dry_run)
+      end
+      log.call("Seeded actions: #{actions.size}")
+
+      # Resources (resolve action by name)
+      resources = load_yaml('resources.yml')
+      resources.each do |attrs|
+        action_name = attrs.delete('action_name') || attrs.delete(:action_name)
+        next if dry_run && action_name && Action.find_by(name: action_name).nil?
+        rec = find_or_init(Resource, by: { name: attrs['name'] || attrs[:name] })
+        rec.assign_attributes(attrs)
+        rec.action = Action.find_by(name: action_name) if action_name
+        save!(rec, dry_run)
+      end
+      log.call("Seeded resources: #{resources.size}")
+
+      # Skills
+      skills = load_yaml('skills.yml')
+      skills.each { |attrs| upsert(Skill, by: :name, attrs: attrs, dry_run: dry_run) }
+      log.call("Seeded skills: #{skills.size}")
+
+      # Items
+      items = load_yaml('items.yml')
+      items.each { |attrs| upsert(Item, by: :name, attrs: attrs, dry_run: dry_run) }
+      log.call("Seeded items: #{items.size}")
+
+      # Buildings
+      buildings = load_yaml('buildings.yml')
+      buildings.each { |attrs| upsert(Building, by: :name, attrs: attrs, dry_run: dry_run) }
+      log.call("Seeded buildings: #{buildings.size}")
+
+      # Recipes and components
+      recipes = load_yaml('recipes.yml')
+      recipes.each do |row|
+        item_name = row.fetch('item') { row[:item] }
+        quantity  = row.fetch('quantity', 1)
+        item = Item.find_by(name: item_name)
+        if item.nil?
+          raise "Unknown recipe item '#{item_name}'" unless dry_run
+          next
+        end
+        recipe = find_or_init(Recipe, by: { item_id: item.id })
+        recipe.quantity = quantity
+        save!(recipe, dry_run)
+
+        keep_ids = []
+        Array(row['components'] || row[:components]).each do |comp|
+          type = comp.fetch('type') { comp[:type] }
+          name = comp.fetch('name') { comp[:name] }
+          qty  = comp.fetch('quantity') { comp[:quantity] }
+
+          case type
+          when 'Resource'
+            model = Resource
+            target = model.find_by(name: name)
+          when 'Item'
+            model = Item
+            target = model.find_by(name: name)
+          else
+            raise "Unsupported component type '#{type}' for recipe '#{item_name}'"
+          end
+
+          if target.nil?
+            raise "Unknown component #{type}:'#{name}' in recipe '#{item_name}'" unless dry_run
+            next
+          end
+
+          rr = RecipeResource.find_or_initialize_by(recipe_id: recipe.id, component_type: type, component_id: target.id)
+          rr.quantity = qty
+          save!(rr, dry_run)
+          keep_ids << [type, target.id]
+        end
+
+        if prune && !dry_run
+          RecipeResource.where(recipe_id: recipe.id).where.not(component_type: keep_ids.map(&:first), component_id: keep_ids.map(&:last)).delete_all
+        end
+      end
+      log.call("Seeded recipes: #{recipes.size}")
+
+      # Flags, requirements, unlockables
+      flags = load_yaml('flags.yml')
+      flags.each do |f|
+        base = f.slice('slug', 'name', 'description')
+        flag = upsert(Flag, by: :slug, attrs: base, dry_run: dry_run)
+
+        Array(f['requirements']).each do |req|
+          type = req['type'] # Resource, Item, Skill, Building, Flag
+          name = req['name']
+          quantity = req['quantity'] || 1
+          logic = req['logic'] || 'AND'
+          model = model_for(type)
+          next if dry_run && model.find_by(name: name).nil?
+          target = type == 'Flag' ? Flag.find_by(slug: name) : model.find_by(name: name)
+          raise "Unknown requirement #{type}: '#{name}' for flag '#{flag.slug}'" if target.nil? && !dry_run
+          next if target.nil?
+          fr = FlagRequirement.find_or_initialize_by(flag_id: flag.id, requirement_type: type, requirement_id: target.id)
+          fr.quantity = quantity
+          fr.logic    = logic
+          save!(fr, dry_run)
+        end
+
+        Array(f['unlockables']).each do |u|
+          type = u['type'] # Action, Recipe, Item, Building
+          name = u['name']
+          case type
+          when 'Action'
+            target = Action.find_by(name: name)
+          when 'Recipe'
+            item = Item.find_by(name: name)
+            target = item && Recipe.find_by(item_id: item.id)
+          when 'Item'
+            target = Item.find_by(name: name)
+          when 'Building'
+            target = Building.find_by(name: name)
+          else
+            raise "Unsupported unlockable type '#{type}'"
+          end
+          if target.nil?
+            raise "Unknown unlockable #{type}: '#{name}' for flag '#{flag.slug}'" unless dry_run
+            next
+          end
+          save!(Unlockable.find_or_initialize_by(flag_id: flag.id, unlockable: target), dry_run)
+        end
+      end
+      log.call("Seeded flags: #{flags.size}")
+
+      summary = {
+        actions: Action.count,
+        resources: Resource.count,
+        skills: Skill.count,
+        items: Item.count,
+        buildings: Building.count,
+        recipes: Recipe.count,
+        flags: Flag.count
+      }
+      log.call("Summary: #{summary}")
+      summary
+    end
+
+    def model_for(type)
+      case type
+      when 'Resource' then Resource
+      when 'Item'     then Item
+      when 'Skill'    then Skill
+      when 'Building' then Building
+      when 'Flag'     then Flag
+      else raise "Unknown type: #{type}"
+      end
+    end
+
+    def upsert(model, by:, attrs:, dry_run: false)
+      keys = Array(by)
+      find = attrs.slice(*keys).presence || keys.to_h { |k| [k, attrs[k.to_s]] }
+      rec = model.find_or_initialize_by(find)
+      rec.assign_attributes(attrs.except(*keys).presence || attrs.reject { |k, _| keys.map(&:to_s).include?(k.to_s) })
+      save!(rec, dry_run)
+      rec
+    end
+
+    def find_or_init(model, by: {})
+      model.find_or_initialize_by(by)
+    end
+
+    def save!(record, dry_run)
+      return record unless record.changed?
+      return record if dry_run
+      record.save!
+      record
+    end
+  end
+end

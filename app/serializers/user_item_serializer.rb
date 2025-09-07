@@ -2,7 +2,7 @@
 
 class UserItemSerializer
   include JSONAPI::Serializer
-  attributes :id, :user_id, :item_id, :quantity
+  attributes :id, :user_id, :item_id, :quantity, :quality
   belongs_to :item
 
   attribute :usable do |object, params|

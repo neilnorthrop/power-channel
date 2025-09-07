@@ -1,0 +1,36 @@
+---
+- name: Gold Coins
+  description: The currency of the realm.
+  base_amount: 10
+  drop_chance: 1.0
+  action_name: Taxes
+- name: Stick
+  description: A basic crafting material.
+  base_amount: 3
+  drop_chance: 0.85
+  action_name: Gather
+- name: Stone
+  description: A basic crafting material.
+  base_amount: 1
+  drop_chance: 0.75
+  action_name: Gather
+- name: Weeds
+  description: A basic crafting material.
+  base_amount: 2
+  drop_chance: 0.5
+  action_name: Gather
+- name: Wood
+  description: A basic crafting material.
+  base_amount: 1
+  drop_chance: 1.0
+  action_name: Chop Wood
+- name: Stone
+  description: A basic crafting material.
+  base_amount: 5
+  drop_chance: 1.0
+  action_name: Quarry Stone
+- name: Coal
+  description: A fuel source for smelting and crafting.
+  base_amount: 2
+  drop_chance: 0.33
+  action_name: Quarry Stone

@@ -33,6 +33,15 @@ This document collects future features and improvements. Grouped by area for eas
 - DB check constraints to prevent negative `amount`/`quantity`.
 - Delta broadcasts over ActionCable: send only changed user_items/resources, not full lists.
 
+- Advanced crafting mode:
+  - Gate switch: select `AdvancedCraftingService` when `users.experimental_crafting` is true (controller in place).
+  - Quality rolls: introduce outcome tables/modifiers to produce varying quality tiers and/or quantities.
+  - Failure/partial outcomes: configurable failure chance, component return rates, and byproduct outputs.
+  - Skill/tool modifiers: integrate skill levels, tool durability/bonuses, buffs, and building bonuses into outcome math.
+  - Data model: extend recipes to support multiple outcomes by quality; consider `recipe_outcomes` with chances and multipliers.
+  - Indexing: add composite index on `user_items(user_id,item_id,quality)` and backfill existing rows to `quality = 'normal'`.
+  - API/UI: expose item `quality` and experimental-outcome previews; badge experimental mode; add opt-in hints/tooltips.
+
 ## Gates & Flags
 - Cache `Unlockable` maps per type (in-process or Rails.cache) with simple versioning.
 - SQL gate filtering: LEFT JOIN `unlockables` + `user_flags` to filter visible records at the DB layer.

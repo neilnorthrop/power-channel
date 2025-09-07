@@ -2,6 +2,15 @@
 
 All notable changes are organized by date (YYYY-MM-DD). Newest first.
 
+## 2025-09-06
+
+- Users
+  - Added `experimental_crafting` flag to gate advanced crafting mode.
+- Inventory
+  - Added `quality` column on `user_items` with enum tiers.
+- Crafting
+  - Introduced `AdvancedCraftingService` and controller switch based on user flag.
+
 ## 2025-08-31
 
 - Frontend and JS boot

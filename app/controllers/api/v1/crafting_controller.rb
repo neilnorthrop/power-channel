@@ -34,7 +34,8 @@ class Api::V1::CraftingController < Api::ApiController
   end
 
   def create
-    crafting_service = CraftingService.new(@current_user)
+    service_class = @current_user.experimental_crafting? ? AdvancedCraftingService : CraftingService
+    crafting_service = service_class.new(@current_user)
     result = crafting_service.craft_item(params[:recipe_id])
 
     if result[:success]

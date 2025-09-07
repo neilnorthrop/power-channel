@@ -1,0 +1,11 @@
+---
+- name: Golden Touch
+  description: Increase gold gained from all actions by 10%.
+  cost: 1
+  effect: increase_gold_gain
+  multiplier: 1.1
+- name: Fleet Footed
+  description: Reduce action cooldowns by 10%.
+  cost: 1
+  effect: reduce_cooldown
+  multiplier: 0.9

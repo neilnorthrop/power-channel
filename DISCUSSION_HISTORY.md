@@ -74,3 +74,13 @@ Note: If you want a different structure (strict chronology, or per-sprint sectio
  - Note: Future extension could add a `group_key` to support grouped OR logic
    like (A or B) AND (C or D). Semantics: all ANDs must pass; each group_key
    represents an OR-bucket where at least one requirement in that group must pass.
+
+## Experimental Crafting Preview (Attempt 1)
+- Decision: Gate an experimental crafting mode behind a per-user flag `users.experimental_crafting`.
+- Change: Added `AdvancedCraftingService < CraftingService` as a placeholder to enable a gradual refactor while reusing base behavior. File: `app/services/advanced_crafting_service.rb`.
+- Change: Switched controller to pick the service class by flag. File: `app/controllers/api/v1/crafting_controller.rb:37`.
+- Change: Introduced item quality to inventory to support future advanced outcomes. Files: `db/migrate/20250906153642_add_quality_to_user_items.rb`, `app/models/user_item.rb`, `app/serializers/user_item_serializer.rb`.
+- Change: Updated base `CraftingService` to scope consumption/production to a default quality (`DEFAULT_QUALITY = 'normal'`) so both classic and advanced modes share the same storage. File: `app/services/crafting_service.rb`.
+- Migrations: Added `experimental_crafting` to users. File: `db/migrate/20250906153638_add_experimental_crafting_to_users.rb`.
+- Behavior notes: Craft performs atomic decrements and increments within a transaction, evaluates unlock flags in-transaction, then broadcasts consolidated updates to `UserUpdatesChannel`. File: `app/services/crafting_service.rb`.
+- Environment: Database migrations/tests not executed in this environment (no local Postgres). Validate locally with `bin/rails db:migrate` and `bin/rails test`.
