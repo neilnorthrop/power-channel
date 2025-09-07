@@ -30,6 +30,9 @@ class DismantleService
 
     ApplicationRecord.transaction do
       user_item.decrement!(:quantity, 1)
+      if user_item.reload.quantity.to_i <= 0
+        user_item.destroy!
+      end
 
       # Apply outputs
       computed.each do |out|
@@ -59,4 +62,3 @@ class DismantleService
     { success: true, message: "#{item.name} dismantled successfully." }
   end
 end
-

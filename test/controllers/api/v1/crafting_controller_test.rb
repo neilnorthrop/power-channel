@@ -25,4 +25,12 @@ class Api::V1::CraftingControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
   end
+
+  test "uses advanced service when experimental flag is true" do
+    @user.update!(experimental_crafting: true)
+    assert_difference("UserItem.count") do
+      post api_v1_crafting_index_url, params: { recipe_id: @recipe.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
+    end
+    assert_response :success
+  end
 end

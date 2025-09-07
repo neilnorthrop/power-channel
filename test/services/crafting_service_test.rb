@@ -87,4 +87,13 @@ class CraftingServiceItemComponentTest < ActiveSupport::TestCase
     assert_not result[:success]
     assert_equal "Not enough resources.", result[:error]
   end
+
+  test "does not count non-default quality item components" do
+    # Give user only rare twine
+    @user.user_items.where(item: @twine).delete_all
+    @user.user_items.create!(item: @twine, quantity: 5, quality: "rare")
+    service = CraftingService.new(@user)
+    result = service.craft_item(@recipe.id)
+    assert_not result[:success], "Should not craft using non-default quality items"
+  end
 end

@@ -1,0 +1,14 @@
+hatchet_rule_twine:
+  dismantle_rule: hatchet_rule
+  component: twine (Item)
+  component_type: Item
+  quantity: 1
+  salvage_rate: 1.0
+
+hatchet_rule_stone:
+  dismantle_rule: hatchet_rule
+  component: stone (Resource)
+  component_type: Resource
+  quantity: 5
+  salvage_rate: 0.6
+
