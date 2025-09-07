@@ -199,3 +199,102 @@ Users who already satisfy requirements will be granted the appropriate flags. Ne
 - Pruning: Use `PRUNE=1` with `db:seed` to remove recipe components not in YAML.
 - Indexes: Review and add covering indexes to keep seeding and queries fast.
 
+## Content Packs (Starter Packs)
+
+Content packs are themed bundles of Actions, Resources, Items, Recipes, Buildings, Skills, and Flags that ship as drop‑in YAML and form a coherent gameplay loop. They help you add significant content quickly and safely.
+
+- Structure: place packs under `db/data/packs/<pack_name>/`. Each pack can provide any of the standard YAML files:
+  - `actions.yml`, `resources.yml`, `items.yml`, `recipes.yml`, `buildings.yml`, `skills.yml`, `flags.yml`
+- Merge model: core data in `db/data/*.yml` remains the base; packs are merged on top. Later packs (in order) win when the same natural key is present (e.g., same Item name).
+- Optional loader behavior: support `PACKS` env to load specific packs, e.g. `PACKS=woodworking,alchemy bin/rails db:seed`. Not required to use packs; if `PACKS` is unset all packs can be ignored.
+- Isolation: packs should avoid renaming core records; if they depend on core, reference by `name` (or `slug` for Flags). Keep pack content idempotent and additive where possible.
+
+Starter pack ideas
+- Woodworking: Fell Trees → Timber → Planks/Handles → Tools (Hatchet/Bow/Arrows), Carpenter’s Workshop, flags for advanced felling/bowyer.
+- Mining & Smelting: Ore veins → Ore → Bars → Tools (Pickaxe/Anvil), Smelter/Forge buildings, deeper strata flags.
+- Alchemy: Herbs → Reagents → Potions (Luck/Haste/Health), Mortar & Pestle building, brewing skill.
+- Agriculture: Seeds → Crops → Food/Ingredients, Farm/Granary buildings.
+- Masonry: Stone → Bricks → Structures, Quarry upgrades, construction flags.
+
+Example: woodworking pack (YAML)
+
+db/data/packs/woodworking/actions.yml
+---
+- name: Fell Trees
+  description: Chop mature trees for timber.
+  cooldown: 60
+- name: Saw Planks
+  description: Process timber into planks.
+  cooldown: 90
+
+db/data/packs/woodworking/resources.yml
+---
+- name: Timber
+  base_amount: 1
+  drop_chance: 0.9
+  action_name: Fell Trees
+- name: Bark
+  base_amount: 1
+  drop_chance: 0.4
+  action_name: Fell Trees
+
+db/data/packs/woodworking/items.yml
+---
+- name: Wood Plank
+  description: A processed timber plank.
+- name: Wooden Handle
+  description: A carved wooden handle.
+- name: Longbow
+  description: A bow made of flexible wood.
+- name: Arrows
+  description: Bundle of arrows.
+
+db/data/packs/woodworking/recipes.yml
+---
+- item: Wood Plank
+  quantity: 1
+  components:
+    - { type: Resource, name: Timber, quantity: 2 }
+- item: Wooden Handle
+  quantity: 1
+  components:
+    - { type: Item, name: Wood Plank, quantity: 1 }
+    - { type: Resource, name: Bark, quantity: 2 }
+- item: Longbow
+  quantity: 1
+  components:
+    - { type: Item, name: Wood Plank, quantity: 4 }
+    - { type: Item, name: Wooden Handle, quantity: 1 }
+    - { type: Item, name: Twine, quantity: 3 }
+- item: Arrows
+  quantity: 10
+  components:
+    - { type: Item, name: Wood Plank, quantity: 1 }
+    - { type: Resource, name: Stone, quantity: 1 }
+
+db/data/packs/woodworking/buildings.yml
+---
+- name: Carpenter’s Workshop
+  description: Improves plank yield and unlocks advanced woodworking.
+  level: 1
+
+db/data/packs/woodworking/flags.yml
+---
+- slug: woodworking_intro
+  name: Woodworking Intro
+  requirements:
+    - { type: Resource, name: Wood, quantity: 25 }
+  unlockables:
+    - { type: Action, name: Saw Planks }
+    - { type: Recipe, name: Wood Plank }
+- slug: bowyer_path
+  name: Bowyer Path
+  requirements:
+    - { type: Item, name: Twine, quantity: 2 }
+    - { type: Item, name: Wood Plank, quantity: 4 }
+  unlockables:
+    - { type: Recipe, name: Longbow }
+    - { type: Recipe, name: Arrows }
+
+Implementation notes
+- Loader support for `PACKS` is not required yet; it’s a small addition (scan `db/data/packs`, merge specified packs) and can be added when you’re ready.

@@ -128,6 +128,11 @@ Notes
 See also
 - `SEEDS_REFERENCE_GUIDE.md` for detailed guidance, workflows, and flag examples.
 
+Starter packs
+- You can organize themed “starter packs” of content under `db/data/packs/<pack_name>/` (e.g., woodworking, alchemy) with the same YAML shapes as core.
+- Planned option: load packs via `PACKS=woodworking,alchemy bin/rails db:seed` to merge them on top of core content.
+- Details and a sample woodworking pack are in `SEEDS_REFERENCE_GUIDE.md`.
+
 ---
 
 ## Adding a New Game Element

@@ -84,3 +84,9 @@ Note: If you want a different structure (strict chronology, or per-sprint sectio
 - Migrations: Added `experimental_crafting` to users. File: `db/migrate/20250906153638_add_experimental_crafting_to_users.rb`.
 - Behavior notes: Craft performs atomic decrements and increments within a transaction, evaluates unlock flags in-transaction, then broadcasts consolidated updates to `UserUpdatesChannel`. File: `app/services/crafting_service.rb`.
 - Environment: Database migrations/tests not executed in this environment (no local Postgres). Validate locally with `bin/rails db:migrate` and `bin/rails test`.
+
+## Seeding Content Packs
+- Idea: Introduce themed “starter packs” as drop‑in YAML bundles under `db/data/packs/<pack>` to accelerate world‑building.
+- Loader behavior: Keep core YAML in `db/data/*.yml`, optionally merge packs listed in `PACKS` env (e.g., `PACKS=woodworking,alchemy bin/rails db:seed`). Later packs win on key collisions.
+- Conventions: Packs avoid renaming core; reference by names (or flag slugs); keep changes additive and idempotent.
+- Example pack: “woodworking” with Fell Trees/Saw Planks actions, Timber/Bark resources, Wood Plank/Handle/Bow/Arrows items and recipes, Carpenter’s Workshop building, and flags `woodworking_intro` and `bowyer_path`.

@@ -26,6 +26,7 @@ This document collects future features and improvements. Grouped by area for eas
 - Rollback & audit: optional pre-seed snapshots (SEEDS_BACKUP); maintain `seed_runs` audit log.
 - Developer ergonomics: wrapper tasks and flags for common flows.
 - Flag requirement logic groups: support `group_key` to model (A|B) AND (C|D) expressions in a declarative way.
+- Content packs: support `db/data/packs/<pack>` folders and optional `PACKS=...` env var to merge themed bundles (woodworking, alchemy) over core content; add seeds:lint awareness for packs.
 
 ## Crafting & Inventory
 - Concurrency safety: row locking on `user_resources`/`user_items` within the craft transaction; optimistic retry on conflicts.
