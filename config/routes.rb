@@ -19,6 +19,7 @@ Rails.application.routes.draw do
         post "use", on: :member
       end
       resources :crafting, only: [ :index, :create ]
+      resources :dismantle, only: [ :create ]
       resources :buildings, only: [ :index, :create, :update ]
       resources :events, only: [ :index ]
     end

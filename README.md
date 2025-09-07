@@ -135,6 +135,29 @@ Starter packs
 
 ---
 
+## Dismantling (Items)
+
+You can dismantle items into their component outputs using rules defined in YAML and executed by a service.
+
+- Data: `db/data/dismantle.yml` (item-only for now) defines per-item outputs with optional salvage rates.
+- Service: `DismantleService#dismantle_item(item_id, quality: 'normal')` decrements one item and grants outputs transactionally.
+- API: `POST /api/v1/dismantle` with `item_id` and optional `quality`.
+- Broadcasts: item/resource deltas are pushed via `UserUpdatesChannel`.
+
+Deterministic yields
+- Each yield computes `floor(quantity * salvage_rate)`; 0 means no output. Skills/modifiers can be added later to adjust salvage rates.
+
+Example `db/data/dismantle.yml`
+```
+- subject_type: Item
+  subject_name: Hatchet
+  yields:
+    - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
+    - { type: Resource, name: Stone, quantity: 5, salvage_rate: 0.6 }
+```
+
+---
+
 ## Adding a New Game Element
 
 Use the following checklists when introducing new content. Most data lives in `db/seeds.rb`, but remember to write tests for any new logic.

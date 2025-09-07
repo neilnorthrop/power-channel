@@ -298,3 +298,24 @@ db/data/packs/woodworking/flags.yml
 
 Implementation notes
 - Loader support for `PACKS` is not required yet; it’s a small addition (scan `db/data/packs`, merge specified packs) and can be added when you’re ready.
+
+## Dismantle Rules (Items)
+
+Dismantle rules define how 1 item can be broken down into outputs. Rules are item-only for now and live in `db/data/dismantle.yml`.
+
+- Structure per entry:
+  - `subject_type`: `Item`
+  - `subject_name`: item name
+  - `yields`: list of components with `type` (`Resource` or `Item`), `name`, `quantity`, optional `salvage_rate` (0.0–1.0), optional `quality` (for item outputs)
+- Deterministic yields: each output amount is `floor(quantity * salvage_rate)`; 0 is skipped.
+- Loader: entries are upserted into `DismantleRule` and `DismantleYield`.
+- Service: `DismantleService` consumes one inventory unit and grants outputs transactionally.
+
+Example
+```
+- subject_type: Item
+  subject_name: Hatchet
+  yields:
+    - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
+    - { type: Resource, name: Stone, quantity: 5, salvage_rate: 0.6 }
+```

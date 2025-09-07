@@ -153,6 +153,49 @@ module Seeds
       end
       log.call("Seeded flags: #{flags.size}")
 
+      # Dismantle rules (items only for now)
+      dismantles = load_yaml('dismantle.yml')
+      dismantles.each do |row|
+        subject_type = row.fetch('subject_type', 'Item')
+        subject_name = row.fetch('subject_name') { row['item'] || row['name'] }
+        next unless subject_type == 'Item'
+        item = Item.find_by(name: subject_name)
+        if item.nil?
+          raise "Unknown dismantle subject Item: '#{subject_name}'" unless dry_run
+          next
+        end
+        rule = DismantleRule.find_or_initialize_by(subject_type: 'Item', subject_id: item.id)
+        rule.notes = row['notes'] if row['notes']
+        save!(rule, dry_run)
+
+        keep_keys = []
+        Array(row['yields']).each do |y|
+          type = y.fetch('type')
+          name = y.fetch('name')
+          qty  = y.fetch('quantity', 1)
+          rate = y.fetch('salvage_rate', 1.0)
+          quality = y['quality']
+          target = (type == 'Resource' ? Resource.find_by(name: name) : Item.find_by(name: name))
+          if target.nil?
+            raise "Unknown dismantle yield #{type}: '#{name}' for subject '#{subject_name}'" unless dry_run
+            next
+          end
+          dy = DismantleYield.find_or_initialize_by(dismantle_rule_id: rule.id, component_type: type, component_id: target.id)
+          dy.quantity = qty
+          dy.salvage_rate = rate
+          dy.quality = quality
+          save!(dy, dry_run)
+          keep_keys << [type, target.id]
+        end
+
+        if prune && !dry_run
+          DismantleYield.where(dismantle_rule_id: rule.id).where.not(
+            component_type: keep_keys.map(&:first), component_id: keep_keys.map(&:last)
+          ).delete_all
+        end
+      end
+      log.call("Seeded dismantle rules: #{dismantles.size}")
+
       summary = {
         actions: Action.count,
         resources: Resource.count,
@@ -160,7 +203,8 @@ module Seeds
         items: Item.count,
         buildings: Building.count,
         recipes: Recipe.count,
-        flags: Flag.count
+        flags: Flag.count,
+        dismantle_rules: defined?(DismantleRule) ? DismantleRule.count : 0
       }
       log.call("Summary: #{summary}")
       summary

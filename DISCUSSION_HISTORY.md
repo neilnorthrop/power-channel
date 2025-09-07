@@ -90,3 +90,10 @@ Note: If you want a different structure (strict chronology, or per-sprint sectio
 - Loader behavior: Keep core YAML in `db/data/*.yml`, optionally merge packs listed in `PACKS` env (e.g., `PACKS=woodworking,alchemy bin/rails db:seed`). Later packs win on key collisions.
 - Conventions: Packs avoid renaming core; reference by names (or flag slugs); keep changes additive and idempotent.
 - Example pack: “woodworking” with Fell Trees/Saw Planks actions, Timber/Bark resources, Wood Plank/Handle/Bow/Arrows items and recipes, Carpenter’s Workshop building, and flags `woodworking_intro` and `bowyer_path`.
+
+## Dismantling (Items Only, v1)
+- Decision: Introduce a simple dismantle system starting with items only.
+- Data model: `DismantleRule(subject_type='Item', subject_id)` and `DismantleYield(component_type, component_id, quantity, salvage_rate, quality)`.
+- Seeds: YAML file `db/data/dismantle.yml` to define per-item salvage outputs; deterministic yields via `floor(quantity * salvage_rate)`.
+- Service: `DismantleService#dismantle_item(item_id, quality)` decrements one item and grants outputs transactionally; broadcasts deltas and logs an event.
+- API: `POST /api/v1/dismantle` with `item_id` and optional `quality`.

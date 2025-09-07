@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_06_153642) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_06_153642) do
     t.string "effect"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "dismantle_rules", force: :cascade do |t|
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subject_type", "subject_id"], name: "index_dismantle_rules_on_subject", unique: true
+  end
+
+  create_table "dismantle_yields", force: :cascade do |t|
+    t.bigint "dismantle_rule_id", null: false
+    t.string "component_type", null: false
+    t.bigint "component_id", null: false
+    t.integer "quantity", default: 1, null: false
+    t.decimal "salvage_rate", precision: 5, scale: 2, default: "1.0", null: false
+    t.string "quality"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dismantle_rule_id", "component_type", "component_id"], name: "index_dismantle_yields_on_rule_component"
+    t.index ["dismantle_rule_id"], name: "index_dismantle_yields_on_dismantle_rule_id"
   end
 
   create_table "effects", force: :cascade do |t|
@@ -229,6 +251,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_06_153642) do
 
   add_foreign_key "active_effects", "effects"
   add_foreign_key "active_effects", "users"
+  add_foreign_key "dismantle_yields", "dismantle_rules"
   add_foreign_key "events", "users"
   add_foreign_key "flag_requirements", "flags"
   add_foreign_key "recipe_resources", "recipes"

@@ -33,6 +33,7 @@ This document collects future features and improvements. Grouped by area for eas
 - SQL-only decrements when consuming multiple components (single `UPDATE ... CASE`).
 - DB check constraints to prevent negative `amount`/`quantity`.
 - Delta broadcasts over ActionCable: send only changed user_items/resources, not full lists.
+- Dismantling: add item-only dismantle rules and service (done); consider RNG rolls and skill/building modifiers; evaluate extending to buildings later with refund math.
 
 - Advanced crafting mode:
   - Gate switch: select `AdvancedCraftingService` when `users.experimental_crafting` is true (controller in place).

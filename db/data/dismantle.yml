@@ -1,0 +1,11 @@
+---
+# Item-only dismantle rules. Each entry defines what a user gets when dismantling 1 unit.
+# Deterministic yields are computed as floor(quantity * salvage_rate).
+
+- subject_type: Item
+  subject_name: Hatchet
+  notes: Recover basic components from a simple tool.
+  yields:
+    - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
+    - { type: Resource, name: Stone, quantity: 5, salvage_rate: 0.6 }
+
