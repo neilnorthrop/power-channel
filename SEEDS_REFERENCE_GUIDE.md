@@ -9,15 +9,16 @@ This guide consolidates the seeding comments that previously lived in `db/seeds.
 
 ## Quick Start
 1) Define content under `db/data/*.yml` (Actions, Resources with `action_name`, Skills, Items, Buildings, Recipes, Flags).
-2) Apply definitions: `bin/rails db:seed`.
-3) Backfill existing users (idempotent):
+2) Plan first (optional): `bin/rails seeds:plan` shows effective packs, sources, and counts.
+3) Apply definitions: `bin/rails db:seed`.
+4) Backfill existing users (idempotent):
    - `bin/rails users:ensure_actions`
    - `bin/rails users:ensure_resources`
    - Optional (env-gated):
      - `ITEMS_CREATE_ZERO=1 bin/rails users:ensure_items`
      - `AUTO_GRANT=1         bin/rails users:ensure_skills`
      - `AUTO_GRANT=1 LEVEL=1 bin/rails users:ensure_buildings`
-4) One-liners (seed + ensure):
+5) One-liners (seed + ensure):
    - `bin/rails app:seed_and_ensure_actions`
    - `bin/rails app:seed_and_ensure_resources`
    - `bin/rails app:seed_and_ensure_all` (obeys env flags for items/skills/buildings)
@@ -297,7 +298,9 @@ db/data/packs/woodworking/flags.yml
     - { type: Recipe, name: Arrows }
 
 Implementation notes
-- Loader support for `PACKS` is not required yet; it’s a small addition (scan `db/data/packs`, merge specified packs) and can be added when you’re ready.
+- Loader supports `PACKS` and `EXCLUDE`.
+  - `PACKS=woodworking,alchemy` merges those packs over core. `PACKS=all` merges all packs found.
+  - `EXCLUDE=pack1,pack2` removes those from the selected set. `EXCLUDE=all` disables all packs even if `PACKS` is set.
 
 ## Dismantle Rules (Items)
 

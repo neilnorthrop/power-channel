@@ -1,0 +1,11 @@
+---
+- name: Timber
+  description: Cut logs suitable for planks.
+  base_amount: 1
+  drop_chance: 0.9
+  action_name: Fell Trees
+- name: Bark
+  description: Outer tree bark.
+  base_amount: 1
+  drop_chance: 0.4
+  action_name: Fell Trees

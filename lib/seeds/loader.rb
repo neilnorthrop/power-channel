@@ -2,18 +2,62 @@
 
 require 'yaml'
 
-module Seeds
-  module Loader
-    module_function
+  module Seeds
+    module Loader
+      module_function
 
-    def data_dir
-      Rails.root.join('db', 'data')
+      def data_dir
+        Rails.root.join('db', 'data')
+      end
+
+    def available_packs
+      packs_root = data_dir.join('packs')
+      return [] unless Dir.exist?(packs_root)
+      Dir.children(packs_root).select { |c| File.directory?(packs_root.join(c)) }.sort
+    end
+
+    def selected_pack_names
+      packs_env = ENV['PACKS']&.strip
+      exclude_env = ENV['EXCLUDE']&.strip
+
+      return [] if exclude_env&.downcase == 'all'
+
+      names = []
+      if packs_env.present?
+        if packs_env.downcase == 'all'
+          names = available_packs
+        else
+          names = packs_env.split(',').map(&:strip).reject(&:empty?)
+        end
+      else
+        names = [] # Backward compatible: only load packs when PACKS is set
+      end
+
+      if exclude_env.present?
+        excludes = exclude_env.split(',').map { |x| x.strip.downcase }.reject(&:empty?)
+        names = names.reject { |n| excludes.include?(n.downcase) }
+      end
+      names
+    end
+
+    def pack_dirs
+      selected_pack_names.map { |name| data_dir.join('packs', name) }
     end
 
     def load_yaml(basename)
-      path = data_dir.join(basename)
-      return [] unless File.exist?(path)
-      YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true) || []
+      rows = []
+      # Base file first
+      base = data_dir.join(basename)
+      rows.concat YAML.safe_load(File.read(base), permitted_classes: [Symbol], aliases: true) if File.exist?(base)
+
+      # Then overlay packs in listed order
+      pack_dirs.each do |dir|
+        path = dir.join(basename)
+        next unless File.exist?(path)
+        pack_rows = YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true)
+        rows.concat(pack_rows) if pack_rows
+      end
+      rows || []
     end
 
     def apply!(dry_run: false, prune: false, logger: STDOUT)
@@ -29,7 +73,7 @@ module Seeds
         end
         upsert(Action, by: :name, attrs: attrs, dry_run: dry_run)
       end
-      log.call("Seeded actions: #{actions.size}")
+      log.call("Seeded actions: #{actions.size} (packs: #{selected_pack_names.join(', ')})")
 
       # Resources (resolve action by name)
       resources = load_yaml('resources.yml')

@@ -1,0 +1,9 @@
+---
+- name: Wood Plank
+  description: A processed timber plank.
+- name: Wooden Handle
+  description: A carved wooden handle.
+- name: Longbow
+  description: A bow made of flexible wood.
+- name: Arrows
+  description: Bundle of arrows.

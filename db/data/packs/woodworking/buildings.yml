@@ -1,0 +1,4 @@
+---
+- name: Carpenter’s Workshop
+  description: Improves plank yield and unlocks advanced woodworking.
+  level: 1

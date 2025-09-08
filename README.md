@@ -117,8 +117,10 @@ Seeds are externalized to YAML files under `db/data`. This makes it easy to add 
 - Files: `db/data/actions.yml`, `resources.yml`, `skills.yml`, `items.yml`, `buildings.yml`, `recipes.yml`, `flags.yml`.
 - Apply: `bin/rails db:seed` (idempotent upserts; no user-owned data is modified).
 - Dry-run: `DRY_RUN=1 bin/rails db:seed` or `bin/rails seeds:dry_run`.
+- Plan: `bin/rails seeds:plan` prints effective packs, source files, and planned row counts (no writes).
 - Lint: `bin/rails seeds:lint` checks basic shapes and references.
 - Prune: `PRUNE=1` will remove recipe components that aren’t listed in YAML.
+- Packs: set `PACKS=woodworking,alchemy` to merge themed packs from `db/data/packs` over core YAML. Use `PACKS=all` to include all packs. Use `EXCLUDE=pack1,pack2` or `EXCLUDE=all` to filter.
 
 Notes
 - Recipes reference components by `type` (`Resource` or `Item`) and `name`.
@@ -130,7 +132,7 @@ See also
 
 Starter packs
 - You can organize themed “starter packs” of content under `db/data/packs/<pack_name>/` (e.g., woodworking, alchemy) with the same YAML shapes as core.
-- Planned option: load packs via `PACKS=woodworking,alchemy bin/rails db:seed` to merge them on top of core content.
+- Load packs via `PACKS=woodworking,alchemy bin/rails db:seed` to merge them on top of core content.
 - Details and a sample woodworking pack are in `SEEDS_REFERENCE_GUIDE.md`.
 
 ---

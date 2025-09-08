@@ -1,0 +1,16 @@
+---
+- slug: woodworking_intro
+  name: Woodworking Intro
+  requirements:
+    - { type: Resource, name: Wood, quantity: 25 }
+  unlockables:
+    - { type: Action, name: Saw Planks }
+    - { type: Recipe, name: Wood Plank }
+- slug: bowyer_path
+  name: Bowyer Path
+  requirements:
+    - { type: Item, name: Twine, quantity: 2 }
+    - { type: Item, name: Wood Plank, quantity: 4 }
+  unlockables:
+    - { type: Recipe, name: Longbow }
+    - { type: Recipe, name: Arrows }
