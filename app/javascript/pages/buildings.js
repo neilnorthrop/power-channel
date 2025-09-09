@@ -1,4 +1,5 @@
 import { getJwt, authHeaders, toast } from "pages/util"
+import { getConsumer } from "pages/cable"
 
 function initBuildings() {
   const token = getJwt()
@@ -53,7 +54,7 @@ function initBuildings() {
               .then(async r => {
                 const data = await r.json()
                 if (r.ok) {
-                  toast(data.message || 'Building upgraded.', 'success')
+                  toast(data.message || 'Building upgraded.', 'building')
                 } else {
                   toast(data.error || 'Failed to upgrade building.', 'error')
                 }
@@ -69,7 +70,38 @@ function initBuildings() {
       })
   }
 
+  // Debounced refresh
+  let refreshTimer = null
+  const scheduleRefresh = (msg = null) => {
+    if (msg) toast(msg, 'info')
+    if (refreshTimer) return
+    refreshTimer = setTimeout(() => { refreshTimer = null; fetchBuildings() }, 150)
+  }
+
   fetchBuildings()
+
+  // Live updates via ActionCable
+  if (token) {
+    const cable = getConsumer(token)
+    cable.subscriptions.create('UserUpdatesChannel', {
+      received(data) {
+        if (!data || !data.type) return
+        switch (data.type) {
+          case 'user_building_update':
+            scheduleRefresh('Buildings updated')
+            break
+          case 'user_resource_update':
+          case 'user_item_update':
+          case 'user_skill_update':
+          case 'user_update':
+            scheduleRefresh()
+            break
+          default:
+            break
+        }
+      }
+    })
+  }
 }
 
 // Initialize on Turbo visits and full loads

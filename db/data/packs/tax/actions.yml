@@ -1,0 +1,5 @@
+---
+- name: Taxes
+  description: Gather taxes from your citizens.
+  cooldown: 60
+

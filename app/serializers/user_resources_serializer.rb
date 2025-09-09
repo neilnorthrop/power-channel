@@ -2,7 +2,7 @@
 
 class UserResourcesSerializer
   include JSONAPI::Serializer
-  attributes :id, :user_id, :amount
+  attributes :id, :user_id, :amount, :resource_id
 
   attribute :name do |object|
     object.resource.name

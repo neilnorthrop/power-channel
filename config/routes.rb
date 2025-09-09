@@ -2,7 +2,6 @@ Rails.application.routes.draw do
   root "game#index"
   get "/inventory", to: "game#inventory", as: :inventory
   get "/skills", to: "game#skills", as: :skills
-  get "/crafting", to: "game#crafting", as: :crafting
   get "/buildings", to: "game#buildings", as: :buildings
 
   devise_for :users, controllers: { registrations: "api/v1/registrations" }

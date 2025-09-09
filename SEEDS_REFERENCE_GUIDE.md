@@ -322,3 +322,10 @@ Example
     - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
     - { type: Resource, name: Stone, quantity: 5, salvage_rate: 0.6 }
 ```
+- Ordering for Actions
+- `actions.order` controls display order. You can set it explicitly in YAML.
+- If omitted, the loader auto-assigns an order:
+  - Core actions get the next available value in the `[0, 10_000)` range.
+  - Pack actions get the next available value in their pack’s reserved block of 10,000 (ordered by `PACKS` env).
+  - Values are spaced by 10 to leave room for manual inserts later.
+- UI sorts by `order` then `name`, so clicking buttons won’t make the list jump.

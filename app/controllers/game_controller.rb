@@ -6,6 +6,5 @@ class GameController < ApplicationController
 
   def inventory; end
   def skills; end
-  def crafting; end
   def buildings; end
 end

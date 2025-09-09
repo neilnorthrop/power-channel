@@ -16,7 +16,6 @@ pin_all_from "app/javascript/pages", under: "pages"
 pin "pages/home", to: "pages/home.js"
 pin "pages/inventory", to: "pages/inventory.js"
 pin "pages/skills", to: "pages/skills.js"
-pin "pages/crafting", to: "pages/crafting.js"
 pin "pages/buildings", to: "pages/buildings.js"
 pin "pages/util", to: "pages/util.js"
 

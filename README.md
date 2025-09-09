@@ -122,6 +122,12 @@ Seeds are externalized to YAML files under `db/data`. This makes it easy to add 
 - Prune: `PRUNE=1` will remove recipe components that aren’t listed in YAML.
 - Packs: set `PACKS=woodworking,alchemy` to merge themed packs from `db/data/packs` over core YAML. Use `PACKS=all` to include all packs. Use `EXCLUDE=pack1,pack2` or `EXCLUDE=all` to filter.
 
+Action ordering
+- Each Action can define an `order` in YAML. If omitted, an order is assigned automatically so you don’t need to hunt for the next number:
+  - Core actions use the next value in a reserved core block; each pack gets its own block.
+  - Values increment by 10 to allow manual inserts later without renumbering.
+- The API returns actions sorted by `order` then `name` to keep the UI stable.
+
 Notes
 - Recipes reference components by `type` (`Resource` or `Item`) and `name`.
 - Flags support `requirements` (with `type`, `name`, `quantity`, `logic`) and `unlockables` (`type`, `name`).

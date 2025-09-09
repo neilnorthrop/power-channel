@@ -1,0 +1,12 @@
+---
+- name: Stone
+  description: A basic crafting material.
+  base_amount: 5
+  drop_chance: 1.0
+  action_name: Quarry Stone
+- name: Coal
+  description: A fuel source for smelting and crafting.
+  base_amount: 2
+  drop_chance: 0.33
+  action_name: Quarry Stone
+

@@ -173,7 +173,7 @@ function initHome() {
       .then(async r => {
         const data = await r.json()
         if (r.ok) {
-          toast(data.message || 'Action performed.', 'success')
+          toast(data.message || 'Action performed.', 'action')
         } else {
           toast(data.error || 'Failed to perform action.', 'error')
         }
@@ -186,7 +186,7 @@ function initHome() {
       .then(async r => {
         const data = await r.json()
         if (r.ok) {
-          toast(data.message || 'Action upgraded.', 'success')
+          toast(data.message || 'Action upgraded.', 'action')
         } else {
           toast(data.error || 'Failed to upgrade action.', 'error')
         }

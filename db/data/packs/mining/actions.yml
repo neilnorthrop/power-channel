@@ -1,0 +1,5 @@
+---
+- name: Quarry Stone
+  description: Quarry for stone.
+  cooldown: 60
+

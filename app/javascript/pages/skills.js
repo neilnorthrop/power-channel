@@ -1,4 +1,5 @@
 import { getJwt, authHeaders, toast } from "pages/util"
+import { getConsumer } from "pages/cable"
 
 function initSkills() {
   const token = getJwt()
@@ -65,7 +66,7 @@ function initSkills() {
               .then(async r => {
                 const data = await r.json()
                 if (r.ok) {
-                  toast(data.message || 'Skill unlocked.', 'success')
+                  toast(data.message || 'Skill unlocked.', 'skill')
                 } else {
                   toast(data.error || 'Failed to unlock skill.', 'error')
                 }
@@ -83,7 +84,38 @@ function initSkills() {
       })
   }
 
+  // Debounced refresh
+  let refreshTimer = null
+  const scheduleRefresh = (msg = null) => {
+    if (msg) toast(msg, 'info')
+    if (refreshTimer) return
+    refreshTimer = setTimeout(() => { refreshTimer = null; fetchSkills() }, 150)
+  }
+
   fetchSkills()
+
+  // Live updates via ActionCable
+  if (token) {
+    const cable = getConsumer(token)
+    cable.subscriptions.create('UserUpdatesChannel', {
+      received(data) {
+        if (!data || !data.type) return
+        switch (data.type) {
+          case 'user_update':
+          case 'user_skill_update':
+            scheduleRefresh('Skills updated')
+            break
+          case 'user_resource_update':
+          case 'user_item_update':
+          case 'user_building_update':
+            scheduleRefresh()
+            break
+          default:
+            break
+        }
+      }
+    })
+  }
 }
 
 // Initialize on Turbo visits and full loads

@@ -5,3 +5,6 @@
 - name: Saw Planks
   description: Process timber into planks.
   cooldown: 90
+- name: Chop Wood
+  description: Chop down trees for wood.
+  cooldown: 60

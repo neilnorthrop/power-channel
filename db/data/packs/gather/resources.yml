@@ -1,0 +1,12 @@
+---
+- name: Stick
+  description: A basic crafting material.
+  base_amount: 3
+  drop_chance: 0.85
+  action_name: Gather
+- name: Weeds
+  description: A basic crafting material.
+  base_amount: 2
+  drop_chance: 0.5
+  action_name: Gather
+

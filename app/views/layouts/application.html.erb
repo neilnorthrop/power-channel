@@ -30,15 +30,15 @@
   </head>
 
   <body class="">
-    <div class="container mx-auto p-4 min-h-screen bg-white pb-48">
+    <div id="page-container" class="container mx-auto p-4 h-screen overflow-hidden bg-white">
     <% if user_signed_in? %>
-      <div class="flex gap-6" data-controller="sidebar">
+      <div class="flex gap-6 h-full overflow-hidden" data-controller="sidebar">
         <aside id="sidebar"
                role="dialog"
                aria-modal="true"
                aria-label="Main sidebar"
                aria-hidden="true"
-               class="fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full md:static md:translate-x-0 md:block transition-transform duration-200 ease-in-out">
+               class="fixed inset-y-0 left-0 z-40 w-64 transform -translate-x-full overflow-y-auto md:static md:h-full md:translate-x-0 md:block transition-transform duration-200 ease-in-out">
                 <% if content_for?(:sidebar) %>
                   <%= yield :sidebar %>
                 <% else %>
@@ -52,7 +52,7 @@
         <!-- backdrop for mobile sidebar -->
         <div id="sidebar-backdrop" data-sidebar-target="backdrop" data-action="click->sidebar#close" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
 
-        <main class="flex-1">
+        <main id="main-scroll" class="flex-1 h-full overflow-y-auto">
           <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -94,9 +94,9 @@
     </div>
 
     <!-- Persistent Event Log (bottom panel) -->
-    <div id="event-log" class="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <div id="event-log" class="fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
       <div class="container mx-auto">
-        <div class="px-4 py-2 text-xs text-gray-600 flex items-center gap-3">
+        <div class="px-4 py-2 text-xs text-gray-600 flex items-center gap-3 bg-white border-b border-gray-200">
           <span>Event Log</span>
           <label class="inline-flex items-center gap-1">
             <span>Level</span>
@@ -120,7 +120,7 @@
           <button id="event-clear" class="text-xs px-2 py-0.5 rounded border border-gray-300">Clear</button>
           <button id="event-apply" class="text-xs px-2 py-0.5 rounded bg-gray-800 text-white">Apply</button>
         </div>
-        <div id="event-log-list" class="px-4 pb-3 max-h-44 overflow-y-auto space-y-1"></div>
+        <div id="event-log-list" class="px-4 pb-3 max-h-44 overflow-y-auto space-y-1 bg-white"></div>
       </div>
     </div>
   </body>

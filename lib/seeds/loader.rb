@@ -63,17 +63,51 @@ require 'yaml'
     def apply!(dry_run: false, prune: false, logger: STDOUT)
       log = ->(msg) { logger.puts(msg) if logger }
 
-      # Actions
-      actions = load_yaml('actions.yml')
-      actions.each do |attrs|
+      # Actions (with order auto-assignment and pack-aware offsets)
+      action_rows = []
+      # core first
+      core_path = data_dir.join('actions.yml')
+      if File.exist?(core_path)
+        (YAML.safe_load(File.read(core_path), permitted_classes: [Symbol], aliases: true) || []).each do |row|
+          action_rows << [row, 'core']
+        end
+      end
+      # then packs
+      selected_pack_names.each do |pack|
+        path = data_dir.join('packs', pack, 'actions.yml')
+        next unless File.exist?(path)
+        (YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true) || []).each do |row|
+          action_rows << [row, pack]
+        end
+      end
+
+      action_rows.each do |(attrs, source)|
+        attrs = attrs.dup
         if attrs.key?('cooldown') || attrs.key?(:cooldown)
-          # Use short cooldowns in development for faster iteration
-          attrs = attrs.dup
           attrs['cooldown'] = 1 if Rails.env.development?
+        end
+        # Auto-assign order if missing: allocate blocks per source to avoid manual hunting
+        if attrs['order'].nil? && attrs[:order].nil?
+          # Respect existing DB order if present
+          existing = Action.find_by(name: attrs['name'] || attrs[:name]) unless dry_run
+          if existing && existing.order
+            attrs['order'] = existing.order
+          else
+            # Segment size and base by source
+            segment_size = 10_000
+            base_offset = if source == 'core'
+                            0
+                          else
+                            # stable offset based on pack position (1-based)
+                            (selected_pack_names.index(source).to_i + 1) * segment_size
+                          end
+            current_max = dry_run ? base_offset : (Action.where(order: base_offset..(base_offset + segment_size - 1)).maximum(:order) || base_offset)
+            attrs['order'] = current_max + 10
+          end
         end
         upsert(Action, by: :name, attrs: attrs, dry_run: dry_run)
       end
-      log.call("Seeded actions: #{actions.size} (packs: #{selected_pack_names.join(', ')})")
+      log.call("Seeded actions: #{action_rows.size} (packs: #{selected_pack_names.join(', ')})")
 
       # Resources (resolve action by name)
       resources = load_yaml('resources.yml')

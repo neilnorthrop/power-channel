@@ -9,3 +9,8 @@
   base_amount: 1
   drop_chance: 0.4
   action_name: Fell Trees
+- name: Wood
+  description: A basic crafting material.
+  base_amount: 1
+  drop_chance: 1.0
+  action_name: Chop Wood

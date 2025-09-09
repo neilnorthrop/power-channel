@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_07_101500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,6 +20,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.integer "cooldown"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "order", default: 1000, null: false
+    t.index ["order"], name: "index_actions_on_order"
   end
 
   create_table "active_effects", force: :cascade do |t|
@@ -180,6 +182,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.datetime "updated_at", null: false
     t.integer "level", default: 1
     t.index ["action_id"], name: "index_user_actions_on_action_id"
+    t.index ["user_id", "action_id"], name: "index_user_actions_on_user_and_action"
     t.index ["user_id"], name: "index_user_actions_on_user_id"
   end
 
@@ -190,6 +193,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["building_id"], name: "index_user_buildings_on_building_id"
+    t.index ["user_id", "building_id"], name: "index_user_buildings_on_user_and_building"
     t.index ["user_id"], name: "index_user_buildings_on_user_id"
   end
 
@@ -211,6 +215,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.integer "quantity", default: 0
     t.string "quality", default: "normal", null: false
     t.index ["item_id"], name: "index_user_items_on_item_id"
+    t.index ["user_id", "item_id", "quality"], name: "index_user_items_on_user_item_quality"
     t.index ["user_id"], name: "index_user_items_on_user_id"
   end
 
@@ -221,6 +226,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["resource_id"], name: "index_user_resources_on_resource_id"
+    t.index ["user_id", "resource_id"], name: "index_user_resources_on_user_and_resource"
     t.index ["user_id"], name: "index_user_resources_on_user_id"
   end
 
@@ -230,6 +236,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["skill_id"], name: "index_user_skills_on_skill_id"
+    t.index ["user_id", "skill_id"], name: "index_user_skills_on_user_and_skill"
     t.index ["user_id"], name: "index_user_skills_on_user_id"
   end
 

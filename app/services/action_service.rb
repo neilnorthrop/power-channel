@@ -35,6 +35,8 @@ class ActionService
     cooldown = action.cooldown
 
     if user_action.last_performed_at.nil? || Time.current > user_action.last_performed_at + cooldown.seconds
+      total_gained = 0
+      coins_gained = 0
       action.resources.each do |resource|
         if rand.round(4) <= resource.drop_chance
           amount = resource.base_amount
@@ -42,6 +44,8 @@ class ActionService
           cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, amount)
           user_resource = @user.user_resources.find_or_create_by(resource: resource)
           user_resource.increment!(:amount, amount)
+          total_gained += amount.to_i
+          coins_gained += amount.to_i if resource.name.to_s.downcase.include?("coin")
         end
       end
       user_action.update(last_performed_at: Time.current)
@@ -50,7 +54,15 @@ class ActionService
       UserUpdatesChannel.broadcast_to(@user, { type: "user_action_update", data: UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
       Event.create!(user: @user, level: 'info', message: "Performed action: #{action.name}")
-      { success: true, message: "#{action.name} performed successfully." }
+      # Friendly toast message hints
+      msg = if action.name.to_s.downcase.include?("tax") && coins_gained > 0
+              "#{coins_gained} coins collected from taxes!"
+            elsif total_gained > 0
+              "#{total_gained} #{action.name} resources found!"
+            else
+              "#{action.name} performed."
+            end
+      { success: true, message: msg, hint: { kind: 'action' } }
     else
       Event.create!(user: @user, level: 'warning', message: "Attempted action on cooldown: #{action.name}")
       { success: false, error: "Action is on cooldown." }

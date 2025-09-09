@@ -62,7 +62,7 @@ class CraftingService
       UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources.includes(:resource)).serializable_hash })
       UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(user_items, { params: { items_with_effects: items_with_effects } }).serializable_hash })
       Event.create!(user: @user, level: 'info', message: "Crafted item: #{recipe.item.name}")
-      { success: true, message: "#{recipe.item.name} crafted successfully." }
+      { success: true, message: "1 #{recipe.item.name} crafted!", hint: { kind: 'craft' } }
     else
       Event.create!(user: @user, level: 'warning', message: "Failed to craft (insufficient resources): #{recipe.item.name}")
       { success: false, error: "Not enough resources." }
