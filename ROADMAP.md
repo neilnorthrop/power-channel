@@ -23,6 +23,7 @@ This document collects future features and improvements. Grouped by area for eas
 - Admin/editor UI for managing content with previews and publishing workflow.
 - Content packs governance: pack dependencies and validation (e.g., ensure referenced resources exist in selected packs); content ownership docs.
 - Relative ordering hints: support `order_after` / `order_before` for actions to auto-place near peers.
+ - Tier 0 pack placement: gather (basic mats), woodworking/survival (knife/torch/axe), mining (stone/flint/heads/pickaxe), hunting (bone/spear/club).
 
 ## Seeding & Content Pipeline
 - Packs-first: content under `db/data/packs/<pack>`; support `PACKS`, `PACKS=all`, `EXCLUDE` to compose worlds.
@@ -69,7 +70,8 @@ This document collects future features and improvements. Grouped by area for eas
 - Conditional GETs (ETag/Last-Modified) on list endpoints to skip unchanged responses.
 - Evaluate faster JSON generation (e.g., Oj) or lighter serializers for hot paths.
 - Add `craftable_now` to recipes (server-side) with precomputed component sufficiency; keep names prefetch to avoid N+1.
-- Continue explicit IDs in serializers for joins (e.g., `resource_id` in user_resources) to simplify clients.
+ - Continue explicit IDs in serializers for joins (e.g., `resource_id` in user_resources) to simplify clients.
+ - Grouped recipes output: add grouped component structure once OR logic lands; client groups duplicate recipes meantime.
 
 ## Performance & Loading
 - Async preloads (`load_async`) for independent reads on heavy endpoints.

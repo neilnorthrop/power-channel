@@ -112,6 +112,13 @@ namespace :seeds do
         next unless File.exist?(path)
         arr = YAML.safe_load(File.read(path))
         abort("#{path} must be an array") unless arr.is_a?(Array)
+        if fname == 'resources.yml'
+          arr.each do |r|
+            if r['min_amount'] && r['max_amount']
+              abort("#{path}: min_amount must be <= max_amount for #{r['name']}") if r['min_amount'].to_i > r['max_amount'].to_i
+            end
+          end
+        end
       end
     end
 

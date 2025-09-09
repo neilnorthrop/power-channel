@@ -29,7 +29,8 @@ class UserInitializationService
       end
     end
 
-    Action.all.each do |action|
+    # Create user_action rows for all actions; gates (flags) control visibility/usage.
+    Action.find_each do |action|
       @user.user_actions.find_or_create_by(action: action)
     end
   end

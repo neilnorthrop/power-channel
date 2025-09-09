@@ -32,3 +32,4 @@
     - { type: Item, name: Hatchet, quantity: 1 }
   unlockables:
     - { type: Action, name: Chop Wood }
+    - { type: Action, name: Fell Trees }

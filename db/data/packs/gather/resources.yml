@@ -1,12 +1,20 @@
 ---
 - name: Stick
   description: A basic crafting material.
-  base_amount: 3
+  min_amount: 1
+  max_amount: 5
   drop_chance: 0.85
   action_name: Gather
 - name: Weeds
   description: A basic crafting material.
-  base_amount: 2
+  min_amount: 1
+  max_amount: 5
   drop_chance: 0.5
   action_name: Gather
 
+- name: Rock
+  description: A small rock useful for early crafting.
+  min_amount: 1
+  max_amount: 5
+  drop_chance: 0.85
+  action_name: Gather

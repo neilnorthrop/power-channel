@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ActionService
+  # Luck split weights (chance vs quantity). Adjust as needed.
+  LUCK_CHANCE_WEIGHT = 0.5
+  LUCK_QTY_WEIGHT    = 0.5
   def initialize(user)
     @user = user
   end
@@ -52,15 +55,42 @@ class ActionService
     if user_action.last_performed_at.nil? || Time.current > user_action.last_performed_at + cooldown.seconds
       total_gained = 0
       coins_gained = 0
+
+      # Aggregate a simple luck bonus from active effects (modifier_type == 'luck')
+      luck_bonus = ActiveEffect
+                      .where(user: @user)
+                      .where("expires_at > ?", Time.current)
+                      .joins(:effect)
+                      .where(effects: { modifier_type: 'luck' })
+                      .sum("COALESCE(effects.modifier_value, 0)").to_f
+
+      # Split luck between chance and quantity; adjust weights above as desired
+      chance_mult  = 1.0 + (luck_bonus * LUCK_CHANCE_WEIGHT)
+      quantity_mult = 1.0 + (luck_bonus * LUCK_QTY_WEIGHT)
+
       action.resources.each do |resource|
-        if rand.round(4) <= resource.drop_chance
-          amount = resource.base_amount
+        # Success roll based on (drop_chance * chance_mult)
+        effective_chance = [resource.drop_chance.to_f * chance_mult, 1.0].min
+        if rand < effective_chance
+          # Determine base quantity (min..max or base_amount)
+          base_qty = if resource.min_amount.present? && resource.max_amount.present?
+                       min = resource.min_amount.to_i
+                       max = resource.max_amount.to_i
+                       rand(min..max)
+                     else
+                       resource.base_amount.to_i
+                     end
+
+          # Apply skills, then quantity multiplier from luck
           skill_service = SkillService.new(@user)
-          cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, amount)
+          cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, base_qty)
+          amount = (amount.to_f * quantity_mult).floor
+          amount = 1 if amount <= 0
+
           user_resource = @user.user_resources.find_or_create_by(resource: resource)
           user_resource.increment!(:amount, amount)
-          total_gained += amount.to_i
-          coins_gained += amount.to_i if resource.name.to_s.downcase.include?("coin")
+          total_gained += amount
+          coins_gained += amount if resource.name.to_s.downcase.include?("coin")
         end
       end
       user_action.update(last_performed_at: Time.current)

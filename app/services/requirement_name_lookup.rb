@@ -17,6 +17,10 @@ class RequirementNameLookup
     preload("Skill")    { |ids| Skill.where(id: ids).pluck(:id, :name).to_h }
   end
 
+  def to_map
+    @names
+  end
+
   private
 
   # Preload names for a specific requirement type using the provided block to fetch names by ids
@@ -27,9 +31,5 @@ class RequirementNameLookup
     ids = (@by_type[type] || []).map(&:requirement_id).uniq
     return if ids.empty?
     @names[type] = yield(ids)
-  end
-
-  def to_map
-    @names
   end
 end
