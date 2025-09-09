@@ -5,6 +5,13 @@ class UserInitializationService
     @user = user
   end
 
+  # Initialize the user with default values for resources, actions, and other attributes
+  # Returns the user object after initialization
+  #
+  # Example return value:
+  # User object with initialized attributes and associated resources/actions
+  #
+  # @return [User] the initialized user object
   def initialize_defaults
     @user.skill_points = 0
     @user.level = 1

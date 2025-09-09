@@ -4,6 +4,27 @@ class Api::V1::ActionsController < Api::ApiController
   include Authenticable
   before_action :authenticate_request
 
+  # GET /api/v1/actions
+  # Returns a list of actions available to the current user, filtered by unlockable gates and sorted by action order and name.
+  # Example return value:
+  # [
+  #   {
+  #     "id": 1,
+  #     "user_id": 1,
+  #     "action_id": 1,
+  #     "level": 1,
+  #     "action": {
+  #       "id": 1,
+  #       "name": "Gather Wood",
+  #       "description": "Collect wood from the forest.",
+  #       "order": 1
+  #     }
+  #   },
+  #   ...
+  # ]
+  # @return [JSON] a JSON array of user actions with associated action details, filtered and sorted for the current user
+  # @example GET /api/v1/actions
+  #   curl -X GET "https://example.com/api/v1/actions
   def index
     user_actions = @current_user.user_actions.includes(:action)
     # Bulk gate check to avoid N+1
@@ -24,6 +45,25 @@ class Api::V1::ActionsController < Api::ApiController
     render json: UserActionSerializer.new(visible_user_actions, options).serializable_hash.to_json
   end
 
+  # POST /api/v1/actions
+  # Perform an action for the current user, checking for cooldowns and unlockable requirements.
+  # Example return value:
+  # {
+  #   "id": 1,
+  #   "user_id": 1,
+  #   "action_id": 1,
+  #   "level": 1,
+  #   "action": {
+  #     "id": 1,
+  #     "name": "Gather Wood",
+  #     "description": "Collect wood from the forest.",
+  #     "order": 1
+  #   },
+  #   "message": "10 coins collected from taxes!"
+  # }
+  # @return [JSON] a JSON object representing the user action performed, including any success message or error details
+  # @example POST /api/v1/actions
+  #   curl -X POST "https://example.com/api/v1/actions" -d '{"action_id":1}'
   def create
     action_service = ActionService.new(@current_user)
     result = action_service.perform_action(params[:action_id])
@@ -37,6 +77,15 @@ class Api::V1::ActionsController < Api::ApiController
     end
   end
 
+  # PATCH /api/v1/actions/:id
+  # Upgrade a user action for the current user, increasing its level and potentially unlocking new features or benefits associated with that action.
+  # Example return value:
+  # {
+  #   "message": "Gather Wood upgraded successfully."
+  # }
+  # @return [JSON] a JSON object indicating the success of the upgrade operation or any error details
+  # @example PATCH /api/v1/actions/1
+  #   curl -X PATCH "https://example.com/api/v1/actions/1"
   def update
     user_action = @current_user.user_actions.find(params[:id])
     if user_action.upgrade

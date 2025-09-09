@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class DismantleService
-  DEFAULT_QUALITY = 'normal'
+  DEFAULT_QUALITY = "normal"
 
   def initialize(user)
     @user = user
@@ -9,16 +9,25 @@ class DismantleService
 
   # Dismantle exactly one unit of the given item (by id) at a given quality.
   # Returns { success:, message: } or { success: false, error: }
+  # Example return values:
+  # { success: true, message: "Item dismantled successfully." }
+  # { success: false, error: "Item not found in inventory." }
+  # { success: false, error: "This item cannot be dismantled." }
+  # { success: false, error: "No dismantle yields defined." }
+  # { success: false, error: "No salvageable output." }
+  # @param item_id [Integer] the ID of the item to dismantle
+  # @param quality [String] the quality of the item to dismantle (default: 'normal')
+  # @return [Hash] result of the dismantle attempt with success status and message or error details
   def dismantle_item(item_id, quality: DEFAULT_QUALITY)
     item = Item.find(item_id)
     user_item = @user.user_items.find_by(item_id: item.id, quality: quality)
-    return { success: false, error: 'Item not found in inventory.' } unless user_item && user_item.quantity.to_i >= 1
+    return { success: false, error: "Item not found in inventory." } unless user_item && user_item.quantity.to_i >= 1
 
-    rule = DismantleRule.find_by(subject_type: 'Item', subject_id: item.id)
-    return { success: false, error: 'This item cannot be dismantled.' } unless rule
+    rule = DismantleRule.find_by(subject_type: "Item", subject_id: item.id)
+    return { success: false, error: "This item cannot be dismantled." } unless rule
 
     yields = rule.dismantle_yields.to_a
-    return { success: false, error: 'No dismantle yields defined.' } if yields.empty?
+    return { success: false, error: "No dismantle yields defined." } if yields.empty?
 
     # Precompute deterministic amounts
     computed = yields.map do |dy|
@@ -26,7 +35,7 @@ class DismantleService
       next if amount <= 0
       { type: dy.component_type, id: dy.component_id, amount: amount, quality: (dy.quality || DEFAULT_QUALITY) }
     end.compact
-    return { success: false, error: 'No salvageable output.' } if computed.empty?
+    return { success: false, error: "No salvageable output." } if computed.empty?
 
     ApplicationRecord.transaction do
       user_item.decrement!(:quantity, 1)
@@ -37,11 +46,11 @@ class DismantleService
       # Apply outputs
       computed.each do |out|
         case out[:type]
-        when 'Resource'
+        when "Resource"
           ur = @user.user_resources.find_or_initialize_by(resource_id: out[:id])
           ur.amount = ur.amount.to_i + out[:amount]
           ur.save!
-        when 'Item'
+        when "Item"
           ui = @user.user_items.find_or_initialize_by(item_id: out[:id], quality: out[:quality])
           ui.quantity = ui.quantity.to_i + out[:amount]
           ui.save!
@@ -55,10 +64,10 @@ class DismantleService
     # Broadcast updates
     user_items = @user.user_items.includes(:item)
     item_ids = user_items.map(&:item_id).uniq
-    items_with_effects = Effect.where(effectable_type: 'Item', effectable_id: item_ids).distinct.pluck(:effectable_id).to_set
-    UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_update', data: UserResourcesSerializer.new(@user.user_resources.includes(:resource)).serializable_hash })
-    UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_update', data: UserItemSerializer.new(user_items, { params: { items_with_effects: items_with_effects } }).serializable_hash })
-    Event.create!(user: @user, level: 'info', message: "Dismantled item: #{item.name}")
+    items_with_effects = Effect.where(effectable_type: "Item", effectable_id: item_ids).distinct.pluck(:effectable_id).to_set
+    UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources.includes(:resource)).serializable_hash })
+    UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(user_items, { params: { items_with_effects: items_with_effects } }).serializable_hash })
+    Event.create!(user: @user, level: "info", message: "Dismantled item: #{item.name}")
     { success: true, message: "#{item.name} dismantled successfully." }
   end
 end

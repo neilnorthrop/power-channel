@@ -5,6 +5,15 @@ class SkillService
     @user = user
   end
 
+  # Unlock a skill for the user if they have enough skill points to afford it.
+  # Returns { success:, message: } or { success: false, error: }
+  # Example return values:
+  # { success: true, message: "Skill unlocked successfully." }
+  # { success: false, error: "Skill already unlocked." }
+  # { success: false, error: "Not enough skill points." }
+  #
+  # @param skill_id [Integer] the ID of the skill to unlock
+  # @return [Hash] result of the unlock attempt with success status and message or error details
   def unlock_skill(skill_id)
     skill = Skill.find(skill_id)
     return { success: false, error: "Skill already unlocked." } if @user.skills.include?(skill)

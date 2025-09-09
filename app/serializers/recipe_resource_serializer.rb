@@ -10,9 +10,9 @@ class RecipeResourceSerializer
       (names[rr.component_type] || {})[rr.component_id]
     else
       case rr.component_type
-      when 'Resource'
+      when "Resource"
         Resource.find_by(id: rr.component_id)&.name
-      when 'Item'
+      when "Item"
         Item.find_by(id: rr.component_id)&.name
       else
         nil
