@@ -19,3 +19,13 @@ two:
   duration: 1
   effectable: two
   effectable_type: Effectable
+
+luck:
+  name: Minor Luck
+  description: Increases luck slightly.
+  target_attribute: quantity
+  modifier_type: luck
+  modifier_value: 0.2
+  duration: 60
+  effectable: one (Item)
+  effectable_type: Item

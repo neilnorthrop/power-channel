@@ -84,8 +84,14 @@ class ActionService
           # Apply skills, then quantity multiplier from luck
           skill_service = SkillService.new(@user)
           cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, base_qty)
-          amount = (amount.to_f * quantity_mult).floor
-          amount = 1 if amount <= 0
+
+          # Probabilistic fractional rounding:
+          # exact = base * multiplier; give +1 with probability equal to the fractional part.
+          exact = amount.to_f * quantity_mult
+          int   = exact.floor
+          frac  = exact - int
+          amount = int + (rand < frac ? 1 : 0)
+          amount = 1 if amount <= 0 # ensure a successful drop yields at least 1
 
           user_resource = @user.user_resources.find_or_create_by(resource: resource)
           user_resource.increment!(:amount, amount)

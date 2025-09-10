@@ -4,16 +4,19 @@ gold:
   name: Taxes
   description: Gold coins from taxes.
   base_amount: 10
+  drop_chance: 1.0
   action: gather_taxes
 
 wood:
   name: Wood
   description: Logs from the forest.
   base_amount: 5
+  drop_chance: 1.0
   action: gather_wood
 
 stone:
   name: Stone
   description: Rocks from the quarry.
   base_amount: 3
+  drop_chance: 1.0
   action: gather_stone

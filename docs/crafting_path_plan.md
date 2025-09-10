@@ -50,6 +50,11 @@ Gating
 - V1 passive: ActionService checks ownership (e.g., Knife) and increases fiber gain on Gather/Harvest Fibers.
 - V2 equip: Add equipped tool per user; effects apply only when equipped.
 
+## Luck and Variable Drops (implemented)
+- Each resource can define a quantity range via `min_amount`/`max_amount`. If absent, `base_amount` is used.
+- Luck is split between success chance and quantity (currently 50/50; adjustable weights in `ActionService`).
+- Quantity uses probabilistic fractional rounding: after computing an exact value, we award +1 extra with probability equal to the fractional part, preserving expected values without bias.
+
 ## Phased Implementation Plan
 
 Phase 1 — Content (low risk, high value)
@@ -89,4 +94,3 @@ Cons
 4) Add flags: `can_harvest_fibers` (Knife → unlock action/bonus), `can_quarry` (Pickaxe → unlock Quarry Stone).
 5) Add dismantle rules for the new tools.
 6) Inventory UI: group duplicate recipes by item to prevent clutter.
-
