@@ -5,11 +5,25 @@
   max_amount: 5
   drop_chance: 0.85
   action_name: Gather
-- name: Weeds
-  description: A basic crafting material.
+- name: Branch
+  description: A sturdy branch suitable for tool handles.
   min_amount: 1
-  max_amount: 5
-  drop_chance: 0.5
+  max_amount: 3
+  drop_chance: 0.6
+  action_name: Gather
+
+- name: Plant Fibers
+  description: Tough fibers useful for making twine.
+  min_amount: 1
+  max_amount: 3
+  drop_chance: 0.7
+  action_name: Gather
+
+- name: Reeds
+  description: Flexible reeds that can be twisted into bindings.
+  min_amount: 1
+  max_amount: 3
+  drop_chance: 0.7
   action_name: Gather
 
 - name: Rock

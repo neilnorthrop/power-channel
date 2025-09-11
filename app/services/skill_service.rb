@@ -46,15 +46,20 @@ class SkillService
   private
 
   def apply_skill_effect(skill, action, cooldown, amount)
+    Rails.logger.debug("Applying skill effect for skill ID #{skill.id} and user ID #{@user.id}")
     modification, resource_name, attribute = skill.effect.split("_", 3)
+    Rails.logger.debug("Skill effect details: modification=#{modification}, resource_name=#{resource_name}, attribute=#{attribute}")
     effect_class_name = "SkillEffects::#{modification.camelize}#{attribute.camelize}Effect"
 
-    begin
-      effect_class = effect_class_name.constantize
-      effect_class.apply(action, cooldown, amount, resource_name.capitalize, skill.multiplier)
-    rescue NameError
-      # Handle cases where the effect class doesn't exist
-      [ cooldown, amount ]
-    end
+    Rails.logger.debug("Looking for effect class: #{effect_class_name}")
+    effect_class = effect_class_name.constantize
+    effect_class.apply(action, cooldown, amount, resource_name.capitalize, skill.multiplier)
+  rescue NameError
+    # Handle cases where the effect class doesn't exist
+    [ cooldown, amount ]
+  rescue StandardError => e
+    # Log or handle other potential errors gracefully
+    Rails.logger.error("Error applying skill effect: #{e.message} for skill ID #{skill.id} and user ID #{@user.id}")
+    [ cooldown, amount ]
   end
 end

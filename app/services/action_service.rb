@@ -61,7 +61,7 @@ class ActionService
                       .where(user: @user)
                       .where("expires_at > ?", Time.current)
                       .joins(:effect)
-                      .where(effects: { modifier_type: 'luck' })
+                      .where(effects: { modifier_type: "luck" })
                       .sum("COALESCE(effects.modifier_value, 0)").to_f
 
       # Split luck between chance and quantity; adjust weights above as desired
@@ -70,16 +70,16 @@ class ActionService
 
       action.resources.each do |resource|
         # Success roll based on (drop_chance * chance_mult)
-        effective_chance = [resource.drop_chance.to_f * chance_mult, 1.0].min
+        effective_chance = [ resource.drop_chance.to_f * chance_mult, 1.0 ].min
         if rand < effective_chance
           # Determine base quantity (min..max or base_amount)
           base_qty = if resource.min_amount.present? && resource.max_amount.present?
                        min = resource.min_amount.to_i
                        max = resource.max_amount.to_i
                        rand(min..max)
-                     else
+          else
                        resource.base_amount.to_i
-                     end
+          end
 
           # Apply skills, then quantity multiplier from luck
           skill_service = SkillService.new(@user)

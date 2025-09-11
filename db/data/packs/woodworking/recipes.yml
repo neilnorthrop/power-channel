@@ -23,7 +23,7 @@
 - item: Twine
   quantity: 1
   components:
-    - { type: Resource, name: Weeds, quantity: 5 }
+    - { type: Resource, name: Plant Fibers, quantity: 5 }
 
 - item: Bundle of Sticks
   quantity: 1

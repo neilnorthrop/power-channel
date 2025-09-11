@@ -141,18 +141,35 @@ function initInventory() {
           // Determine craftable now by comparing requirements
           const includes = craftJson.included || []
           const rrs = includes.filter(x => x.type === 'recipe_resource' && String(x.attributes.recipe_id) === String(recipe.id))
-          const canCraft = rrs.every(rr => {
-            const type = rr.attributes.component_type
-            const compId = String(rr.attributes.component_id)
-            const need = rr.attributes.quantity || 0
-            if (type === 'Resource') {
-              const have = Number(resourceAmounts.get(compId) || 0)
-              return have >= need
-            } else if (type === 'Item') {
-              const have = Number(normalItemQty.get(compId) || 0)
-              return have >= need
+          // Group by group_key; null/undefined means ungrouped AND
+          const groups = new Map()
+          rrs.forEach(rr => {
+            const key = rr.attributes.group_key || null
+            if (!groups.has(key)) groups.set(key, [])
+            groups.get(key).push(rr)
+          })
+          const canCraft = Array.from(groups.entries()).every(([key, parts]) => {
+            const hasOr = parts.some(rr => String(rr.attributes.logic || '').toUpperCase() === 'OR')
+            const sufficient = rr => {
+              const type = rr.attributes.component_type
+              const compId = String(rr.attributes.component_id)
+              const need = rr.attributes.quantity || 0
+              if (type === 'Resource') {
+                const have = Number(resourceAmounts.get(compId) || 0)
+                return have >= need
+              } else if (type === 'Item') {
+                const have = Number(normalItemQty.get(compId) || 0)
+                return have >= need
+              } else {
+                return false
+              }
+            }
+            if (key === null) {
+              return parts.every(sufficient)
+            } else if (hasOr) {
+              return parts.some(sufficient)
             } else {
-              return false
+              return parts.every(sufficient)
             }
           })
 

@@ -26,24 +26,74 @@ class CraftingService
     user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
     user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids, quality: DEFAULT_QUALITY).index_by(&:item_id) : {}
 
-    # Verify availability
-    can_craft = reqs.all? do |rr|
-      case rr.component_type
-      when "Resource"
-        ur = user_resources_by_id[rr.component_id]
-        ur && ur.amount.to_i >= rr.quantity
-      when "Item"
-        ui = user_items_by_id[rr.component_id]
-        ui && ui.quantity.to_i >= rr.quantity
+    # Verify availability with OR/AND groups
+    selected = []
+    grouped = reqs.group_by { |rr| rr.group_key.presence }
+
+    can_craft = grouped.all? do |group_key, parts|
+      if group_key.nil?
+        parts.all? do |rr|
+          case rr.component_type
+          when "Resource"
+            ur = user_resources_by_id[rr.component_id]
+            ok = ur && ur.amount.to_i >= rr.quantity
+            selected << rr if ok
+            ok
+          when "Item"
+            ui = user_items_by_id[rr.component_id]
+            ok = ui && ui.quantity.to_i >= rr.quantity
+            selected << rr if ok
+            ok
+          else
+            false
+          end
+        end
       else
-        false
+        has_or = parts.any? { |rr| rr.logic.to_s.upcase == 'OR' }
+        if has_or
+          choice = parts.find do |rr|
+            case rr.component_type
+            when "Resource"
+              ur = user_resources_by_id[rr.component_id]
+              ur && ur.amount.to_i >= rr.quantity
+            when "Item"
+              ui = user_items_by_id[rr.component_id]
+              ui && ui.quantity.to_i >= rr.quantity
+            else
+              false
+            end
+          end
+          if choice
+            selected << choice
+            true
+          else
+            false
+          end
+        else
+          parts.all? do |rr|
+            case rr.component_type
+            when "Resource"
+              ur = user_resources_by_id[rr.component_id]
+              ok = ur && ur.amount.to_i >= rr.quantity
+              selected << rr if ok
+              ok
+            when "Item"
+              ui = user_items_by_id[rr.component_id]
+              ok = ui && ui.quantity.to_i >= rr.quantity
+              selected << rr if ok
+              ok
+            else
+              false
+            end
+          end
+        end
       end
     end
 
     if can_craft
       # Perform the entire craft atomically
       ApplicationRecord.transaction do
-        reqs.each do |rr|
+        selected.each do |rr|
           case rr.component_type
           when "Resource"
             if (ur = user_resources_by_id[rr.component_id])

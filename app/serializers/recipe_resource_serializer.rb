@@ -2,7 +2,7 @@
 
 class RecipeResourceSerializer
   include JSONAPI::Serializer
-  attributes :id, :quantity, :recipe_id, :component_type, :component_id
+  attributes :id, :quantity, :recipe_id, :component_type, :component_id, :group_key, :logic
 
   attribute :component_name do |rr, params|
     names = params && params[:component_names]

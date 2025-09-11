@@ -155,6 +155,8 @@ require 'yaml'
           type = comp.fetch('type') { comp[:type] }
           name = comp.fetch('name') { comp[:name] }
           qty  = comp.fetch('quantity') { comp[:quantity] }
+          group_key = comp['group'] || comp[:group]
+          logic = (comp['logic'] || comp[:logic] || 'AND').to_s.upcase
 
           case type
           when 'Resource'
@@ -174,6 +176,8 @@ require 'yaml'
 
           rr = RecipeResource.find_or_initialize_by(recipe_id: recipe.id, component_type: type, component_id: target.id)
           rr.quantity = qty
+          rr.group_key = group_key
+          rr.logic = logic
           save!(rr, dry_run)
           keep_ids << [type, target.id]
         end

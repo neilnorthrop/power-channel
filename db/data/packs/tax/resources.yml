@@ -1,7 +1,7 @@
 ---
 - name: Gold Coins
   description: The currency of the realm.
-  base_amount: 10
+  min_amount: 6
+  max_amount: 12
   drop_chance: 1.0
   action_name: Taxes
-

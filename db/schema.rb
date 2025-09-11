@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_07_110000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_07_113000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -129,8 +129,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_110000) do
     t.datetime "updated_at", null: false
     t.string "component_type", null: false
     t.bigint "component_id", null: false
+    t.string "group_key"
+    t.string "logic", default: "AND", null: false
     t.index ["component_type", "component_id"], name: "index_recipe_resources_on_component"
     t.index ["recipe_id", "component_type", "component_id"], name: "index_recipe_resources_unique_component", unique: true
+    t.index ["recipe_id", "group_key"], name: "index_recipe_resources_on_recipe_id_and_group_key"
     t.index ["recipe_id"], name: "index_recipe_resources_on_recipe_id"
   end
 

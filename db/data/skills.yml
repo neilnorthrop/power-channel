@@ -7,5 +7,5 @@
 - name: Fleet Footed
   description: Reduce action cooldowns by 10%.
   cost: 1
-  effect: reduce_cooldown
+  effect: decrease_gold_cooldown
   multiplier: 0.9
