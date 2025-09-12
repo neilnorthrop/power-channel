@@ -1,39 +1,21 @@
 ---
 - item: Wood Plank
-  quantity: 1
+  quantity: 2
   components:
-    - { type: Resource, name: Timber, quantity: 2 }
+    - { type: Resource, name: Wood, quantity: 1 }
 - item: Wooden Handle
   quantity: 1
   components:
     - { type: Item, name: Wood Plank, quantity: 1 }
     - { type: Resource, name: Bark, quantity: 2 }
-- item: Longbow
-  quantity: 1
-  components:
-    - { type: Item, name: Wood Plank, quantity: 4 }
-    - { type: Item, name: Wooden Handle, quantity: 1 }
-    - { type: Item, name: Twine, quantity: 3 }
-- item: Arrows
-  quantity: 10
-  components:
-    - { type: Item, name: Wood Plank, quantity: 1 }
-    - { type: Resource, name: Stone, quantity: 1 }
-
-- item: Twine
-  quantity: 1
-  components:
-    - { type: Resource, name: Plant Fibers, quantity: 5 }
-
-- item: Bundle of Sticks
-  quantity: 1
-  components:
-    - { type: Item, name: Twine, quantity: 2 }
-    - { type: Resource, name: Stick, quantity: 5 }
-
-- item: Hatchet
-  quantity: 1
-  components:
-    - { type: Item, name: Bundle of Sticks, quantity: 1 }
-    - { type: Resource, name: Stone, quantity: 5 }
-    - { type: Item, name: Twine, quantity: 2 }
+# - item: Longbow
+#   quantity: 1
+#   components:
+#     - { type: Item, name: Wood Plank, quantity: 4 }
+#     - { type: Item, name: Wooden Handle, quantity: 1 }
+#     - { type: Item, name: Twine, quantity: 3 }
+# - item: Arrows
+#   quantity: 10
+#   components:
+#     - { type: Item, name: Wood Plank, quantity: 1 }
+#     - { type: Resource, name: Stone, quantity: 1 }

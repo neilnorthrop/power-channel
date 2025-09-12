@@ -1,63 +1,67 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require "yaml"
 
   module Seeds
     module Loader
       module_function
 
       def data_dir
-        Rails.root.join('db', 'data')
+        Rails.root.join("db", "data")
       end
 
     def available_packs
-      packs_root = data_dir.join('packs')
+      packs_root = data_dir.join("packs")
       return [] unless Dir.exist?(packs_root)
       Dir.children(packs_root).select { |c| File.directory?(packs_root.join(c)) }.sort
     end
 
     def selected_pack_names
-      packs_env = ENV['PACKS']&.strip
-      exclude_env = ENV['EXCLUDE']&.strip
+      packs_env = ENV["PACKS"]&.strip
+      exclude_env = ENV["EXCLUDE"]&.strip
 
-      return [] if exclude_env&.downcase == 'all'
+      return [] if exclude_env&.downcase == "all"
 
       names = []
       if packs_env.present?
-        if packs_env.downcase == 'all'
+        if packs_env.downcase == "all"
           names = available_packs
         else
-          names = packs_env.split(',').map(&:strip).reject(&:empty?)
+          names = packs_env.split(",").map(&:strip).reject(&:empty?)
         end
       else
         names = [] # Backward compatible: only load packs when PACKS is set
       end
 
       if exclude_env.present?
-        excludes = exclude_env.split(',').map { |x| x.strip.downcase }.reject(&:empty?)
+        excludes = exclude_env.split(",").map { |x| x.strip.downcase }.reject(&:empty?)
         names = names.reject { |n| excludes.include?(n.downcase) }
       end
       names
     end
 
     def pack_dirs
-      selected_pack_names.map { |name| data_dir.join('packs', name) }
+      selected_pack_names.map { |name| data_dir.join("packs", name) }
     end
 
     def load_yaml(basename)
       rows = []
       # Base file first
       base = data_dir.join(basename)
-      rows.concat YAML.safe_load(File.read(base), permitted_classes: [Symbol], aliases: true) if File.exist?(base)
+      rows.concat YAML.safe_load(File.read(base), permitted_classes: [ Symbol ], aliases: true) if File.exist?(base)
 
       # Then overlay packs in listed order
       pack_dirs.each do |dir|
         path = dir.join(basename)
         next unless File.exist?(path)
-        pack_rows = YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true)
+        pack_rows = YAML.safe_load(File.read(path), permitted_classes: [ Symbol ], aliases: true)
         rows.concat(pack_rows) if pack_rows
       end
       rows || []
+    rescue StandardError => e
+      STDOUT.puts("Error loading YAML file '#{basename}': '#{base}' #{e.message}")
+      STDOUT.puts(e.backtrace.join("\n"))
+      raise e
     end
 
     def apply!(dry_run: false, prune: false, logger: STDOUT)
@@ -66,43 +70,43 @@ require 'yaml'
       # Actions (with order auto-assignment and pack-aware offsets)
       action_rows = []
       # core first
-      core_path = data_dir.join('actions.yml')
+      core_path = data_dir.join("actions.yml")
       if File.exist?(core_path)
-        (YAML.safe_load(File.read(core_path), permitted_classes: [Symbol], aliases: true) || []).each do |row|
-          action_rows << [row, 'core']
+        (YAML.safe_load(File.read(core_path), permitted_classes: [ Symbol ], aliases: true) || []).each do |row|
+          action_rows << [ row, "core" ]
         end
       end
       # then packs
       selected_pack_names.each do |pack|
-        path = data_dir.join('packs', pack, 'actions.yml')
+        path = data_dir.join("packs", pack, "actions.yml")
         next unless File.exist?(path)
-        (YAML.safe_load(File.read(path), permitted_classes: [Symbol], aliases: true) || []).each do |row|
-          action_rows << [row, pack]
+        (YAML.safe_load(File.read(path), permitted_classes: [ Symbol ], aliases: true) || []).each do |row|
+          action_rows << [ row, pack ]
         end
       end
 
       action_rows.each do |(attrs, source)|
         attrs = attrs.dup
-        if attrs.key?('cooldown') || attrs.key?(:cooldown)
-          attrs['cooldown'] = 1 if Rails.env.development?
+        if attrs.key?("cooldown") || attrs.key?(:cooldown)
+          attrs["cooldown"] = 1 if Rails.env.development?
         end
         # Auto-assign order if missing: allocate blocks per source to avoid manual hunting
-        if attrs['order'].nil? && attrs[:order].nil?
+        if attrs["order"].nil? && attrs[:order].nil?
           # Respect existing DB order if present
-          existing = Action.find_by(name: attrs['name'] || attrs[:name]) unless dry_run
+          existing = Action.find_by(name: attrs["name"] || attrs[:name]) unless dry_run
           if existing && existing.order
-            attrs['order'] = existing.order
+            attrs["order"] = existing.order
           else
             # Segment size and base by source
             segment_size = 10_000
-            base_offset = if source == 'core'
+            base_offset = if source == "core"
                             0
-                          else
+            else
                             # stable offset based on pack position (1-based)
                             (selected_pack_names.index(source).to_i + 1) * segment_size
-                          end
+            end
             current_max = dry_run ? base_offset : (Action.where(order: base_offset..(base_offset + segment_size - 1)).maximum(:order) || base_offset)
-            attrs['order'] = current_max + 10
+            attrs["order"] = current_max + 10
           end
         end
         upsert(Action, by: :name, attrs: attrs, dry_run: dry_run)
@@ -110,11 +114,11 @@ require 'yaml'
       log.call("Seeded actions: #{action_rows.size} (packs: #{selected_pack_names.join(', ')})")
 
       # Resources (resolve action by name)
-      resources = load_yaml('resources.yml')
+      resources = load_yaml("resources.yml")
       resources.each do |attrs|
-        action_name = attrs.delete('action_name') || attrs.delete(:action_name)
+        action_name = attrs.delete("action_name") || attrs.delete(:action_name)
         next if dry_run && action_name && Action.find_by(name: action_name).nil?
-        rec = find_or_init(Resource, by: { name: attrs['name'] || attrs[:name] })
+        rec = find_or_init(Resource, by: { name: attrs["name"] || attrs[:name] })
         rec.assign_attributes(attrs)
         rec.action = Action.find_by(name: action_name) if action_name
         save!(rec, dry_run)
@@ -122,25 +126,25 @@ require 'yaml'
       log.call("Seeded resources: #{resources.size}")
 
       # Skills
-      skills = load_yaml('skills.yml')
+      skills = load_yaml("skills.yml")
       skills.each { |attrs| upsert(Skill, by: :name, attrs: attrs, dry_run: dry_run) }
       log.call("Seeded skills: #{skills.size}")
 
       # Items
-      items = load_yaml('items.yml')
+      items = load_yaml("items.yml")
       items.each { |attrs| upsert(Item, by: :name, attrs: attrs, dry_run: dry_run) }
       log.call("Seeded items: #{items.size}")
 
       # Buildings
-      buildings = load_yaml('buildings.yml')
+      buildings = load_yaml("buildings.yml")
       buildings.each { |attrs| upsert(Building, by: :name, attrs: attrs, dry_run: dry_run) }
       log.call("Seeded buildings: #{buildings.size}")
 
       # Recipes and components
-      recipes = load_yaml('recipes.yml')
+      recipes = load_yaml("recipes.yml")
       recipes.each do |row|
-        item_name = row.fetch('item') { row[:item] }
-        quantity  = row.fetch('quantity', 1)
+        item_name = row.fetch("item") { row[:item] }
+        quantity  = row.fetch("quantity", 1)
         item = Item.find_by(name: item_name)
         if item.nil?
           raise "Unknown recipe item '#{item_name}'" unless dry_run
@@ -151,18 +155,18 @@ require 'yaml'
         save!(recipe, dry_run)
 
         keep_ids = []
-        Array(row['components'] || row[:components]).each do |comp|
-          type = comp.fetch('type') { comp[:type] }
-          name = comp.fetch('name') { comp[:name] }
-          qty  = comp.fetch('quantity') { comp[:quantity] }
-          group_key = comp['group'] || comp[:group]
-          logic = (comp['logic'] || comp[:logic] || 'AND').to_s.upcase
+        Array(row["components"] || row[:components]).each do |comp|
+          type = comp.fetch("type") { comp[:type] }
+          name = comp.fetch("name") { comp[:name] }
+          qty  = comp.fetch("quantity") { comp[:quantity] }
+          group_key = comp["group"] || comp[:group]
+          logic = (comp["logic"] || comp[:logic] || "AND").to_s.upcase
 
           case type
-          when 'Resource'
+          when "Resource"
             model = Resource
             target = model.find_by(name: name)
-          when 'Item'
+          when "Item"
             model = Item
             target = model.find_by(name: name)
           else
@@ -179,7 +183,7 @@ require 'yaml'
           rr.group_key = group_key
           rr.logic = logic
           save!(rr, dry_run)
-          keep_ids << [type, target.id]
+          keep_ids << [ type, target.id ]
         end
 
         if prune && !dry_run
@@ -189,19 +193,19 @@ require 'yaml'
       log.call("Seeded recipes: #{recipes.size}")
 
       # Flags, requirements, unlockables
-      flags = load_yaml('flags.yml')
+      flags = load_yaml("flags.yml")
       flags.each do |f|
-        base = f.slice('slug', 'name', 'description')
+        base = f.slice("slug", "name", "description")
         flag = upsert(Flag, by: :slug, attrs: base, dry_run: dry_run)
 
-        Array(f['requirements']).each do |req|
-          type = req['type'] # Resource, Item, Skill, Building, Flag
-          name = req['name']
-          quantity = req['quantity'] || 1
-          logic = req['logic'] || 'AND'
+        Array(f["requirements"]).each do |req|
+          type = req["type"] # Resource, Item, Skill, Building, Flag
+          name = req["name"]
+          quantity = req["quantity"] || 1
+          logic = req["logic"] || "AND"
           model = model_for(type)
           next if dry_run && model.find_by(name: name).nil?
-          target = type == 'Flag' ? Flag.find_by(slug: name) : model.find_by(name: name)
+          target = type == "Flag" ? Flag.find_by(slug: name) : model.find_by(name: name)
           raise "Unknown requirement #{type}: '#{name}' for flag '#{flag.slug}'" if target.nil? && !dry_run
           next if target.nil?
           fr = FlagRequirement.find_or_initialize_by(flag_id: flag.id, requirement_type: type, requirement_id: target.id)
@@ -210,18 +214,18 @@ require 'yaml'
           save!(fr, dry_run)
         end
 
-        Array(f['unlockables']).each do |u|
-          type = u['type'] # Action, Recipe, Item, Building
-          name = u['name']
+        Array(f["unlockables"]).each do |u|
+          type = u["type"] # Action, Recipe, Item, Building
+          name = u["name"]
           case type
-          when 'Action'
+          when "Action"
             target = Action.find_by(name: name)
-          when 'Recipe'
+          when "Recipe"
             item = Item.find_by(name: name)
             target = item && Recipe.find_by(item_id: item.id)
-          when 'Item'
+          when "Item"
             target = Item.find_by(name: name)
-          when 'Building'
+          when "Building"
             target = Building.find_by(name: name)
           else
             raise "Unsupported unlockable type '#{type}'"
@@ -236,28 +240,28 @@ require 'yaml'
       log.call("Seeded flags: #{flags.size}")
 
       # Dismantle rules (items only for now)
-      dismantles = load_yaml('dismantle.yml')
+      dismantles = load_yaml("dismantle.yml")
       dismantles.each do |row|
-        subject_type = row.fetch('subject_type', 'Item')
-        subject_name = row.fetch('subject_name') { row['item'] || row['name'] }
-        next unless subject_type == 'Item'
+        subject_type = row.fetch("subject_type", "Item")
+        subject_name = row.fetch("subject_name") { row["item"] || row["name"] }
+        next unless subject_type == "Item"
         item = Item.find_by(name: subject_name)
         if item.nil?
           raise "Unknown dismantle subject Item: '#{subject_name}'" unless dry_run
           next
         end
-        rule = DismantleRule.find_or_initialize_by(subject_type: 'Item', subject_id: item.id)
-        rule.notes = row['notes'] if row['notes']
+        rule = DismantleRule.find_or_initialize_by(subject_type: "Item", subject_id: item.id)
+        rule.notes = row["notes"] if row["notes"]
         save!(rule, dry_run)
 
         keep_keys = []
-        Array(row['yields']).each do |y|
-          type = y.fetch('type')
-          name = y.fetch('name')
-          qty  = y.fetch('quantity', 1)
-          rate = y.fetch('salvage_rate', 1.0)
-          quality = y['quality']
-          target = (type == 'Resource' ? Resource.find_by(name: name) : Item.find_by(name: name))
+        Array(row["yields"]).each do |y|
+          type = y.fetch("type")
+          name = y.fetch("name")
+          qty  = y.fetch("quantity", 1)
+          rate = y.fetch("salvage_rate", 1.0)
+          quality = y["quality"]
+          target = (type == "Resource" ? Resource.find_by(name: name) : Item.find_by(name: name))
           if target.nil?
             raise "Unknown dismantle yield #{type}: '#{name}' for subject '#{subject_name}'" unless dry_run
             next
@@ -267,7 +271,7 @@ require 'yaml'
           dy.salvage_rate = rate
           dy.quality = quality
           save!(dy, dry_run)
-          keep_keys << [type, target.id]
+          keep_keys << [ type, target.id ]
         end
 
         if prune && !dry_run
@@ -294,18 +298,18 @@ require 'yaml'
 
     def model_for(type)
       case type
-      when 'Resource' then Resource
-      when 'Item'     then Item
-      when 'Skill'    then Skill
-      when 'Building' then Building
-      when 'Flag'     then Flag
+      when "Resource" then Resource
+      when "Item"     then Item
+      when "Skill"    then Skill
+      when "Building" then Building
+      when "Flag"     then Flag
       else raise "Unknown type: #{type}"
       end
     end
 
     def upsert(model, by:, attrs:, dry_run: false)
       keys = Array(by)
-      find = attrs.slice(*keys).presence || keys.to_h { |k| [k, attrs[k.to_s]] }
+      find = attrs.slice(*keys).presence || keys.to_h { |k| [ k, attrs[k.to_s] ] }
       rec = model.find_or_initialize_by(find)
       rec.assign_attributes(attrs.except(*keys).presence || attrs.reject { |k, _| keys.map(&:to_s).include?(k.to_s) })
       save!(rec, dry_run)
@@ -322,5 +326,5 @@ require 'yaml'
       record.save!
       record
     end
+    end
   end
-end

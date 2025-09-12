@@ -1,0 +1,16 @@
+---
+- subject_type: Item
+  subject_name: Hatchet
+  notes: Recover basic components from a simple tool.
+  yields:
+    - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
+    - { type: Resource, name: Rock, quantity: 2, salvage_rate: 0.6 }
+    - { type: Item, name: Bundle of Sticks, quantity: 2, salvage_rate: 0.5 }
+- subject_type: Item
+  subject_name: Basic Pick
+  notes: Recover basic components from a simple mining tool.
+  yields:
+    - { type: Item, name: Twine, quantity: 1, salvage_rate: 0.8 }
+    - { type: Resource, name: Rock, quantity: 2, salvage_rate: 0.6 }
+    - { type: Item, name: Bundle of Sticks, quantity: 2, salvage_rate: 0.5 }
+

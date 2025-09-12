@@ -1,10 +1,10 @@
 ---
-- name: Fell Trees
-  description: Chop mature trees for timber.
-  cooldown: 60
-- name: Saw Planks
-  description: Process timber into planks.
-  cooldown: 90
 - name: Chop Wood
   description: Chop down trees for wood.
   cooldown: 60
+# - name: Fell Trees
+#   description: Chop mature trees for timber.
+#   cooldown: 60
+# - name: Saw Planks
+#   description: Process timber into planks.
+#   cooldown: 90

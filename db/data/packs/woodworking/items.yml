@@ -1,4 +1,5 @@
 ---
+# Woodworking
 - name: Wood Plank
   description: A processed timber plank.
 - name: Wooden Handle
@@ -7,10 +8,3 @@
   description: A bow made of flexible wood.
 - name: Arrows
   description: Bundle of arrows.
-  
-- name: Twine
-  description: Simple fiber cord for crafting.
-- name: Bundle of Sticks
-  description: A bundle of sticks bound together.
-- name: Hatchet
-  description: A basic woodcutting tool.

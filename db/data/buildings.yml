@@ -1,13 +1,10 @@
 ---
-- name: Lumber Mill
-  description: Increases wood production by 10% per level.
+- name: Small Home
+  description: A small dwelling for your citizens.
   level: 1
-  effect: increase_wood_production
-- name: Mine
-  description: Increases gold production by 10% per level.
-  level: 1
-  effect: increase_gold_production
-- name: Quarry
-  description: Increases stone production by 10% per level.
-  level: 1
-  effect: increase_stone_production
+- name: Medium Home
+  description: A medium-sized dwelling for your citizens.
+  level: 2
+- name: Large Home
+  description: A large dwelling for your citizens.
+  level: 3

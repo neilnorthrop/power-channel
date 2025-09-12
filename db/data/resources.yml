@@ -1,4 +1,5 @@
 ---
+# Gather
 - name: Stick
   description: A basic crafting material.
   min_amount: 1
@@ -11,24 +12,30 @@
   max_amount: 3
   drop_chance: 0.6
   action_name: Gather
-
 - name: Plant Fibers
   description: Tough fibers useful for making twine.
   min_amount: 1
-  max_amount: 3
+  max_amount: 4
   drop_chance: 0.7
   action_name: Gather
-
 - name: Reeds
   description: Flexible reeds that can be twisted into bindings.
   min_amount: 1
-  max_amount: 3
+  max_amount: 2
   drop_chance: 0.7
   action_name: Gather
-
 - name: Rock
   description: A small rock useful for early crafting.
   min_amount: 1
   max_amount: 5
   drop_chance: 0.85
   action_name: Gather
+
+# Taxes
+- name: Gold Coins
+  description: The currency of the realm.
+  min_amount: 6
+  max_amount: 12
+  drop_chance: 1.0
+  action_name: Taxes
+

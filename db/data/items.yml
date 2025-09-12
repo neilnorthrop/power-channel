@@ -1,0 +1,21 @@
+---
+- name: Twine
+  description: Simple fiber cord for crafting.
+- name: Bundle of Sticks
+  description: A bundle of sticks bound together.
+# Woodworking
+- name: Hatchet
+  description: A basic woodcutting tool.
+# Mining
+- name: Basic Pick
+  description: A basic mining tool.
+
+# Alchemy
+# - name: Minor Potion of Luck
+#   description: Slightly increases your luck for a short duration.
+#   effect: increase_luck
+#   drop_chance: 0.02
+# - name: Scroll of Haste
+#   description: Reduces cooldowns for a short time.
+#   effect: reduce_cooldown
+#   drop_chance: 0.01
