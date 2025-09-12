@@ -4,3 +4,10 @@
   description: Unlocks the Carpenter’s Workshop building.
   unlockables:
     - { type: Building, name: Carpenter’s Workshop }
+- slug: can_chop_wood
+  name: Can Chop Wood
+  description: Allows woodcutting after crafting a hatchet.
+  requirements:
+    - { type: Item, name: Hatchet, quantity: 1 }
+  unlockables:
+    - { type: Action, name: Chop Wood }

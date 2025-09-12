@@ -4,7 +4,7 @@
   description: Allows crafting a basic hatchet for chopping wood.
   requirements:
     - { type: Item, name: Bundle of Sticks, quantity: 1, logic: OR }
-    - { type: Resource, name: Stone, quantity: 1, logic: OR }
+    - { type: Resource, name: Rock, quantity: 1, logic: OR }
     - { type: Item, name: Twine, quantity: 1, logic: OR }
   unlockables:
     - { type: Recipe, name: Hatchet }
@@ -14,26 +14,10 @@
   description: Allows crafting a basic pick for quarrying stone.
   requirements:
     - { type: Item, name: Bundle of Sticks, quantity: 1, logic: OR }
-    - { type: Resource, name: Stone, quantity: 1, logic: OR }
+    - { type: Resource, name: Rock, quantity: 1, logic: OR }
     - { type: Item, name: Twine, quantity: 1, logic: OR }
   unlockables:
     - { type: Recipe, name: Basic Pick }
-
-- slug: can_chop_wood
-  name: Can Chop Wood
-  description: Allows woodcutting after crafting a hatchet.
-  requirements:
-    - { type: Item, name: Hatchet, quantity: 1 }
-  unlockables:
-    - { type: Action, name: Chop Wood }
-
-- slug: can_quarry
-  name: Can Quarry Stone
-  description: Unlocks stone quarrying after crafting a basic pick.
-  requirements:
-    - { type: Item, name: Basic Pick, quantity: 1 }
-  unlockables:
-    - { type: Action, name: Quarry Stone }
 
 - slug: small_home
   name: Small Home

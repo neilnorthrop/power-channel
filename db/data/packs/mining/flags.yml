@@ -1,1 +1,8 @@
 ---
+- slug: can_quarry
+  name: Can Quarry Stone
+  description: Unlocks stone quarrying after crafting a basic pick.
+  requirements:
+    - { type: Item, name: Basic Pick, quantity: 1 }
+  unlockables:
+    - { type: Action, name: Quarry Stone }
