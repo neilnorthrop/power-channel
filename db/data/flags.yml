@@ -35,3 +35,22 @@
   unlockables:
     - { type: Action, name: Quarry Stone }
 
+- slug: small_home
+  name: Small Home
+  description: Unlocks the ability to build small homes for your citizens.
+  unlockables:
+    - { type: Building, name: Small Home }
+- slug: medium_home
+  name: Medium Home
+  description: Unlocks the ability to build medium homes for your citizens.
+  requirements:
+    - { type: Building, name: Small Home, quantity: 1 }
+  unlockables:
+    - { type: Building, name: Medium Home }
+- slug: large_home
+  name: Large Home
+  description: Unlocks the ability to build large homes for your citizens.
+  requirements:
+    - { type: Building, name: Medium Home, quantity: 1 }
+  unlockables:
+    - { type: Building, name: Large Home }

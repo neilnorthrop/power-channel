@@ -1,0 +1,6 @@
+---
+- slug: unlock_carpenters_workshop
+  name: Unlock Carpenter’s Workshop
+  description: Unlocks the Carpenter’s Workshop building.
+  unlockables:
+    - { type: Building, name: Carpenter’s Workshop }
