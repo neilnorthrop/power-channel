@@ -13,6 +13,7 @@ class SkillService
   # { success: false, error: "Not enough skill points." }
   #
   # @param skill_id [Integer] the ID of the skill to unlock
+  #
   # @return [Hash] result of the unlock attempt with success status and message or error details
   def unlock_skill(skill_id)
     skill = Skill.find(skill_id)
@@ -35,6 +36,7 @@ class SkillService
   # @param action [Object] The action to which skills are being applied.
   # @param cooldown [Numeric] The initial cooldown value for the action.
   # @param amount [Numeric] The initial amount value for the action.
+  #
   # @return [Array(Numeric, Numeric)] The modified cooldown and amount after all skills have been applied.
   def apply_skills_to_action(action, cooldown, amount)
     @user.skills.each do |skill|
@@ -45,6 +47,15 @@ class SkillService
 
   private
 
+  # Applies a single skill's effect to the action, modifying its cooldown and amount.
+  # This method dynamically determines the appropriate effect class based on the skill's effect attribute,
+  # and invokes the apply method on that class.
+  # @param skill [Skill] The skill whose effect is to be applied.
+  # @param action [Object] The action to which the skill effect is being applied.
+  # @param cooldown [Numeric] The current cooldown value for the action.
+  # @param amount [Numeric] The current amount value for the action.
+  #
+  # @return [Array(Numeric, Numeric)] The modified cooldown and amount after the skill effect has been applied.
   def apply_skill_effect(skill, action, cooldown, amount)
     Rails.logger.debug("Applying skill effect for skill ID #{skill.id} and user ID #{@user.id}")
     modification, resource_name, attribute = skill.effect.split("_", 3)

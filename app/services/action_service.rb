@@ -70,23 +70,42 @@ class ActionService
 
       action.resources.each do |resource|
         # Success roll based on (drop_chance * chance_mult)
+        # Clamp at 100% chance to avoid weirdness
+        # (eg. 150% chance doesn't mean guaranteed +50% quantity)
+        # Also handles nil drop_chance as 0.0
+        # (e.g. resources with 0% drop chance will never drop, even with luck)
+        # Note: Skills may further modify cooldown and quantity below
         effective_chance = [ resource.drop_chance.to_f * chance_mult, 1.0 ].min
         if rand < effective_chance
-          # Determine base quantity (min..max or base_amount)
+          Rails.logger.debug("Resource #{resource.name} passed drop chance roll (effective chance: #{(effective_chance * 100).round(2)}%)")
+          # Base quantity calculation
+          # If min/max defined, use random in that range scaled by user_action level
+          # Else use base_amount directly
+          # Determine base quantity ((min..max * user action level) or base_amount) first
+          Rails.logger.debug("Calculating base quantity for resource #{resource.name} for user action level #{user_action.level}")
+          Rails.logger.debug("Resource details: base_amount='#{resource.base_amount}', min_amount='#{resource.min_amount}', max_amount='#{resource.max_amount}'")
           base_qty = if resource.min_amount.present? && resource.max_amount.present?
                        min = resource.min_amount.to_i
                        max = resource.max_amount.to_i
-                       rand(min..max)
+                       (rand(min..max) * user_action.level)
           else
                        resource.base_amount.to_i
           end
 
+          Rails.logger.debug("Base quantity before skills and luck: #{base_qty}")
+
           # Apply skills, then quantity multiplier from luck
+          # Note: Skills are applied before quantity_mult to ensure that luck
+          # affects the final amount after all other modifiers, including skills.
+          # This ensures that luck consistently modifies the final outcome.
           skill_service = SkillService.new(@user)
           cooldown, amount = skill_service.apply_skills_to_action(action, cooldown, base_qty)
 
           # Probabilistic fractional rounding:
           # exact = base * multiplier; give +1 with probability equal to the fractional part.
+          # E.g. 2.3 -> 2 + 30% chance of +1; 2.7 -> 2 + 70% chance of +1
+          # Ensures average gain is correct over time while keeping integers
+          # Also ensure at least 1 is given on a successful drop
           exact = amount.to_f * quantity_mult
           int   = exact.floor
           frac  = exact - int
@@ -112,7 +131,7 @@ class ActionService
         UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_delta", data: { changes: changed } })
       end
       # Broadcast user stats for header without requiring refetch
-      UserUpdatesChannel.broadcast_to(@user, { type: 'user_update', data: { level: @user.level, experience: @user.experience, skill_points: @user.skill_points } })
+      UserUpdatesChannel.broadcast_to(@user, { type: "user_update", data: { level: @user.level, experience: @user.experience, skill_points: @user.skill_points } })
       Event.create!(user: @user, level: "info", message: "Performed action: #{action.name}")
       # Friendly toast message hints
       msg = if action.name.to_s.downcase.include?("tax") && coins_gained > 0

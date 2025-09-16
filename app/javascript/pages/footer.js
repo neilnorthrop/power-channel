@@ -7,6 +7,14 @@ function adjustPaddingForFooter() {
   const h = footer.offsetHeight || 0
   // Add a small visual gap
   main.style.paddingBottom = `${h + 16}px`
+  const frame = document.getElementById('main')
+  if (frame) {
+    frame.style.paddingBottom = `${h + 16}px`
+  }
+  const page = document.getElementById('page-container')
+  if (page) {
+    page.style.paddingBottom = `${h + 16}px`
+  }
   const sidebar = document.getElementById('sidebar')
   if (sidebar) {
     // Ensure sidebar content isn't hidden behind footer and can scroll independently
