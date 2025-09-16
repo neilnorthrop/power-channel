@@ -102,8 +102,17 @@ class ActionService
       user_action.update(last_performed_at: Time.current)
       @user.gain_experience(10)
       @user.save
+      # Broadcast minimal deltas
       UserUpdatesChannel.broadcast_to(@user, { type: "user_action_update", data: UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash })
-      UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources).serializable_hash })
+      if total_gained > 0
+        changed = action.resources.map do |r|
+          ur = @user.user_resources.find_by(resource_id: r.id)
+          { resource_id: r.id, amount: ur&.amount.to_i }
+        end
+        UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_delta", data: { changes: changed } })
+      end
+      # Broadcast user stats for header without requiring refetch
+      UserUpdatesChannel.broadcast_to(@user, { type: 'user_update', data: { level: @user.level, experience: @user.experience, skill_points: @user.skill_points } })
       Event.create!(user: @user, level: "info", message: "Performed action: #{action.name}")
       # Friendly toast message hints
       msg = if action.name.to_s.downcase.include?("tax") && coins_gained > 0

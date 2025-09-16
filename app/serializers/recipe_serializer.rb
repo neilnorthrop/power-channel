@@ -58,4 +58,51 @@ class RecipeSerializer
       []
     end
   end
+
+  attribute :craftable_now do |object, params|
+    user_resources_by_id = (params && params[:user_resources_by_id]) || {}
+    user_items_by_id     = (params && params[:user_items_by_id]) || {}
+
+    reqs = object.recipe_resources
+    grouped = reqs.group_by { |rr| rr.group_key.presence }
+    grouped.all? do |group_key, parts|
+      if group_key.nil?
+        parts.all? do |rr|
+          case rr.component_type
+          when 'Resource'
+            (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
+          when 'Item'
+            (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
+          else
+            false
+          end
+        end
+      else
+        has_or = parts.any? { |rr| rr.logic.to_s.upcase == 'OR' }
+        if has_or
+          parts.any? do |rr|
+            case rr.component_type
+            when 'Resource'
+              (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
+            when 'Item'
+              (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
+            else
+              false
+            end
+          end
+        else
+          parts.all? do |rr|
+            case rr.component_type
+            when 'Resource'
+              (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
+            when 'Item'
+              (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
+            else
+              false
+            end
+          end
+        end
+      end
+    end
+  end
 end

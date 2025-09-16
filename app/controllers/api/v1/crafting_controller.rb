@@ -61,7 +61,11 @@ class Api::V1::CraftingController < Api::ApiController
     flag_ids = gates.values.compact.uniq
     requirement_names = RequirementNameLookup.for_flag_ids(flag_ids)
 
-    options = { include: [ :item, :recipe_resources ], params: { current_user: @current_user, gates: { "Recipe" => gates, "Item" => item_gates }, user_flag_ids: user_flag_ids, component_names: component_names, requirement_names: requirement_names } }
+    # Prefetch user state maps to compute craftable_now server-side
+    user_resources_by_id = resource_ids.any? ? @current_user.user_resources.where(resource_id: resource_ids).pluck(:resource_id, :amount).to_h : {}
+    user_items_by_id     = item_component_ids.any? ? @current_user.user_items.where(item_id: item_component_ids, quality: CraftingService::DEFAULT_QUALITY).pluck(:item_id, :quantity).to_h : {}
+
+    options = { include: [ :item, :recipe_resources ], params: { current_user: @current_user, gates: { "Recipe" => gates, "Item" => item_gates }, user_flag_ids: user_flag_ids, component_names: component_names, requirement_names: requirement_names, user_resources_by_id: user_resources_by_id, user_items_by_id: user_items_by_id } }
     render json: RecipeSerializer.new(visible_recipes, options).serializable_hash.to_json
   end
 

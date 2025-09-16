@@ -114,12 +114,20 @@ class CraftingService
         EnsureFlagsService.evaluate_for(@user, touch: { items: [ recipe.item_id ] })
       end
 
-      # Broadcast after commit so clients see committed state
-      user_items = @user.user_items.includes(:item)
-      item_ids = user_items.map(&:item_id).uniq
-      items_with_effects = Effect.where(effectable_type: "Item", effectable_id: item_ids).distinct.pluck(:effectable_id).to_set
-      UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_update", data: UserResourcesSerializer.new(@user.user_resources.includes(:resource)).serializable_hash })
-      UserUpdatesChannel.broadcast_to(@user, { type: "user_item_update", data: UserItemSerializer.new(user_items, { params: { items_with_effects: items_with_effects } }).serializable_hash })
+      # Broadcast deltas after commit so clients see committed state
+      res_changes = selected.select { |rr| rr.component_type == 'Resource' }.map do |rr|
+        ur = @user.user_resources.find_by(resource_id: rr.component_id)
+        { resource_id: rr.component_id, amount: ur&.amount.to_i }
+      end
+      # Include crafted item increment
+      item_change_ids = selected.select { |rr| rr.component_type == 'Item' }.map(&:component_id)
+      item_change_ids << recipe.item_id
+      item_changes = item_change_ids.uniq.map do |iid|
+        ui = @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
+        { item_id: iid, quality: DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
+      end
+      UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_delta', data: { changes: res_changes } }) if res_changes.any?
+      UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_delta', data: { changes: item_changes } }) if item_changes.any?
       Event.create!(user: @user, level: "info", message: "Crafted item: #{recipe.item.name}")
       { success: true, message: "1 #{recipe.item.name} crafted!", hint: { kind: "craft" } }
     else

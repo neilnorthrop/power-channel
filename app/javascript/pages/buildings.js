@@ -94,6 +94,8 @@ function initBuildings() {
           case 'user_item_update':
           case 'user_skill_update':
           case 'user_update':
+          case 'user_resource_delta':
+          case 'user_item_delta':
             scheduleRefresh()
             break
           default:

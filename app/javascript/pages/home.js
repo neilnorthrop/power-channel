@@ -178,7 +178,6 @@ function initHome() {
           toast(data.error || 'Failed to perform action.', 'error')
         }
       })
-      .finally(() => { fetchUser(); fetchActions() })
   }
 
   const upgradeAction = (userActionId) => {
@@ -191,7 +190,6 @@ function initHome() {
           toast(data.error || 'Failed to upgrade action.', 'error')
         }
       })
-      .finally(() => fetchActions())
   }
 
   fetchUser()
@@ -206,10 +204,16 @@ function initHome() {
           // Update only the affected cooldown and reload actions if needed
           updateCooldown(data.data.data)
         } else if (data.type === 'user_update') {
-          fetchUser()
-        } else if (data.type === 'user_resource_update' || data.type === 'user_item_update' || data.type === 'user_building_update' || data.type === 'user_skill_update') {
-          // Conservative refresh of actions; adjust if more granular signals are added
-          fetchActions()
+          // Patch header stats directly when provided
+          const u = data.data || {}
+          const lvl = document.getElementById('level')
+          const xp  = document.getElementById('experience')
+          const sp  = document.getElementById('skill-points')
+          if (lvl && u.level != null) lvl.textContent = u.level
+          if (xp && u.experience != null) xp.textContent = u.experience
+          if (sp && u.skill_points != null) sp.textContent = u.skill_points
+        } else if (data.type === 'user_resource_update' || data.type === 'user_item_update' || data.type === 'user_building_update' || data.type === 'user_skill_update' || data.type === 'user_resource_delta' || data.type === 'user_item_delta') {
+          // Skip heavy reloads on deltas; action cooldowns update via user_action_update
         }
       }
     })
