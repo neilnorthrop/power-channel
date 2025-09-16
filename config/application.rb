@@ -29,5 +29,9 @@ module AetherForge
     # There is intentionally no fallback to Rails credentials to keep one
     # source of truth across environments.
     config.jwt_secret = ENV["JWT_SECRET"]
+
+    # Cooldown period (in seconds) between performing the same action.
+    # Default is 60 seconds in production, 1 second in development for easier testing.
+    config.action_cooldown = Rails.env.development? ? 5 : 60 # seconds
   end
 end

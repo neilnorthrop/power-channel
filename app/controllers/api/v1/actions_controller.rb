@@ -89,6 +89,11 @@ class Api::V1::ActionsController < Api::ApiController
   def update
     user_action = @current_user.user_actions.find(params[:id])
     if user_action.upgrade
+      # Broadcast the upgraded user_action so clients can update level badges without refetching
+      UserUpdatesChannel.broadcast_to(
+        @current_user,
+        { type: "user_action_update", data: UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash }
+      )
       render json: { message: "#{user_action.action.name} upgraded successfully." }
     else
       render json: { error: "Failed to upgrade action." }, status: :unprocessable_entity

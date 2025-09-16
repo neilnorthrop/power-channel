@@ -2,6 +2,7 @@ import { getJwt, authHeaders, toast } from "pages/util"
 import { getConsumer } from "pages/cable"
 
 function initHome() {
+  const action_status_update = 500 // ms
   const token = getJwt()
   const levelSpan = document.getElementById('level')
   const experienceSpan = document.getElementById('experience')
@@ -21,7 +22,7 @@ function initHome() {
 
   // toast imported from pages/util
 
-  const updateCooldown = (userAction) => {
+  const updateActionStatusUI = (userAction) => {
     const id = userAction.id || (userAction.data && userAction.data.id)
     const badge = document.getElementById(`cooldown-badge-${id}`)
     const bar = document.getElementById(`cooldown-bar-${id}`)
@@ -30,6 +31,12 @@ function initHome() {
 
     let attributes = userAction.attributes
     if (userAction.data && userAction.data.attributes) attributes = userAction.data.attributes
+
+    // Update level badge if present (for upgrades)
+    const levelEl = document.getElementById(`level-badge-${id}`)
+    if (levelEl && attributes.level != null) {
+      levelEl.textContent = `Lvl ${attributes.level}`
+    }
 
     const cooldown = attributes.cooldown || 0
     if (attributes.last_performed_at && cooldown > 0) {
@@ -44,7 +51,7 @@ function initHome() {
         bar.style.width = `${100 - pct}%`
         performBtn.disabled = true
         performBtn.classList.add('opacity-50', 'cursor-not-allowed')
-        setTimeout(() => updateCooldown(userAction), 1000)
+        setTimeout(() => updateActionStatusUI(userAction), action_status_update)
         return
       }
     }
@@ -92,6 +99,7 @@ function initHome() {
           title.textContent = action.attributes.name
 
           const levelBadge = document.createElement('span')
+          levelBadge.id = `level-badge-${userAction.id}`
           levelBadge.className = 'text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700'
           levelBadge.textContent = `Lvl ${userAction.attributes.level || 1}`
 
@@ -162,7 +170,7 @@ function initHome() {
               left.appendChild(reqList)
             }
           } else {
-            updateCooldown(userAction)
+            updateActionStatusUI(userAction)
           }
         })
       })
@@ -201,8 +209,8 @@ function initHome() {
     cable.subscriptions.create('UserUpdatesChannel', {
       received(data) {
         if (data.type === 'user_action_update') {
-          // Update only the affected cooldown and reload actions if needed
-          updateCooldown(data.data.data)
+          // Update the affected action card state (level, cooldown)
+          updateActionStatusUI(data.data.data)
         } else if (data.type === 'user_update') {
           // Patch header stats directly when provided
           const u = data.data || {}

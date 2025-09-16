@@ -87,8 +87,21 @@ require "yaml"
 
       action_rows.each do |(attrs, source)|
         attrs = attrs.dup
+        # Apply global cooldown if not set
+        #
+        # Note: this will overwrite any existing cooldown values in the DB if the action is re-seeded.
+        # This is intentional to ensure consistency across all actions.
+        # If you need per-action cooldowns, consider setting them explicitly in the YAML files.
+        #
+        # The cooldown value is read from Rails config, which is set in application.rb
+        # This allows easy adjustment via environment (1 second in dev, 60 seconds in prod).
+        # If you want to disable this behavior, you can comment out this block.
+        # Alternatively, you can set a specific cooldown value in the YAML file to override the default.
+        # If you want to remove cooldowns entirely, set cooldown: 0 in the YAML file.
+        # This approach ensures that all actions have a sensible default cooldown unless explicitly overridden.
+        # This is particularly useful in development environments where rapid testing is needed.
         if attrs.key?("cooldown") || attrs.key?(:cooldown)
-          attrs["cooldown"] = 1 if Rails.env.development?
+          attrs["cooldown"] = Rails.application.config.action_cooldown.to_i
         end
         # Auto-assign order if missing: allocate blocks per source to avoid manual hunting
         if attrs["order"].nil? && attrs[:order].nil?

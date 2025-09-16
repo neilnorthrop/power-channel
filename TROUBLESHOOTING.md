@@ -61,3 +61,23 @@ This document captures common issues observed during development and how to diag
   - Prefer event-driven updates over refetching entire lists.
   - Keep broadcast payloads light (only changed rows) and patch the DOM selectively.
 
+## Action Upgrade Level Not Updating in UI
+
+- Symptom
+  - After clicking Upgrade on an action, the level badge still shows the previous level (e.g., stays at Lvl 1 after upgrading to Lvl 2).
+
+- Root Cause
+  - The upgrade endpoint did not broadcast a UserUpdatesChannel message describing the upgraded `user_action`.
+  - The client handler only updated cooldowns on `user_action_update`, not the level badge text.
+
+- Fix Implemented
+  - Backend: `Api::V1::ActionsController#update` now broadcasts `{ type: 'user_action_update', data: UserActionSerializer.new(user_action, include: [:action]) }` after a successful upgrade.
+  - Frontend: Home page adds an id to the level badge (`#level-badge-<user_action.id>`) and updates its text inside `updateCooldown()` when a payload includes a new `attributes.level`.
+  - Files: `app/controllers/api/v1/actions_controller.rb`, `app/javascript/pages/home.js`.
+
+- Why This Works
+  - The client receives the exact `user_action` that changed and patches the DOM node with the new level. No heavy refetch is required.
+
+- Preventive Guidance
+  - For any endpoint that mutates user-facing state, broadcast a small, specific delta (e.g., `user_action_update`, `user_resource_delta`).
+  - Ensure the UI renders dynamic values with stable element ids so they can be patched in place by event handlers.
