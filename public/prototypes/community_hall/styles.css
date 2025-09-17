@@ -1,0 +1,52 @@
+body {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/5/54/Castlehall.jpg') center/cover fixed;
+  font-family: 'Times New Roman', serif;
+  color: #fff;
+  text-align: center;
+  padding-top: 2rem;
+}
+.hall {
+  position: relative;
+  width: 80%;
+  margin: 0 auto 2rem;
+}
+.table {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(139,69,19,0.8);
+  padding: 1rem;
+}
+.seat {
+  background: #deb887;
+  padding: 1rem;
+  cursor: pointer;
+}
+.avatar {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  font-size: 2rem;
+  transition: left 0.5s;
+}
+.conversations {
+  display: flex;
+  overflow: hidden;
+  width: 80%;
+  margin: 0 auto;
+}
+.card {
+  min-width: 100%;
+  background: rgba(255,255,255,0.8);
+  color: #000;
+  padding: 2rem;
+}
+.nav button {
+  margin: 0.5rem;
+}
+.advisor {
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.hidden { display: none; }
