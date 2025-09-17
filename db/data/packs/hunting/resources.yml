@@ -1,0 +1,26 @@
+---
+- name: Small Meat
+  description: Cuts of meat from small game.
+  min_amount: 1
+  max_amount: 2
+  drop_chance: 0.9
+  action_name: Hunt
+- name: Bone
+  description: Bones from hunted game.
+  min_amount: 1
+  max_amount: 1
+  drop_chance: 0.5
+  action_name: Hunt
+- name: Feathers
+  description: Feathers useful for fletching and pillows.
+  min_amount: 1
+  max_amount: 3
+  drop_chance: 0.4
+  action_name: Hunt
+- name: Hide
+  description: Animal hide suitable for crafting.
+  min_amount: 1
+  max_amount: 2
+  drop_chance: 0.6
+  action_name: Hunt
+

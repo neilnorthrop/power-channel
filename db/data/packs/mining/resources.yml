@@ -17,3 +17,10 @@
   max_amount: 2
   drop_chance: 0.33
   action_name: Quarry Stone
+
+- name: Sand
+  description: Fine sand for glassmaking.
+  min_amount: 2
+  max_amount: 4
+  drop_chance: 1.0
+  action_name: Quarry Stone

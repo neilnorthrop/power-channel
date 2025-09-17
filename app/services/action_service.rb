@@ -56,12 +56,15 @@ class ActionService
       total_gained = 0
       coins_gained = 0
 
-      # Aggregate a simple luck bonus from active effects (modifier_type == 'luck')
+      # Aggregate luck from active effects with optional action scoping
+      # Scope key format: "action:<underscored_action_name>" (e.g., action:hunt)
+      scope_key = "action:#{action.name.to_s.downcase.gsub(/\s+/, '_')}"
       luck_bonus = ActiveEffect
                       .where(user: @user)
                       .where("expires_at > ?", Time.current)
                       .joins(:effect)
                       .where(effects: { modifier_type: "luck" })
+                      .where("effects.target_attribute IS NULL OR effects.target_attribute = ?", scope_key)
                       .sum("COALESCE(effects.modifier_value, 0)").to_f
 
       # Split luck between chance and quantity; adjust weights above as desired
@@ -118,6 +121,31 @@ class ActionService
           coins_gained += amount if resource.name.to_s.downcase.include?("coin")
         end
       end
+      # Handle item drops (option B): drop Items directly from actions
+      item_changes = []
+      action.item_drops.each do |drop|
+        effective_chance = [ drop.drop_chance.to_f * chance_mult, 1.0 ].min
+        if rand < effective_chance
+          base_qty = if drop.min_amount.present? && drop.max_amount.present?
+                       min = drop.min_amount.to_i
+                       max = drop.max_amount.to_i
+                       (rand(min..max) * user_action.level)
+                     else
+                       1
+                     end
+
+          exact = base_qty.to_f * quantity_mult
+          int   = exact.floor
+          frac  = exact - int
+          amount = int + (rand < frac ? 1 : 0)
+          amount = 1 if amount <= 0
+
+          ui = @user.user_items.find_or_create_by(item_id: drop.item_id, quality: CraftingService::DEFAULT_QUALITY)
+          ui.increment!(:quantity, amount)
+          item_changes << { item_id: drop.item_id, quality: ui.quality, quantity: ui.quantity }
+        end
+      end
+
       user_action.update(last_performed_at: Time.current)
       @user.gain_experience(10)
       @user.save
@@ -129,6 +157,9 @@ class ActionService
           { resource_id: r.id, amount: ur&.amount.to_i }
         end
         UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_delta", data: { changes: changed } })
+      end
+      if item_changes.any?
+        UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_delta', data: { changes: item_changes } })
       end
       # Broadcast user stats for header without requiring refetch
       UserUpdatesChannel.broadcast_to(@user, { type: "user_update", data: { level: @user.level, experience: @user.experience, skill_points: @user.skill_points } })

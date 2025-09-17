@@ -1,0 +1,7 @@
+---
+# Action-driven item drops
+- action: Gather
+  item: Lucky Charm
+  min_amount: 1
+  max_amount: 1
+  drop_chance: 0.00005

@@ -1,0 +1,10 @@
+---
+- name: Hunter's Luck
+  description: Increases luck when hunting.
+  target_attribute: action:hunt
+  modifier_type: luck
+  modifier_value: 0.2
+  duration: 600
+  effectable_type: Item
+  effectable_name: Lucky Rabbit's Foot
+

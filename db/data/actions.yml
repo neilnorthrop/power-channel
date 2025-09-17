@@ -5,4 +5,3 @@
 - name: Gather
   description: Gather basic resources.
   cooldown: 60
-

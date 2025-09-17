@@ -112,6 +112,21 @@ class CraftingService
 
         # Evaluate flags potentially satisfied by crafting this item within the transaction
         EnsureFlagsService.evaluate_for(@user, touch: { items: [ recipe.item_id ] })
+
+        # Equip-style items: consume the crafted item after awarding the flag
+        # Data-driven via flags: any flag with slug in the set below and requiring this item
+        equippable_flag_slugs = %w[has_small_backpack has_basic_hatchet has_basic_pick has_spear]
+        if Flag.joins(:flag_requirements).where(slug: equippable_flag_slugs, flag_requirements: { requirement_type: 'Item', requirement_id: recipe.item_id }).exists?
+          # remove one crafted item so it does not remain in inventory
+          user_item.reload
+          if user_item.quantity.to_i > 0
+            if user_item.quantity == 1
+              user_item.destroy!
+            else
+              user_item.decrement!(:quantity, 1)
+            end
+          end
+        end
       end
 
       # Broadcast deltas after commit so clients see committed state

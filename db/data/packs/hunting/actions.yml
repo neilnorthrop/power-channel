@@ -1,0 +1,5 @@
+---
+- name: Hunt
+  description: Hunt small game for meat, hides, bones, and feathers.
+  cooldown: 60
+

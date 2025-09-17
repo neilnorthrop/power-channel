@@ -1,0 +1,10 @@
+---
+# Item Effects
+- name: Gatherer's Luck
+  description: Increases luck when gathering.
+  target_attribute: action:gather
+  modifier_type: luck
+  modifier_value: 0.2
+  duration: 600
+  effectable_type: Item
+  effectable_name: Lucky Charm

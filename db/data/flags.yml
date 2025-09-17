@@ -38,3 +38,16 @@
     - { type: Building, name: Medium Home, quantity: 1 }
   unlockables:
     - { type: Building, name: Large Home }
+
+# Equipment flags
+- slug: has_basic_hatchet
+  name: Has Basic Hatchet
+  description: Indicates the user has equipped a basic hatchet.
+  requirements:
+    - { type: Item, name: Hatchet, quantity: 1 }
+
+- slug: has_basic_pick
+  name: Has Basic Pick
+  description: Indicates the user has equipped a basic pick.
+  requirements:
+    - { type: Item, name: Basic Pick, quantity: 1 }

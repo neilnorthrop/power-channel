@@ -1,0 +1,9 @@
+---
+- name: Spear
+  description: A simple spear used for hunting.
+- name: Small Backpack
+  description: A small backpack to carry more findings.
+- name: Lucky Rabbit's Foot
+  description: Grants good fortune while hunting.
+  effect: increase_luck
+

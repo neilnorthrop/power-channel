@@ -1,0 +1,15 @@
+---
+- item: Spear
+  quantity: 1
+  components:
+    - { type: Resource, name: Rock, quantity: 2 }
+    - { type: Resource, name: Flint, quantity: 1 }
+    - { type: Resource, name: Branch, quantity: 1 }
+    - { type: Item, name: Twine, quantity: 1 }
+
+- item: Small Backpack
+  quantity: 1
+  components:
+    - { type: Item, name: Rope, quantity: 2 }
+    - { type: Resource, name: Hide, quantity: 4 }
+

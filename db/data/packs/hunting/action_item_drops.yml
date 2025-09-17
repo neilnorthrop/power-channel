@@ -1,0 +1,7 @@
+---
+- action: Hunt
+  item: Lucky Rabbit's Foot
+  min_amount: 1
+  max_amount: 1
+  drop_chance: 0.00005
+

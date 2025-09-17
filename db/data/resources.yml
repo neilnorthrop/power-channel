@@ -31,6 +31,21 @@
   drop_chance: 0.85
   action_name: Gather
 
+# New core resources
+- name: Flint
+  description: Sharp flint, used to shape stone and tool heads.
+  min_amount: 1
+  max_amount: 1
+  drop_chance: 0.35
+  action_name: Gather
+
+- name: Clay
+  description: Pliable clay used for pottery and bricks.
+  min_amount: 1
+  max_amount: 2
+  drop_chance: 0.6
+  action_name: Gather
+
 # Taxes
 - name: Gold Coins
   description: The currency of the realm.
@@ -38,4 +53,3 @@
   max_amount: 12
   drop_chance: 1.0
   action_name: Taxes
-

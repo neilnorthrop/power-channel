@@ -129,7 +129,8 @@ require "yaml"
       # Resources (resolve action by name)
       resources = load_yaml("resources.yml")
       resources.each do |attrs|
-        action_name = attrs.delete("action_name") || attrs.delete(:action_name)
+        log.call("Processing resource: '#{resources}'") if attrs.nil?
+        action_name = attrs&.delete("action_name") || attrs&.delete(:action_name)
         next if dry_run && action_name && Action.find_by(name: action_name).nil?
         rec = find_or_init(Resource, by: { name: attrs["name"] || attrs[:name] })
         rec.assign_attributes(attrs)
@@ -147,6 +148,34 @@ require "yaml"
       items = load_yaml("items.yml")
       items.each { |attrs| upsert(Item, by: :name, attrs: attrs, dry_run: dry_run) }
       log.call("Seeded items: #{items.size}")
+
+      # Effects (support Item/Action effectables)
+      effects = load_yaml("effects.yml")
+      effects.each do |attrs|
+        type = attrs.fetch("effectable_type")
+        effectable_name = attrs.fetch("effectable_name")
+        model = model_for(type)
+        next if dry_run && model.find_by(name: effectable_name).nil?
+        target = model.find_by(name: effectable_name)
+        raise "Unknown effectable #{type}: '#{effectable_name}'" if target.nil? && !dry_run
+        next if target.nil?
+        rec = Effect.find_or_initialize_by(effectable: target, name: attrs["name"]) do |e|
+          e.description = attrs["description"]
+          e.target_attribute = attrs["target_attribute"]
+          e.modifier_type = attrs["modifier_type"]
+          e.modifier_value = attrs["modifier_value"]
+          e.duration = attrs["duration"]
+        end
+        rec.assign_attributes(
+          description: attrs["description"],
+          target_attribute: attrs["target_attribute"],
+          modifier_type: attrs["modifier_type"],
+          modifier_value: attrs["modifier_value"],
+          duration: attrs["duration"]
+        )
+        save!(rec, dry_run)
+      end
+      log.call("Seeded effects: #{effects.size}")
 
       # Buildings
       buildings = load_yaml("buildings.yml")
@@ -252,6 +281,28 @@ require "yaml"
       end
       log.call("Seeded flags: #{flags.size}")
 
+      # Action Item Drops
+      action_item_drops = load_yaml("action_item_drops.yml")
+      action_item_drops.each do |row|
+        action_name = row.fetch("action") { row[:action] }
+        item_name   = row.fetch("item") { row[:item] }
+        min_amount  = row["min_amount"] || row[:min_amount]
+        max_amount  = row["max_amount"] || row[:max_amount]
+        drop_chance = row.fetch("drop_chance") { row[:drop_chance] }
+        action = Action.find_by(name: action_name)
+        item   = Item.find_by(name: item_name)
+        if action.nil? || item.nil?
+          raise "Unknown action '#{action_name}' or item '#{item_name}' for action_item_drop" unless dry_run
+          next
+        end
+        rec = ActionItemDrop.find_or_initialize_by(action: action, item: item)
+        rec.min_amount = min_amount
+        rec.max_amount = max_amount
+        rec.drop_chance = drop_chance
+        save!(rec, dry_run)
+      end
+      log.call("Seeded action item drops: #{action_item_drops.size}")
+
       # Dismantle rules (items only for now)
       dismantles = load_yaml("dismantle.yml")
       dismantles.each do |row|
@@ -313,6 +364,7 @@ require "yaml"
       case type
       when "Resource" then Resource
       when "Item"     then Item
+      when "Action"   then Action
       when "Skill"    then Skill
       when "Building" then Building
       when "Flag"     then Flag

@@ -1,0 +1,21 @@
+---
+- slug: has_spear
+  name: Has Spear
+  description: Indicates the user has equipped a spear.
+  requirements:
+    - { type: Item, name: Spear, quantity: 1 }
+
+- slug: has_small_backpack
+  name: Has Small Backpack
+  description: Indicates the user has equipped a small backpack.
+  requirements:
+    - { type: Item, name: Small Backpack, quantity: 1 }
+
+- slug: can_hunt
+  name: Can Hunt
+  description: Unlocks Hunt after crafting a spear.
+  requirements:
+    - { type: Item, name: Spear, quantity: 1 }
+  unlockables:
+    - { type: Action, name: Hunt }
+

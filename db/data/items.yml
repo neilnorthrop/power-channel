@@ -10,6 +10,15 @@
 - name: Basic Pick
   description: A basic mining tool.
 
+# Hunting & Utility
+- name: Rope
+  description: A sturdier cord made from twine.
+
+# Lucky items
+- name: Lucky Charm
+  description: Grants good fortune while gathering.
+  effect: increase_luck
+
 # Alchemy
 # - name: Minor Potion of Luck
 #   description: Slightly increases your luck for a short duration.

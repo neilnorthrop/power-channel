@@ -16,6 +16,7 @@
   components:
     - { type: Item, name: Bundle of Sticks, quantity: 1 }
     - { type: Resource, name: Rock, quantity: 5 }
+    - { type: Resource, name: Flint, quantity: 1 }
     - { type: Item, name: Twine, quantity: 2 }
 
 # Mining
@@ -24,6 +25,13 @@
   components:
     - { type: Item, name: Bundle of Sticks, quantity: 1 }
     - { type: Resource, name: Rock, quantity: 5 }
+    - { type: Resource, name: Flint, quantity: 2 }
+    - { type: Item, name: Twine, quantity: 2 }
+
+# Hunting & Utility
+- item: Rope
+  quantity: 1
+  components:
     - { type: Item, name: Twine, quantity: 2 }
 
 # Alchemy
@@ -37,4 +45,3 @@
 #   components:
 #     - { type: Resource, name: Stone, quantity: 10 }
 #     - { type: Resource, name: Wood, quantity: 10 }
-
