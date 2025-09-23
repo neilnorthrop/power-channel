@@ -55,7 +55,7 @@ class ActionServiceTest < ActiveSupport::TestCase
     # rand calls: first for success (<1), second for fractional (<0.3 triggers +1)
     Kernel.stubs(:rand).returns(0.0, 0.1)
     result = ActionService.new(@user).perform_action(action.id)
-    assert result[:success]
+    assert result[:success], result[:error]
     assert_equal before + 4, ur.reload.amount
   end
 
@@ -76,7 +76,7 @@ class ActionServiceTest < ActiveSupport::TestCase
     # rand calls: success 0.0, fractional 0.9 (> 0.3) → no +1
     Kernel.stubs(:rand).returns(0.0, 0.9)
     result = ActionService.new(@user).perform_action(action.id)
-    assert result[:success]
+    assert result[:success], result[:error]
     assert_equal before + 3, ur.reload.amount
   end
 
