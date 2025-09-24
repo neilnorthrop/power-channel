@@ -53,3 +53,4 @@
   max_amount: 12
   drop_chance: 1.0
   action_name: Taxes
+  currency: true

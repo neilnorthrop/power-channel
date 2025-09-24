@@ -85,23 +85,27 @@ require "yaml"
         end
       end
 
+      # Determine cooldown override behavior
+      override_cooldown = begin
+        val = ENV['SEEDS_OVERRIDE_COOLDOWN'].to_s.strip.downcase
+        %w[1 true yes y on].include?(val)
+      end
+      log.call("Seeds cooldown policy: #{override_cooldown ? 'override-all' : 'default-when-missing'} (default=#{Rails.application.config.action_cooldown.to_i}s)")
+
       action_rows.each do |(attrs, source)|
         attrs = attrs.dup
-        # Apply global cooldown if not set
+        # Apply global cooldown
+        # - If SEEDS_OVERRIDE_COOLDOWN is truthy, override cooldown for all actions.
+        # - Otherwise, only set the default when the YAML did not specify a cooldown.
         #
-        # Note: this will overwrite any existing cooldown values in the DB if the action is re-seeded.
-        # This is intentional to ensure consistency across all actions.
-        # If you need per-action cooldowns, consider setting them explicitly in the YAML files.
-        #
-        # The cooldown value is read from Rails config, which is set in application.rb
-        # This allows easy adjustment via environment (1 second in dev, 60 seconds in prod).
-        # If you want to disable this behavior, you can comment out this block.
-        # Alternatively, you can set a specific cooldown value in the YAML file to override the default.
-        # If you want to remove cooldowns entirely, set cooldown: 0 in the YAML file.
-        # This approach ensures that all actions have a sensible default cooldown unless explicitly overridden.
-        # This is particularly useful in development environments where rapid testing is needed.
-        if attrs.key?("cooldown") || attrs.key?(:cooldown)
+        # The default cooldown comes from Rails.application.config.action_cooldown
+        # (see config/application.rb), which you can tune per-env.
+        if override_cooldown
           attrs["cooldown"] = Rails.application.config.action_cooldown.to_i
+        else
+          unless attrs.key?("cooldown") || attrs.key?(:cooldown)
+            attrs["cooldown"] = Rails.application.config.action_cooldown.to_i
+          end
         end
         # Auto-assign order if missing: allocate blocks per source to avoid manual hunting
         if attrs["order"].nil? && attrs[:order].nil?
@@ -128,14 +132,40 @@ require "yaml"
 
       # Resources (resolve action by name)
       resources = load_yaml("resources.yml")
-      resources.each do |attrs|
-        log.call("Processing resource: '#{resources}'") if attrs.nil?
-        action_name = attrs&.delete("action_name") || attrs&.delete(:action_name)
-        next if dry_run && action_name && Action.find_by(name: action_name).nil?
+      resources.each_with_index do |attrs, idx|
+        if attrs.nil?
+          log.call("Skipping nil resource row at index #{idx}")
+          next
+        end
+        # Pull out relationship + drop attributes for join row creation
+        action_name = attrs["action_name"] || attrs[:action_name]
+        min_amount  = attrs["min_amount"] || attrs[:min_amount]
+        max_amount  = attrs["max_amount"] || attrs[:max_amount]
+        drop_chance = attrs["drop_chance"] || attrs[:drop_chance]
+
+        # Keep the resource record itself minimal (attributes minus join hints)
+        attrs = attrs.dup
+        attrs.delete("action_name"); attrs.delete(:action_name)
+        # Preserve existing columns while we migrate; these will be ignored later
         rec = find_or_init(Resource, by: { name: attrs["name"] || attrs[:name] })
         rec.assign_attributes(attrs)
+        # Maintain legacy coupling for now to avoid breaking readers; to be removed later
         rec.action = Action.find_by(name: action_name) if action_name
         save!(rec, dry_run)
+
+        # Emit ActionResourceDrop join if action present
+        if action_name
+          action = Action.find_by(name: action_name)
+          if action.nil?
+            raise "Unknown action '#{action_name}' for resource '#{rec.name}'" unless dry_run
+          else
+            ard = ActionResourceDrop.find_or_initialize_by(action: action, resource: rec)
+            ard.min_amount  = min_amount
+            ard.max_amount  = max_amount
+            ard.drop_chance = drop_chance unless drop_chance.nil?
+            save!(ard, dry_run)
+          end
+        end
       end
       log.call("Seeded resources: #{resources.size}")
 

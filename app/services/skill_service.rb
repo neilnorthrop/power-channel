@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class SkillService
+  # Cache resolved effect classes keyed by full effect string.
+  # Uses Concurrent::Map for thread-safe memoization when available.
+  EFFECT_CLASS_CACHE = defined?(Concurrent::Map) ? Concurrent::Map.new : {}
   def initialize(user)
     @user = user
   end
@@ -57,20 +60,73 @@ class SkillService
   #
   # @return [Array(Numeric, Numeric)] The modified cooldown and amount after the skill effect has been applied.
   def apply_skill_effect(skill, action, cooldown, amount)
-    Rails.logger.debug("Applying skill effect for skill ID #{skill.id} and user ID #{@user.id}")
-    modification, resource_name, attribute = skill.effect.split("_", 3)
-    Rails.logger.debug("Skill effect details: modification=#{modification}, resource_name=#{resource_name}, attribute=#{attribute}")
-    effect_class_name = "SkillEffects::#{modification.camelize}#{attribute.camelize}Effect"
+    effect = skill.effect.to_s
+    user_id = @user&.id
+    action_name = respond_to_action_name(action)
 
-    Rails.logger.debug("Looking for effect class: #{effect_class_name}")
-    effect_class = effect_class_name.constantize
-    effect_class.apply(action, cooldown, amount, resource_name.capitalize, skill.multiplier)
-  rescue NameError
-    # Handle cases where the effect class doesn't exist
-    [ cooldown, amount ]
+    Rails.logger.debug(
+      "Applying skill effect" \
+      + " user_id=#{user_id} skill_id=#{skill.id} effect=\"#{effect}\" action=\"#{action_name}\""
+    )
+
+    parsed = parse_effect(effect)
+    unless parsed
+      Rails.logger.warn(
+        "Invalid skill effect format; skipping" \
+        + " user_id=#{user_id} skill_id=#{skill.id} effect=\"#{effect}\""
+      )
+      return [ cooldown, amount ]
+    end
+
+    effect_class = resolve_effect_class(effect, parsed[:modification], parsed[:attribute])
+    unless effect_class
+      Rails.logger.warn(
+        "Unresolvable skill effect class; skipping" \
+        + " user_id=#{user_id} skill_id=#{skill.id} effect=\"#{effect}\""
+      )
+      return [ cooldown, amount ]
+    end
+
+    effect_class.apply(action, cooldown, amount, parsed[:resource].capitalize, skill.multiplier)
   rescue StandardError => e
-    # Log or handle other potential errors gracefully
-    Rails.logger.error("Error applying skill effect: #{e.message} for skill ID #{skill.id} and user ID #{@user.id}")
+    Rails.logger.error(
+      "Error applying skill effect" \
+      + " user_id=#{user_id} skill_id=#{skill.id} effect=\"#{effect}\" error=#{e.class}: #{e.message}"
+    )
     [ cooldown, amount ]
+  end
+
+  # Parse effect string into parts. Returns a Hash or nil if invalid.
+  def parse_effect(effect)
+    # Expected: "<modification>_<resource>_<attribute>"
+    # Examples: "increase_wood_gain", "decrease_stone_cooldown", "critical_all_gain"
+    m = effect.match(/\A(?<modification>[a-z]+)_(?<resource>[a-z]+)_(?<attribute>[a-z]+)\z/)
+    return nil unless m
+
+    {
+      modification: m[:modification],
+      resource: m[:resource],
+      attribute: m[:attribute]
+    }
+  end
+
+  # Resolve and memoize the effect class for a given effect string.
+  # Returns the class or nil if it cannot be resolved.
+  def resolve_effect_class(effect, modification, attribute)
+    cached = EFFECT_CLASS_CACHE[effect]
+    return nil if cached == false
+    return cached if cached
+
+    effect_class_name = "SkillEffects::#{modification.camelize}#{attribute.camelize}Effect"
+    Rails.logger.debug("Resolving effect class #{effect_class_name} for effect=\"#{effect}\"")
+
+    klass = effect_class_name.safe_constantize
+    # Cache result: class or false sentinel if missing
+    EFFECT_CLASS_CACHE[effect] = klass || false
+    klass
+  end
+
+  def respond_to_action_name(action)
+    action.respond_to?(:name) ? action.name : action.class.name
   end
 end

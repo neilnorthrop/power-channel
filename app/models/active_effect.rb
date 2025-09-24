@@ -36,6 +36,21 @@ class ActiveEffect < ApplicationRecord
     active_for_user_luck_and_target(user, targets, include_quantity: true)
   end
 
+  # Sum luck modifiers for a user scoped to a single target key.
+  # Keeps the predicate identical to existing logic:
+  # - active (expires_at > now)
+  # - joins(:effect)
+  # - effects.modifier_type = 'luck'
+  # - effects.target_attribute IS NULL OR = scope_key
+  # Returns a Float.
+  def self.luck_sum_for(user, scope_key)
+    active
+      .for_user(user)
+      .luck
+      .effects_target_attribute_is([ scope_key ])
+      .sum_modifier_value
+  end
+
   private
 
   def self.col

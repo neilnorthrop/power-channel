@@ -31,20 +31,14 @@ class ActionService
     # Gate by flag via polymorphic unlockables
     if (gate = Unlockable.find_by(unlockable_type: "Action", unlockable_id: action.id))
       unless @user.user_flags.exists?(flag_id: gate.flag_id)
-        # Build requirements summary for friendly error
-        reqs = gate.flag.flag_requirements.includes(:requirement).map do |r|
-          name = case r.requirement_type
-          when "Item" then Item.find_by(id: r.requirement_id)&.name
-          when "Building" then Building.find_by(id: r.requirement_id)&.name
-          when "Resource" then Resource.find_by(id: r.requirement_id)&.name
-          when "Flag" then Flag.find_by(id: r.requirement_id)&.name
-          when "Skill" then Skill.find_by(id: r.requirement_id)&.name
-          else r.requirement_type
-          end
+        # Build requirements summary using preloaded names to avoid N+1 queries
+        names_map = RequirementNameLookup.for_flag_ids([gate.flag_id])
+        reqs = gate.flag.flag_requirements.map do |r|
+          name = names_map.dig(r.requirement_type, r.requirement_id) || r.requirement_type
           qty = r.quantity.to_i > 1 ? " x#{r.quantity}" : ""
-          [ name, qty ].compact.join
+          [name, qty].join
         end.compact
-        msg = "Locked. Requirements: #{reqs.presence || [ 'Unavailable' ] .join(', ')}"
+        msg = "Locked. Requirements: #{reqs.presence || ['Unavailable'].join(', ')}"
         return { success: false, error: msg }
       end
     end
@@ -54,11 +48,11 @@ class ActionService
     # Check cooldown
     if user_action.off_cooldown?
       # Roll outcomes first (pure, uses RNG but no persistence)
-      resource_rolls, total_gained, coins_gained = roll_resource_drops(action.resources, user_action)
+      resource_rolls, total_gained, coins_gained = roll_resource_drops(action.resource_drops, user_action)
       item_rolls = roll_item_drops(action.item_drops, user_action)
 
       # Preload current user state for relevant resource/item IDs to avoid N+1 queries
-      resource_ids = action.resources.map(&:id)
+      resource_ids = action.resource_drops.map(&:resource_id)
       item_ids     = action.item_drops.map(&:item_id)
       @user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
       @user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids, quality: CraftingService::DEFAULT_QUALITY).index_by(&:item_id) : {}
@@ -85,7 +79,7 @@ class ActionService
           ur = @user_resources_by_id[rid] || @user.user_resources.find_by(resource_id: rid)
           { resource_id: rid, amount: ur&.amount.to_i }
         end
-        resource_delta_broadcase(resource_changes)
+        resource_delta_broadcast(resource_changes)
       end
 
       if @changed_item_ids.any?
@@ -121,7 +115,7 @@ class ActionService
     user_broadcast("user_item_delta", { changes: changed })
   end
 
-  def resource_delta_broadcase(changed)
+  def resource_delta_broadcast(changed)
     user_broadcast("user_resource_delta", { changes: changed })
   end
 
@@ -130,7 +124,7 @@ class ActionService
   end
 
   def action
-    @action ||= Action.includes(:resources, :item_drops).find_by(id: @action_id)
+    @action ||= Action.includes(resource_drops: :resource, item_drops: :item).find_by(id: @action_id)
   end
 
   # Aggregate luck from active effects with optional action scoping
@@ -138,12 +132,13 @@ class ActionService
   # Chance multiplier uses global/null and action-targeted luck.
   # Quantity multiplier uses global/null, action-targeted, and quantity-targeted luck.
   def chance_mult
-    total = ActiveEffect.luck_total_for_chance(@user, [ scope_key ])
+    total = ActiveEffect.luck_sum_for(@user, scope_key)
     1.0 + (total * LUCK_CHANCE_WEIGHT)
   end
 
   def quantity_mult
-    total = ActiveEffect.luck_total_for_quantity(@user, [ scope_key ])
+    # Sum action-scoped + quantity-scoped (both include global/null)
+    total = ActiveEffect.luck_sum_for(@user, scope_key) + ActiveEffect.luck_sum_for(@user, "quantity")
     1.0 + (total * LUCK_QTY_WEIGHT)
   end
 
@@ -151,18 +146,23 @@ class ActionService
     @user_action ||= @user.user_actions.find_by(action_id: @action_id)
   end
 
-  def roll_resource_drops(resources, user_action)
+  def roll_resource_drops(resource_drops, user_action)
     rolls = []
     total_gained = 0
     coins_gained = 0
-    resources.each do |resource|
-      next unless Kernel.rand < effective_chance(resource.drop_chance, chance_mult)
+    resource_drops.each do |drop|
+      resource = drop.resource
+      next unless resource
+      chance = DropCalculator.effective_chance(drop.drop_chance, chance_mult)
+      next unless DropCalculator.roll?(chance)
 
       skill_service = SkillService.new(@user)
-      _cooldown, amount = skill_service.apply_skills_to_action(action, action.cooldown, base_qty(resource, user_action))
-      amount = fractional_rounding(amount, quantity_mult)
+      base = DropCalculator.base_quantity(drop.min_amount, drop.max_amount, user_action.level, resource.base_amount)
+      _cooldown, amount = skill_service.apply_skills_to_action(action, action.cooldown, base)
+      exact = amount.to_f * quantity_mult
+      amount = DropCalculator.quantize_with_prob(exact, min_on_success: 1)
       total_gained += amount
-      coins_gained += amount if resource.name.to_s.downcase.include?("coin")
+      coins_gained += amount if resource.respond_to?(:currency) ? resource.currency : false
       rolls << [ resource, amount ]
     end
     [ rolls, total_gained, coins_gained ]
@@ -171,8 +171,11 @@ class ActionService
   def roll_item_drops(item_drops, user_action)
     rolls = []
     item_drops.each do |drop|
-      next unless Kernel.rand < effective_chance(drop.drop_chance, chance_mult)
-      amount = fractional_rounding(base_qty(drop, user_action), quantity_mult)
+      chance = DropCalculator.effective_chance(drop.drop_chance, chance_mult)
+      next unless DropCalculator.roll?(chance)
+      base = DropCalculator.base_quantity(drop.min_amount, drop.max_amount, user_action.level, drop.base_amount)
+      exact = base.to_f * quantity_mult
+      amount = DropCalculator.quantize_with_prob(exact, min_on_success: 1)
       rolls << [ drop, amount ]
     end
     rolls
@@ -208,7 +211,9 @@ class ActionService
 
   def collect_resource_changes(action)
     # Deprecated in favor of tracked deltas; kept for compatibility if needed
-    action.resources.map do |r|
+    action.resource_drops.map do |d|
+      r = d.resource
+      next unless r
       ur = @user.user_resources.find_by(resource_id: r.id)
       { resource_id: r.id, amount: ur&.amount.to_i }
     end
@@ -237,44 +242,4 @@ class ActionService
     "action:#{action.name.to_s.downcase.gsub(/\s+/, '_')}"
   end
   
-  # Success roll based on (drop_chance * chance_mult)
-  # Clamp at 100% chance to avoid weirdness
-  # (eg. 150% chance doesn't mean guaranteed +50% quantity)
-  # Also handles nil drop_chance as 0.0
-  # (e.g. resources with 0% drop chance will never drop, even with luck)
-  # Note: Skills may further modify cooldown and quantity below
-  def effective_chance(drop_chance, chance_mult)
-    [ drop_chance.to_f * chance_mult, 1.0 ].min
-  end
-  
-  # Base quantity calculation
-  # If min/max defined, use random in that range scaled by user_action level
-  # Else use base_amount directly
-  # Determine base quantity ((min..max * user action level) or base_amount) first
-  def base_qty(drop, user_action)
-    Rails.logger.debug("Calculating base quantity for resource || item #{drop.name} for user action level #{user_action.level}")
-    Rails.logger.debug("Resource || item details: base_amount='#{drop.base_amount}', min_amount='#{drop.min_amount}', max_amount='#{drop.max_amount}'")
-    if drop.min_amount.present? && drop.max_amount.present?
-      min = drop.min_amount.to_i
-      max = drop.max_amount.to_i
-      base = (min == max) ? min : Kernel.rand(min..max)
-      (base * user_action.level)
-    else
-      drop&.base_amount&.to_i || 1
-    end
-  end
-  
-  # Probabilistic fractional rounding:
-  # exact = base * multiplier; give +1 with probability equal to the fractional part.
-  # E.g. 2.3 -> 2 + 30% chance of +1; 2.7 -> 2 + 70% chance of +1
-  # Ensures average gain is correct over time while keeping integers
-  # Also ensure at least 1 is given on a successful drop
-  def fractional_rounding(amount, quantity_mult)
-    exact = amount.to_f * quantity_mult
-    int   = exact.floor
-    frac  = exact - int
-    amount = int + (Kernel.rand < frac ? 1 : 0)
-    amount = 1 if amount <= 0 # ensure a successful drop yields at least 1
-    amount
-  end
 end

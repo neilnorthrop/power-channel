@@ -72,6 +72,15 @@ The loader performs idempotent find-or-initialize + assign + save per record, ke
 
 For large datasets, switch to bulk `upsert_all` with unique indexes and prebuilt lookup hashes to avoid N+1 patterns.
 
+## Cooldown Defaults and Overrides
+- Default behavior: the loader sets a sensible default cooldown on Actions only when the YAML does not specify a `cooldown`.
+- Global value: the default comes from `Rails.application.config.action_cooldown` (see `config/application.rb`). By default this is short in development and higher in production.
+- Override mode: set `SEEDS_OVERRIDE_COOLDOWN=true` to override cooldown for all Actions during seeding, regardless of YAML. Useful for uniform tuning across packs or environments.
+- Dry-run examples:
+  - Default-only: `bin/rails seeds:dry_run`
+  - Override-all: `SEEDS_OVERRIDE_COOLDOWN=true bin/rails seeds:dry_run`
+- Logging: seeding logs the active policy, e.g. `Seeds cooldown policy: default-when-missing (default=5s)`.
+
 ## Seeding + Backfill Workflow With Rake Tasks
 Typical workflow when adding content
 1) Edit YAML in `db/data/` to add/modify definitions.

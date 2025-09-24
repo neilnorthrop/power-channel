@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_17_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_120000) do
     t.index ["action_id", "item_id"], name: "index_action_item_drops_on_action_id_and_item_id", unique: true
     t.index ["action_id"], name: "index_action_item_drops_on_action_id"
     t.index ["item_id"], name: "index_action_item_drops_on_item_id"
+  end
+
+  create_table "action_resource_drops", force: :cascade do |t|
+    t.bigint "action_id", null: false
+    t.bigint "resource_id", null: false
+    t.integer "min_amount"
+    t.integer "max_amount"
+    t.float "drop_chance", default: 1.0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action_id", "resource_id"], name: "index_action_resource_drops_on_action_id_and_resource_id", unique: true
+    t.index ["action_id"], name: "index_action_resource_drops_on_action_id"
+    t.index ["resource_id"], name: "index_action_resource_drops_on_resource_id"
   end
 
   create_table "actions", force: :cascade do |t|
@@ -168,6 +181,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_120000) do
     t.float "drop_chance", default: 1.0
     t.integer "min_amount"
     t.integer "max_amount"
+    t.boolean "currency", default: false, null: false
     t.index ["action_id"], name: "index_resources_on_action_id"
   end
 
@@ -276,6 +290,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_120000) do
 
   add_foreign_key "action_item_drops", "actions"
   add_foreign_key "action_item_drops", "items"
+  add_foreign_key "action_resource_drops", "actions"
+  add_foreign_key "action_resource_drops", "resources"
   add_foreign_key "active_effects", "effects"
   add_foreign_key "active_effects", "users"
   add_foreign_key "dismantle_yields", "dismantle_rules"
