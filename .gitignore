@@ -35,5 +35,4 @@
 
 /cline_docs/*
 /node_modules/*
-.env
 cards.json

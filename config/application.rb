@@ -31,7 +31,7 @@ module AetherForge
     config.jwt_secret = ENV["JWT_SECRET"]
 
     # Cooldown period (in seconds) between performing the same action.
-    # Default is 60 seconds in production, 1 second in development for easier testing.
+    # Default is 60 seconds in production, 5 seconds in development for easier testing.
     config.action_cooldown = Rails.env.development? ? 5 : 60 # seconds
   end
 end

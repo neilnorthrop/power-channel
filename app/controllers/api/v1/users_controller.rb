@@ -2,17 +2,17 @@
 
 class Api::V1::UsersController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/user
   # Retrieve the current user's details.
   # Example return value:
   # {
   #   "id": 1,
-  #   "username": "player_one",
   #   "email": "test@example.com",
-  #   "created_at": "2024-06-01T12:00:00Z",
-  #   "updated_at": "2024-06-01T12:00:00Z"
+  #   "level": 1,
+  #   "experience": 0,
+  #   "skill_points": 0,
+  #   "experimental_crafting": false
   # }
   # @return [JSON] a JSON object containing the current user's details
   # @example GET /api/v1/user

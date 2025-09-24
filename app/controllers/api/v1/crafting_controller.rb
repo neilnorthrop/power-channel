@@ -2,17 +2,14 @@
 
 class Api::V1::CraftingController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/crafting
-  # Returns a list of recipes available to the current user, filtered by unlockable gates and sorted by recipe name.
+  # Returns a list of recipes available to the current user, filtered by unlockable gates.
   # Example return value:
   # [
   #   {
   #     "id": 1,
-  #     "name": "Wooden Sword",
-  #     "description": "A basic wooden sword.",
-  #     "base_amount": 1,
+  #     "item_id": 1,
   #     "item": {
   #       "id": 1,
   #       "name": "Wooden Sword",
@@ -25,7 +22,7 @@ class Api::V1::CraftingController < Api::ApiController
   #         "recipe_id": 1,
   #         "component_type": "Resource",
   #         "component_id": 1,
-  #         "amount": 5,
+  #         "quantity": 5,
   #         "component_name": "Wood"
   #       },
   #       ...

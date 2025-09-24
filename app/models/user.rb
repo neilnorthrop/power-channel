@@ -23,21 +23,21 @@ class User < ApplicationRecord
   after_create :initialize_defaults
 
   # Gain experience and level up if the threshold is reached.
-  # This method increases the user's experience by the specified amount,
-  # checks if the user has enough experience to level up, and updates the user's level and skill points accordingly.
+  # Increases the user's experience by the specified amount, checks if the
+  # user has enough experience to level up, and updates the user's level and
+  # skill points accordingly.
   # @param amount [Integer] The amount of experience to gain.
   # @return [void]
-  # This method is typically called when the user performs actions that grant experience,
-  # such as completing quests or defeating enemies.
-  # It is defined in the model to encapsulate the logic for gaining experience and leveling up.
+  # Typical callers: services such as ActionService upon successful action
+  # completion, or other game logic that grants XP.
   # @example
   #   user = User.find(1)
   #   user.gain_experience(150)
   #   # This will increase the user's experience by 150 and check if they level up
   #   # If the user has enough experience to level up, it will increase their level and skill points.
   #
-  # @note This method is called automatically when the user performs actions that grant experience,
-  #       as defined in the `after_create` callback.
+  # @note This method is not called by an `after_create` callback; user
+  #       initialization uses `UserInitializationService`.
   #
   def gain_experience(amount)
     self.experience += amount
@@ -48,8 +48,8 @@ class User < ApplicationRecord
 
   private
 
-  # Calculates the experience required for the next level based on the current level.
-  # The formula is: 100 * level, where level starts at 1.
+  # Calculates the experience required for the next level.
+  # Formula: 100 * current level (level starts at 1).
   #
   # @return [Integer] The experience required for the next level.
   # For level 1, it returns 100; for level 2, it returns 200, and so on.
@@ -72,10 +72,8 @@ class User < ApplicationRecord
     100 * level
   end
 
-  # Levels up the user by increasing their level, resetting experience to 0,
-  # and increasing skill points by 1.
-  # This method is called when the user has enough experience to level up.
-  # It updates the user's attributes and saves the record.
+  # Levels up the user by increasing their level, deducting the current level's
+  # XP requirement, and increasing skill points by 1.
   # @return [void]
   # This method is typically called after the user gains enough experience
   # to reach the next level.

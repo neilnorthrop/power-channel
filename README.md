@@ -127,7 +127,7 @@ Action ordering
 - Each Action can define an `order` in YAML. If omitted, an order is assigned automatically so you don’t need to hunt for the next number:
   - Core actions use the next value in a reserved core block; each pack gets its own block.
   - Values increment by 10 to allow manual inserts later without renumbering.
-- The API returns actions sorted by `order` then `name` to keep the UI stable.
+- The API returns actions sorted by `order` then `name` (descending) to keep the UI stable.
 
 Notes
 - Recipes reference components by `type` (`Resource` or `Item`) and `name`.

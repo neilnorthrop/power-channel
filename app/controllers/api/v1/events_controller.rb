@@ -2,7 +2,6 @@
 
 class Api::V1::EventsController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/events
   # Retrieve a list of events for the current user, filtered by optional parameters such as level, since, and before timestamps.

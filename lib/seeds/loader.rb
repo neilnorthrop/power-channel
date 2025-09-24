@@ -2,9 +2,9 @@
 
 require "yaml"
 
-  module Seeds
-    module Loader
-      module_function
+module Seeds
+  module Loader
+    module_function
 
       def data_dir
         Rails.root.join("db", "data")
@@ -421,5 +421,5 @@ require "yaml"
       record.save!
       record
     end
-    end
   end
+end

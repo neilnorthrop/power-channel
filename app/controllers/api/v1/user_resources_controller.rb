@@ -2,7 +2,6 @@
 
 class Api::V1::UserResourcesController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/user_resources
   # Retrieve a list of user resources for the current user, including associated resource details.
@@ -12,7 +11,7 @@ class Api::V1::UserResourcesController < Api::ApiController
   #     "id": 1,
   #     "user_id": 1,
   #     "resource_id": 1,
-  #     "quantity": 100,
+  #     "amount": 100,
   #     "resource": {
   #       "id": 1,
   #       "name": "Wood",

@@ -9,15 +9,29 @@
 # env settings in production). See README for setup instructions.
 
 class JsonWebToken
-  SECRET_KEY = Rails.application.config.jwt_secret
-
   def self.encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i
-    JWT.encode(payload, SECRET_KEY)
+    key = secret_key!
+    JWT.encode(payload, key)
   end
 
   def self.decode(token)
-    decoded = JWT.decode(token, SECRET_KEY)[0]
+    key = secret_key!
+    decoded = JWT.decode(token, key)[0]
     HashWithIndifferentAccess.new decoded
   end
+
+  # Returns the configured secret key or raises in production if missing.
+  def self.secret_key!
+    key = Rails.application.config.jwt_secret
+    if key.blank?
+      if Rails.env.production?
+        raise "JWT_SECRET is not configured. Set ENV['JWT_SECRET']."
+      else
+        Rails.logger.warn("JWT_SECRET is not configured; using empty secret in #{Rails.env}.")
+      end
+    end
+    key
+  end
+  private_class_method :secret_key!
 end

@@ -2,7 +2,6 @@
 
 class Api::V1::ItemsController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/items
   # Retrieve a list of items for the current user, including information about whether each item is locked based on unlockable requirements and user flags.
@@ -45,12 +44,16 @@ class Api::V1::ItemsController < Api::ApiController
   #   curl -X POST "https://example.com/api/v1/items" -d '{"item_id": 1}'
   def create
     item = Item.find(params[:item_id])
-    @current_user.items << item
-    render json: { message: "#{item.name} added to inventory." }
+    quality = CraftingService::DEFAULT_QUALITY
+    user_item = @current_user.user_items.find_or_initialize_by(item_id: item.id, quality: quality)
+    user_item.quantity = user_item.quantity.to_i + 1
+    user_item.save!
+    render json: { message: "#{item.name} added to inventory.", item_id: item.id, quality: quality, quantity: user_item.quantity }
   end
 
   # POST /api/v1/items/:id/use
   # Use an item from the current user's inventory, applying its effects and removing it from the inventory.
+  # Accepts optional `quality` param; defaults to normal quality.
   # Example return value:
   # {
   #   "message": "Item used successfully."
@@ -59,14 +62,15 @@ class Api::V1::ItemsController < Api::ApiController
   # @example POST /api/v1/items/1/use
   #   curl -X POST "https://example.com/api/v1/items/1/use"
   def use
-    user_item = @current_user.user_items.find_by(item_id: params[:id])
+    quality = params[:quality].presence || CraftingService::DEFAULT_QUALITY
+    user_item = @current_user.user_items.find_by(item_id: params[:id], quality: quality)
     if user_item
       item_service = ItemService.new(@current_user, user_item.item)
       item_service.use
       user_item.destroy
       # Broadcast only the changed item as a delta
       UserUpdatesChannel.broadcast_to(@current_user, { type: "user_item_delta", data: { changes: [ { item_id: user_item.item_id, quality: user_item.quality, quantity: 0 } ] } })
-      render json: { message: "#{user_item.item.name} used." }
+      render json: { message: "#{user_item.item.name} used.", item_id: user_item.item_id, quality: quality }
     else
       render json: { error: "Item not found in inventory." }, status: :not_found
     end

@@ -2,10 +2,9 @@
 
 class Api::V1::ResourcesController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/resources
-  # Retrieve a list of resources for the current user.
+  # Retrieve a list of resources associated with the current user (not global resources).
   # Example return value:
   # [
   #   {
@@ -16,7 +15,7 @@ class Api::V1::ResourcesController < Api::ApiController
   #   },
   #   ...
   # ]
-  # @return [JSON] a JSON array of resources available in the world. For per-user amounts, use `GET /api/v1/user_resources`.
+  # @return [JSON] a JSON array of resources available to the current user. For per-user amounts, use `GET /api/v1/user_resources`.
   # @example GET /api/v1/resources
   #   curl -X GET "https://example.com/api/v1/resources"
   def index

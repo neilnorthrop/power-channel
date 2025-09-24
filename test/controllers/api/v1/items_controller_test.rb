@@ -22,11 +22,13 @@ class Api::V1::ItemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create item" do
-    assert_difference("UserItem.count") do
+    UserItem.where(user: @user, item: @item, quality: "normal").delete_all
+    assert_difference("UserItem.where(user: @user, item: @item, quality: 'normal').count", +1) do
       post api_v1_items_url, params: { item_id: @item.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
     end
-
     assert_response :success
+    ui = UserItem.find_by(user: @user, item: @item, quality: "normal")
+    assert_equal 1, ui.quantity
   end
 
   test "create with invalid item id returns 404 and no change" do
@@ -36,18 +38,19 @@ class Api::V1::ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "creating the same item twice creates two rows (duplicates allowed)" do
-    # Ensure deterministic start: remove existing records for this item/user
-    UserItem.where(user: @user, item: @item).delete_all
-    assert_difference("UserItem.where(user: @user, item: @item).count", +2) do
-      2.times do
-        post api_v1_items_url, params: { item_id: @item.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
-      end
+  test "creating the same item twice increments quantity instead of new row" do
+    UserItem.where(user: @user, item: @item, quality: "normal").delete_all
+    2.times do
+      post api_v1_items_url, params: { item_id: @item.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
+      assert_response :success
     end
+    ui = UserItem.find_by(user: @user, item: @item, quality: "normal")
+    assert_equal 1, UserItem.where(user: @user, item: @item, quality: "normal").count
+    assert_equal 2, ui.quantity
   end
 
   test "should use item" do
-    user_item = @user.user_items.create(item: @item)
+    user_item = @user.user_items.create(item: @item, quality: "normal")
     post use_api_v1_item_url(user_item.item), headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success
   end
@@ -62,11 +65,24 @@ class Api::V1::ItemsControllerTest < ActionDispatch::IntegrationTest
 
   test "use removes only one record when duplicates exist" do
     UserItem.where(user: @user, item: @item).delete_all
-    2.times { @user.user_items.create!(item: @item) }
+    # Create two qualities for the same item
+    @user.user_items.create!(item: @item, quality: "normal")
+    @user.user_items.create!(item: @item, quality: "rare")
+
+    # Use rare specifically
     assert_difference("UserItem.where(user: @user, item: @item).count", -1) do
-      post use_api_v1_item_url(@item), headers: { Authorization: "Bearer #{@token}" }, as: :json
+      post use_api_v1_item_url(@item), params: { quality: "rare" }, headers: { Authorization: "Bearer #{@token}" }, as: :json
     end
     assert_response :success
-    assert_equal 1, UserItem.where(user: @user, item: @item).count
+    remaining = UserItem.where(user: @user, item: @item).pluck(:quality)
+    assert_equal [ "normal" ], remaining
+  end
+
+  test "use defaults to normal quality when not provided" do
+    UserItem.where(user: @user, item: @item).delete_all
+    @user.user_items.create!(item: @item, quality: "normal")
+    post use_api_v1_item_url(@item), headers: { Authorization: "Bearer #{@token}" }, as: :json
+    assert_response :success
+    assert_nil UserItem.find_by(user: @user, item: @item, quality: "normal")
   end
 end

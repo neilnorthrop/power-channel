@@ -2,7 +2,6 @@
 
 class Api::V1::DismantleController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # POST /api/v1/dismantle
   # Dismantle an item for the current user, returning the resources obtained from the dismantling process.

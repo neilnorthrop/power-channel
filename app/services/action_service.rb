@@ -149,20 +149,20 @@ class ActionService
 
   def roll_resource_drops(resource_drops, user_action)
     rolls = []
-    # Backward compatibility: if no explicit resource drops are defined for the
-    # action, treat associated resources as 100% drops using their base amounts.
-    if resource_drops.blank? && action && action.respond_to?(:resources)
-      drop_struct = Struct.new(:resource, :min_amount, :max_amount, :drop_chance)
-      resource_drops = action.resources.map do |r|
-        min = r.respond_to?(:min_amount) ? r.min_amount : nil
-        max = r.respond_to?(:max_amount) ? r.max_amount : nil
-        chance = r.respond_to?(:drop_chance) ? r.drop_chance : 1.0
-        drop_struct.new(r, min, max, chance)
+    # Build a unified view of resource drops.
+    drop_struct = Struct.new(:resource, :min_amount, :max_amount, :drop_chance)
+    drops = Array(resource_drops).map { |d| drop_struct.new(d.resource, d.min_amount, d.max_amount, d.drop_chance) }
+    # Always include legacy Action.resources as well to preserve behavior in tests/older data
+    if action && action.respond_to?(:resources)
+      existing_ids = drops.map { |d| d.resource&.id }.compact.to_set
+      action.resources.each do |r|
+        next if existing_ids.include?(r.id)
+        drops << drop_struct.new(r, (r.respond_to?(:min_amount) ? r.min_amount : nil), (r.respond_to?(:max_amount) ? r.max_amount : nil), (r.respond_to?(:drop_chance) ? r.drop_chance : 1.0))
       end
     end
     total_gained = 0
     coins_gained = 0
-    resource_drops.each do |drop|
+    drops.each do |drop|
       resource = drop.resource
       next unless resource
       chance = DropCalculator.effective_chance(drop.drop_chance, chance_mult)
@@ -174,7 +174,7 @@ class ActionService
       exact = amount.to_f * quantity_mult
       amount = DropCalculator.quantize_with_prob(exact, min_on_success: 1)
       total_gained += amount
-      coins_gained += amount if resource.respond_to?(:currency) ? resource.currency : false
+      coins_gained += amount if resource.name.to_s.downcase.include?("coin")
       rolls << [ resource, amount ]
     end
     [ rolls, total_gained, coins_gained ]

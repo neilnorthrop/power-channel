@@ -2,7 +2,6 @@
 
 class Api::V1::ActionsController < Api::ApiController
   include Authenticable
-  before_action :authenticate_request
 
   # GET /api/v1/actions
   # Returns a list of actions available to the current user, filtered by unlockable gates and sorted by action order and name.
