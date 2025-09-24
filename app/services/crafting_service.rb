@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'set'
 
 class CraftingService
   DEFAULT_QUALITY = "normal"
@@ -23,8 +24,14 @@ class CraftingService
     # Preload user state for relevant component ids
     resource_ids = reqs.select { |rr| rr.component_type == "Resource" }.map(&:component_id)
     item_ids     = reqs.select { |rr| rr.component_type == "Item" }.map(&:component_id)
+    # Include the crafted output item so we can update existing row instead of creating duplicates
+    item_ids << recipe.item_id
+    item_ids.uniq!
     user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
     user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids, quality: DEFAULT_QUALITY).index_by(&:item_id) : {}
+
+    changed_resource_ids = Set.new
+    changed_item_ids     = Set.new
 
     # Verify availability with OR/AND groups
     selected = []
@@ -98,17 +105,25 @@ class CraftingService
           when "Resource"
             if (ur = user_resources_by_id[rr.component_id])
               ur.decrement!(:amount, rr.quantity)
+              changed_resource_ids << rr.component_id
             end
           when "Item"
             if (ui = user_items_by_id[rr.component_id])
               ui.decrement!(:quantity, rr.quantity)
+              changed_item_ids << rr.component_id
             end
           end
         end
 
-        user_item = @user.user_items.find_or_initialize_by(item: recipe.item, quality: DEFAULT_QUALITY)
-        user_item.quantity = user_item.quantity.to_i + 1
-        user_item.save!
+        # Award crafted item using preload map (create only if needed)
+        crafted = user_items_by_id[recipe.item_id]
+        if crafted
+          crafted.update!(quantity: crafted.quantity.to_i + 1)
+        else
+          crafted = @user.user_items.create!(item_id: recipe.item_id, quality: DEFAULT_QUALITY, quantity: 1)
+          user_items_by_id[recipe.item_id] = crafted
+        end
+        changed_item_ids << recipe.item_id
 
         # Evaluate flags potentially satisfied by crafting this item within the transaction
         EnsureFlagsService.evaluate_for(@user, touch: { items: [ recipe.item_id ] })
@@ -118,27 +133,26 @@ class CraftingService
         equippable_flag_slugs = %w[has_small_backpack has_basic_hatchet has_basic_pick has_spear]
         if Flag.joins(:flag_requirements).where(slug: equippable_flag_slugs, flag_requirements: { requirement_type: 'Item', requirement_id: recipe.item_id }).exists?
           # remove one crafted item so it does not remain in inventory
-          user_item.reload
-          if user_item.quantity.to_i > 0
-            if user_item.quantity == 1
-              user_item.destroy!
+          crafted.reload
+          if crafted.quantity.to_i > 0
+            if crafted.quantity == 1
+              crafted.destroy!
+              user_items_by_id.delete(recipe.item_id)
             else
-              user_item.decrement!(:quantity, 1)
+              crafted.decrement!(:quantity, 1)
             end
+            changed_item_ids << recipe.item_id
           end
         end
       end
 
       # Broadcast deltas after commit so clients see committed state
-      res_changes = selected.select { |rr| rr.component_type == 'Resource' }.map do |rr|
-        ur = @user.user_resources.find_by(resource_id: rr.component_id)
-        { resource_id: rr.component_id, amount: ur&.amount.to_i }
+      res_changes = changed_resource_ids.map do |rid|
+        ur = user_resources_by_id[rid] || @user.user_resources.find_by(resource_id: rid)
+        { resource_id: rid, amount: ur&.amount.to_i }
       end
-      # Include crafted item increment
-      item_change_ids = selected.select { |rr| rr.component_type == 'Item' }.map(&:component_id)
-      item_change_ids << recipe.item_id
-      item_changes = item_change_ids.uniq.map do |iid|
-        ui = @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
+      item_changes = changed_item_ids.map do |iid|
+        ui = user_items_by_id[iid] || @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
         { item_id: iid, quality: DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
       end
       UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_delta', data: { changes: res_changes } }) if res_changes.any?

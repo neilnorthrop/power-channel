@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'set'
 
 class DismantleService
   DEFAULT_QUALITY = "normal"
@@ -37,23 +38,53 @@ class DismantleService
     end.compact
     return { success: false, error: "No salvageable output." } if computed.empty?
 
+    # Preload user state for relevant IDs/qualities to reduce queries
+    resource_ids = computed.select { |c| c[:type] == 'Resource' }.map { |c| c[:id] }.uniq
+    item_ids     = (computed.select { |c| c[:type] == 'Item' }.map { |c| c[:id] } + [ item.id ]).uniq
+    qualities    = (computed.select { |c| c[:type] == 'Item' }.map { |c| c[:quality] } + [ quality, DEFAULT_QUALITY ]).uniq
+    user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
+    user_items_by_key    = if item_ids.any?
+      @user.user_items.where(item_id: item_ids, quality: qualities).index_by { |ui| [ ui.item_id, ui.quality ] }
+    else
+      {}
+    end
+
+    # Ensure the subject user_item is present in the local map
+    user_items_by_key[[item.id, quality]] ||= user_item
+
+    changed_resource_ids = Set.new
+    changed_item_keys    = Set.new
+
     ApplicationRecord.transaction do
-      user_item.decrement!(:quantity, 1)
-      if user_item.reload.quantity.to_i <= 0
-        user_item.destroy!
+      # Decrement the dismantled item (specific quality)
+      subj = user_items_by_key[[item.id, quality]]
+      subj.decrement!(:quantity, 1)
+      if subj.reload.quantity.to_i <= 0
+        subj.destroy!
+        user_items_by_key.delete([item.id, quality])
       end
+      changed_item_keys << [item.id, quality]
 
       # Apply outputs
       computed.each do |out|
         case out[:type]
         when "Resource"
-          ur = @user.user_resources.find_or_initialize_by(resource_id: out[:id])
-          ur.amount = ur.amount.to_i + out[:amount]
-          ur.save!
+          ur = user_resources_by_id[out[:id]]
+          unless ur
+            ur = @user.user_resources.create!(resource_id: out[:id], amount: 0)
+            user_resources_by_id[out[:id]] = ur
+          end
+          ur.update!(amount: ur.amount.to_i + out[:amount])
+          changed_resource_ids << out[:id]
         when "Item"
-          ui = @user.user_items.find_or_initialize_by(item_id: out[:id], quality: out[:quality])
-          ui.quantity = ui.quantity.to_i + out[:amount]
-          ui.save!
+          key = [ out[:id], out[:quality] ]
+          ui = user_items_by_key[key]
+          unless ui
+            ui = @user.user_items.create!(item_id: out[:id], quality: out[:quality], quantity: 0)
+            user_items_by_key[key] = ui
+          end
+          ui.update!(quantity: ui.quantity.to_i + out[:amount])
+          changed_item_keys << key
         end
       end
 
@@ -61,15 +92,15 @@ class DismantleService
       # EnsureFlagsService.evaluate_for(@user, touch: { items: [item.id] })
     end
 
-    # Broadcast delta updates
-    res_changes = computed.select { |out| out[:type] == 'Resource' }.map do |out|
-      ur = @user.user_resources.find_by(resource_id: out[:id])
-      { resource_id: out[:id], amount: ur&.amount.to_i }
+    # Broadcast delta updates using tracked changed sets
+    res_changes = changed_resource_ids.map do |rid|
+      ur = user_resources_by_id[rid] || @user.user_resources.find_by(resource_id: rid)
+      { resource_id: rid, amount: ur&.amount.to_i }
     end
-    item_ids = computed.select { |out| out[:type] == 'Item' }.map { |out| out[:id] }
-    item_ids << item.id
-    item_changes = item_ids.uniq.map do |iid|
-      ui = @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
+    # Preserve existing behavior: broadcast default-quality counts for all affected item_ids
+    item_ids_for_broadcast = (changed_item_keys.map(&:first)).uniq
+    item_changes = item_ids_for_broadcast.map do |iid|
+      ui = user_items_by_key[[iid, DEFAULT_QUALITY]] || @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
       { item_id: iid, quality: DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
     end
     UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_delta', data: { changes: res_changes } }) if res_changes.any?

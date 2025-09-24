@@ -12,6 +12,29 @@ class EnsureFlagsService
   # touch: { items: [ids], buildings: [ids], resources: [ids], flags: [ids], skills: [ids] }
   def evaluate!(touch: {})
     flags = candidate_flags(touch)
+
+    # Preload user state for candidate requirements to avoid N+1
+    reqs = flags.flat_map(&:flag_requirements)
+    item_req_ids     = reqs.select { |r| r.requirement_type == 'Item' }.map(&:requirement_id).uniq
+    building_req_ids = reqs.select { |r| r.requirement_type == 'Building' }.map(&:requirement_id).uniq
+    resource_req_ids = reqs.select { |r| r.requirement_type == 'Resource' }.map(&:requirement_id).uniq
+
+    @pre_user_items_by_id = if item_req_ids.any?
+      rows = @user.user_items.where(item_id: item_req_ids).order(:id).to_a
+      rows.group_by(&:item_id).transform_values { |arr| arr.first }
+    else
+      {}
+    end
+    @pre_user_buildings_by_id = if building_req_ids.any?
+      @user.user_buildings.where(building_id: building_req_ids).index_by(&:building_id)
+    else
+      {}
+    end
+    @pre_user_resources_by_id = if resource_req_ids.any?
+      @user.user_resources.where(resource_id: resource_req_ids).index_by(&:resource_id)
+    else
+      {}
+    end
     to_grant = []
     @user_flag_ids ||= @user.user_flags.pluck(:flag_id).to_set
     flags.find_each do |flag|
@@ -57,15 +80,15 @@ class EnsureFlagsService
     case req.requirement_type
     when 'Item'
       @user_items_cache ||= {}
-      ui = @user_items_cache[req.requirement_id] ||= @user.user_items.find_by(item_id: req.requirement_id)
+      ui = @user_items_cache[req.requirement_id] ||= (@pre_user_items_by_id && @pre_user_items_by_id[req.requirement_id]) || @user.user_items.find_by(item_id: req.requirement_id)
       ui && ui.quantity.to_i >= req.quantity
     when 'Building'
       @user_buildings_cache ||= {}
-      ub = @user_buildings_cache[req.requirement_id] ||= @user.user_buildings.find_by(building_id: req.requirement_id)
+      ub = @user_buildings_cache[req.requirement_id] ||= (@pre_user_buildings_by_id && @pre_user_buildings_by_id[req.requirement_id]) || @user.user_buildings.find_by(building_id: req.requirement_id)
       ub && (ub.level.to_i >= req.quantity)
     when 'Resource'
       @user_resources_cache ||= {}
-      ur = @user_resources_cache[req.requirement_id] ||= @user.user_resources.find_by(resource_id: req.requirement_id)
+      ur = @user_resources_cache[req.requirement_id] ||= (@pre_user_resources_by_id && @pre_user_resources_by_id[req.requirement_id]) || @user.user_resources.find_by(resource_id: req.requirement_id)
       ur && ur.amount.to_i >= req.quantity
     when 'Flag'
       @user_flag_ids.include?(req.requirement_id)

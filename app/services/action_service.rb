@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'set'
 
 class ActionService
   # Luck split weights (chance vs quantity). Adjust as needed.
@@ -56,6 +57,16 @@ class ActionService
       resource_rolls, total_gained, coins_gained = roll_resource_drops(action.resources, user_action)
       item_rolls = roll_item_drops(action.item_drops, user_action)
 
+      # Preload current user state for relevant resource/item IDs to avoid N+1 queries
+      resource_ids = action.resources.map(&:id)
+      item_ids     = action.item_drops.map(&:item_id)
+      @user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
+      @user_items_by_id     = item_ids.any?     ? @user.user_items.where(item_id: item_ids, quality: CraftingService::DEFAULT_QUALITY).index_by(&:item_id) : {}
+
+      # Track changed IDs for efficient delta broadcasts
+      @changed_resource_ids = Set.new
+      @changed_item_ids     = Set.new
+
       # Persist atomically
       ApplicationRecord.transaction do
         persist_resource_gains(resource_rolls)
@@ -68,13 +79,22 @@ class ActionService
       # After-commit: collect and broadcast
       user_action_update_broadcast
 
-      if total_gained > 0
-        resource_changes = collect_resource_changes(action)
+      # Build and broadcast minimal deltas from tracked changed IDs
+      if @changed_resource_ids.any?
+        resource_changes = @changed_resource_ids.map do |rid|
+          ur = @user_resources_by_id[rid] || @user.user_resources.find_by(resource_id: rid)
+          { resource_id: rid, amount: ur&.amount.to_i }
+        end
         resource_delta_broadcase(resource_changes)
       end
 
-      item_changes = collect_item_changes(item_rolls)
-      item_delta_broadcast(item_changes) if item_changes.any?
+      if @changed_item_ids.any?
+        item_changes = @changed_item_ids.map do |iid|
+          ui = @user_items_by_id[iid] || @user.user_items.find_by(item_id: iid, quality: CraftingService::DEFAULT_QUALITY)
+          { item_id: iid, quality: CraftingService::DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
+        end
+        item_delta_broadcast(item_changes)
+      end
 
       user_update_broadcast
       Event.create!(user: @user, level: "info", message: "Performed action: #{action.name}")
@@ -160,19 +180,34 @@ class ActionService
 
   def persist_resource_gains(rolls)
     rolls.each do |resource, amount|
-      ur = @user.user_resources.find_or_create_by(resource: resource)
-      ur.increment!(:amount, amount)
+      # Use preloaded map; create only when needed
+      ur = @user_resources_by_id[resource.id]
+      unless ur
+        ur = @user.user_resources.build(resource_id: resource.id, amount: 0)
+        ur.save!
+        @user_resources_by_id[resource.id] = ur
+      end
+      ur.update!(amount: ur.amount.to_i + amount)
+      @changed_resource_ids << resource.id if defined?(@changed_resource_ids)
     end
   end
 
   def persist_item_gains(rolls)
     rolls.each do |drop, amount|
-      ui = @user.user_items.find_or_create_by(item_id: drop.item_id, quality: CraftingService::DEFAULT_QUALITY)
-      ui.increment!(:quantity, amount)
+      # Use preloaded map; create only when needed
+      ui = @user_items_by_id[drop.item_id]
+      unless ui
+        ui = @user.user_items.build(item_id: drop.item_id, quality: CraftingService::DEFAULT_QUALITY, quantity: 0)
+        ui.save!
+        @user_items_by_id[drop.item_id] = ui
+      end
+      ui.update!(quantity: ui.quantity.to_i + amount)
+      @changed_item_ids << drop.item_id if defined?(@changed_item_ids)
     end
   end
 
   def collect_resource_changes(action)
+    # Deprecated in favor of tracked deltas; kept for compatibility if needed
     action.resources.map do |r|
       ur = @user.user_resources.find_by(resource_id: r.id)
       { resource_id: r.id, amount: ur&.amount.to_i }
@@ -180,6 +215,7 @@ class ActionService
   end
 
   def collect_item_changes(item_rolls)
+    # Deprecated in favor of tracked deltas; kept for compatibility if needed
     item_ids = item_rolls.map { |drop, _| drop.item_id }.uniq
     item_ids.map do |iid|
       ui = @user.user_items.find_by(item_id: iid, quality: CraftingService::DEFAULT_QUALITY)
