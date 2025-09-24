@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require 'set'
+
+require "set"
 
 class DismantleService
   DEFAULT_QUALITY = "normal"
@@ -39,9 +40,9 @@ class DismantleService
     return { success: false, error: "No salvageable output." } if computed.empty?
 
     # Preload user state for relevant IDs/qualities to reduce queries
-    resource_ids = computed.select { |c| c[:type] == 'Resource' }.map { |c| c[:id] }.uniq
-    item_ids     = (computed.select { |c| c[:type] == 'Item' }.map { |c| c[:id] } + [ item.id ]).uniq
-    qualities    = (computed.select { |c| c[:type] == 'Item' }.map { |c| c[:quality] } + [ quality, DEFAULT_QUALITY ]).uniq
+    resource_ids = computed.select { |c| c[:type] == "Resource" }.map { |c| c[:id] }.uniq
+    item_ids     = (computed.select { |c| c[:type] == "Item" }.map { |c| c[:id] } + [ item.id ]).uniq
+    qualities    = (computed.select { |c| c[:type] == "Item" }.map { |c| c[:quality] } + [ quality, DEFAULT_QUALITY ]).uniq
     user_resources_by_id = resource_ids.any? ? @user.user_resources.where(resource_id: resource_ids).index_by(&:resource_id) : {}
     user_items_by_key    = if item_ids.any?
       @user.user_items.where(item_id: item_ids, quality: qualities).index_by { |ui| [ ui.item_id, ui.quality ] }
@@ -50,20 +51,20 @@ class DismantleService
     end
 
     # Ensure the subject user_item is present in the local map
-    user_items_by_key[[item.id, quality]] ||= user_item
+    user_items_by_key[[ item.id, quality ]] ||= user_item
 
     changed_resource_ids = Set.new
     changed_item_keys    = Set.new
 
     ApplicationRecord.transaction do
       # Decrement the dismantled item (specific quality)
-      subj = user_items_by_key[[item.id, quality]]
+      subj = user_items_by_key[[ item.id, quality ]]
       subj.decrement!(:quantity, 1)
       if subj.reload.quantity.to_i <= 0
         subj.destroy!
-        user_items_by_key.delete([item.id, quality])
+        user_items_by_key.delete([ item.id, quality ])
       end
-      changed_item_keys << [item.id, quality]
+      changed_item_keys << [ item.id, quality ]
 
       # Apply outputs
       computed.each do |out|
@@ -100,11 +101,11 @@ class DismantleService
     # Preserve existing behavior: broadcast default-quality counts for all affected item_ids
     item_ids_for_broadcast = (changed_item_keys.map(&:first)).uniq
     item_changes = item_ids_for_broadcast.map do |iid|
-      ui = user_items_by_key[[iid, DEFAULT_QUALITY]] || @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
+      ui = user_items_by_key[[ iid, DEFAULT_QUALITY ]] || @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
       { item_id: iid, quality: DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
     end
-    UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_delta', data: { changes: res_changes } }) if res_changes.any?
-    UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_delta', data: { changes: item_changes } }) if item_changes.any?
+    UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_delta", data: { changes: res_changes } }) if res_changes.any?
+    UserUpdatesChannel.broadcast_to(@user, { type: "user_item_delta", data: { changes: item_changes } }) if item_changes.any?
     Event.create!(user: @user, level: "info", message: "Dismantled item: #{item.name}")
     { success: true, message: "#{item.name} dismantled successfully." }
   end

@@ -12,11 +12,11 @@ class Api::V1::ResourcesController < Api::ApiController
   #     "id": 1,
   #     "name": "Wood",
   #     "description": "Basic building material.",
-  #     "quantity": 100
+  #     "base_amount": 2.0
   #   },
   #   ...
   # ]
-  # @return [JSON] a JSON array of resources for the current user
+  # @return [JSON] a JSON array of resources available in the world. For per-user amounts, use `GET /api/v1/user_resources`.
   # @example GET /api/v1/resources
   #   curl -X GET "https://example.com/api/v1/resources"
   def index

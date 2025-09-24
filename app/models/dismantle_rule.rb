@@ -6,4 +6,3 @@ class DismantleRule < ApplicationRecord
   validates :subject_type, inclusion: { in: %w[Item] }
   validates :subject_id, presence: true
 end
-

@@ -4,21 +4,25 @@ require "test_helper"
 
 class SkillServiceTest < ActiveSupport::TestCase
   def setup
-    @user = User.create!(email: "test@example.com", password: "password", skill_points: 10)
-    @action_taxes = Action.create!(name: "Taxes", description: "Collect taxes", cooldown: 60)
-    @resource_taxes = Resource.create!(name: "Taxes", description: "Taxes", base_amount: 10, action: @action_taxes)
-    @action_wood = Action.create!(name: "Wood", description: "Chop wood", cooldown: 30)
-    @resource_wood = Resource.create!(name: "Wood", description: "Wood", base_amount: 5, action: @action_wood)
-    @action_stone = Action.create!(name: "Stone", description: "Mine stone", cooldown: 45)
-    @resource_stone = Resource.create!(name: "Stone", description: "Stone", base_amount: 3, action: @action_stone)
+    @user = users(:one)
+    # Ensure a clean slate of skills for these tests
+    @user.user_skills.destroy_all
+    @user.update!(skill_points: 10)
+    @action_taxes = actions(:gather_taxes)
+    @resource_taxes = resources(:gold)
+    @action_wood = actions(:gather_wood)
+    @resource_wood = resources(:wood)
+    @action_stone = actions(:gather_stone)
+    @resource_stone = resources(:stone)
 
-    @skill_tax_gain = Skill.create!(name: "Tax Lawyer", description: "Increase tax gain by 10%", cost: 1, effect: "increase_taxes_gain", multiplier: 1.1)
-    @skill_wood_cooldown = Skill.create!(name: "Lumberjack", description: "Decrease wood cooldown by 10%", cost: 1, effect: "decrease_wood_cooldown", multiplier: 0.9)
-    @skill_wood_gain = Skill.create!(name: "Woodcutter", description: "Increase wood gain by 10%", cost: 1, effect: "increase_wood_gain", multiplier: 1.1)
-    @skill_tax_cooldown = Skill.create!(name: "Tax Collector", description: "Decrease tax cooldown by 10%", cost: 1, effect: "decrease_taxes_cooldown", multiplier: 0.9)
-    @skill_stone_gain = Skill.create!(name: "Stone Gatherer", description: "Increase stone gain by 10%", cost: 1, effect: "increase_stone_gain", multiplier: 1.1)
-    @skill_stone_cooldown = Skill.create!(name: "Stone Mason", description: "Decrease stone cooldown by 10%", cost: 1, effect: "decrease_stone_cooldown", multiplier: 0.9)
-    @skill_critical = Skill.create!(name: "Critical Focus", description: "Double all gains", cost: 1, effect: "critical_all_gain", multiplier: 2.0)
+    @skill_tax_gain = skills(:one)
+    @skill_wood_cooldown = skills(:two)
+    @skill_wood_gain = skills(:three)
+    @skill_tax_cooldown = skills(:four)
+    @skill_stone_gain = skills(:five)
+    @skill_stone_cooldown = skills(:six)
+    # Dedicated critical skill for this test suite
+    @skill_critical = Skill.create!(name: "Critical (test)", description: "Double resource gain", cost: 1, effect: "critical_all_gain", multiplier: 2.0)
   end
 
   test "should unlock skill" do

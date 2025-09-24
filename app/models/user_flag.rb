@@ -6,4 +6,3 @@ class UserFlag < ApplicationRecord
 
   validates :user_id, uniqueness: { scope: :flag_id }
 end
-

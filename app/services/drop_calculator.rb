@@ -5,7 +5,7 @@ module DropCalculator
 
   # Clamp chance at 100% after applying multiplier
   def effective_chance(chance, mult)
-    [(chance.to_f * mult.to_f), 1.0].min
+    [ (chance.to_f * mult.to_f), 1.0 ].min
   end
 
   # Roll a Bernoulli trial with given chance
@@ -44,4 +44,3 @@ module DropCalculator
     amount
   end
 end
-

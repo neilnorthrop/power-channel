@@ -49,15 +49,15 @@ class Api::V1::ItemsController < Api::ApiController
     render json: { message: "#{item.name} added to inventory." }
   end
 
-  # PATCH /api/v1/items/:id/use
+  # POST /api/v1/items/:id/use
   # Use an item from the current user's inventory, applying its effects and removing it from the inventory.
   # Example return value:
   # {
   #   "message": "Item used successfully."
   # }
   # @return [JSON] a JSON object indicating the success of the use operation or any error details
-  # @example PATCH /api/v1/items/1/use
-  #   curl -X PATCH "https://example.com/api/v1/items/1/use" -d '{"item_id": 1}'
+  # @example POST /api/v1/items/1/use
+  #   curl -X POST "https://example.com/api/v1/items/1/use"
   def use
     user_item = @current_user.user_items.find_by(item_id: params[:id])
     if user_item
@@ -65,7 +65,7 @@ class Api::V1::ItemsController < Api::ApiController
       item_service.use
       user_item.destroy
       # Broadcast only the changed item as a delta
-      UserUpdatesChannel.broadcast_to(@current_user, { type: 'user_item_delta', data: { changes: [ { item_id: user_item.item_id, quality: user_item.quality, quantity: 0 } ] } })
+      UserUpdatesChannel.broadcast_to(@current_user, { type: "user_item_delta", data: { changes: [ { item_id: user_item.item_id, quality: user_item.quality, quantity: 0 } ] } })
       render json: { message: "#{user_item.item.name} used." }
     else
       render json: { error: "Item not found in inventory." }, status: :not_found

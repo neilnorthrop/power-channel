@@ -24,7 +24,7 @@ class Api::V1::ActionsController < Api::ApiController
   # ]
   # @return [JSON] a JSON array of user actions with associated action details, filtered and sorted for the current user
   # @example GET /api/v1/actions
-  #   curl -X GET "https://example.com/api/v1/actions
+  #   curl -X GET "https://example.com/api/v1/actions"
   def index
     user_actions = @current_user.user_actions.includes(:action)
     # Bulk gate check to avoid N+1
@@ -35,7 +35,7 @@ class Api::V1::ActionsController < Api::ApiController
     visible_user_actions = user_actions.select do |ua|
       (flag_id = gates[ua.action_id]).nil? || user_flag_ids.include?(flag_id)
     end
-    # Stable ordering by Action.order then name to prevent UI jumping
+    # Stable ordering by Action.order then name (descending) to prevent UI jumping
     visible_user_actions.sort_by! { |ua| [ ua.action.order || 1000, ua.action.name.to_s ] }.reverse!
     # Prefetch requirement names for flags used by these gated actions
     flag_ids = gates.values.compact.uniq

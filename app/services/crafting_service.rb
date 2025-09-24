@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require 'set'
+
+require "set"
 
 class CraftingService
   DEFAULT_QUALITY = "normal"
@@ -56,7 +57,7 @@ class CraftingService
           end
         end
       else
-        has_or = parts.any? { |rr| rr.logic.to_s.upcase == 'OR' }
+        has_or = parts.any? { |rr| rr.logic.to_s.upcase == "OR" }
         if has_or
           choice = parts.find do |rr|
             case rr.component_type
@@ -131,7 +132,7 @@ class CraftingService
         # Equip-style items: consume the crafted item after awarding the flag
         # Data-driven via flags: any flag with slug in the set below and requiring this item
         equippable_flag_slugs = %w[has_small_backpack has_basic_hatchet has_basic_pick has_spear]
-        if Flag.joins(:flag_requirements).where(slug: equippable_flag_slugs, flag_requirements: { requirement_type: 'Item', requirement_id: recipe.item_id }).exists?
+        if Flag.joins(:flag_requirements).where(slug: equippable_flag_slugs, flag_requirements: { requirement_type: "Item", requirement_id: recipe.item_id }).exists?
           # remove one crafted item so it does not remain in inventory
           crafted.reload
           if crafted.quantity.to_i > 0
@@ -155,8 +156,8 @@ class CraftingService
         ui = user_items_by_id[iid] || @user.user_items.find_by(item_id: iid, quality: DEFAULT_QUALITY)
         { item_id: iid, quality: DEFAULT_QUALITY, quantity: ui&.quantity.to_i }
       end
-      UserUpdatesChannel.broadcast_to(@user, { type: 'user_resource_delta', data: { changes: res_changes } }) if res_changes.any?
-      UserUpdatesChannel.broadcast_to(@user, { type: 'user_item_delta', data: { changes: item_changes } }) if item_changes.any?
+      UserUpdatesChannel.broadcast_to(@user, { type: "user_resource_delta", data: { changes: res_changes } }) if res_changes.any?
+      UserUpdatesChannel.broadcast_to(@user, { type: "user_item_delta", data: { changes: item_changes } }) if item_changes.any?
       Event.create!(user: @user, level: "info", message: "Crafted item: #{recipe.item.name}")
       { success: true, message: "1 #{recipe.item.name} crafted!", hint: { kind: "craft" } }
     else

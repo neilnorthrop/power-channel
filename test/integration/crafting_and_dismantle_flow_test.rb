@@ -35,4 +35,3 @@ class CraftingAndDismantleFlowTest < ActionDispatch::IntegrationTest
     assert_equal 1, @user.user_items.find_by(item: @twine).quantity
   end
 end
-

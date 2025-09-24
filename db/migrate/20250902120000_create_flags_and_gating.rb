@@ -15,7 +15,7 @@ class CreateFlagsAndGating < ActiveRecord::Migration[7.1]
       t.references :flag, null: false, foreign_key: true
       t.timestamps
     end
-    add_index :user_flags, [:user_id, :flag_id], unique: true
+    add_index :user_flags, [ :user_id, :flag_id ], unique: true
 
     create_table :flag_requirements do |t|
       t.references :flag, null: false, foreign_key: true
@@ -24,7 +24,7 @@ class CreateFlagsAndGating < ActiveRecord::Migration[7.1]
       t.integer :quantity, null: false, default: 1
       t.timestamps
     end
-    add_index :flag_requirements, [:requirement_type, :requirement_id], name: 'index_flag_requirements_on_req'
+    add_index :flag_requirements, [ :requirement_type, :requirement_id ], name: 'index_flag_requirements_on_req'
 
     create_table :unlockables do |t|
       t.references :flag, null: false, foreign_key: true
@@ -32,8 +32,7 @@ class CreateFlagsAndGating < ActiveRecord::Migration[7.1]
       t.bigint :unlockable_id, null: false
       t.timestamps
     end
-    add_index :unlockables, [:flag_id, :unlockable_type, :unlockable_id], unique: true, name: 'index_unlockables_unique'
-    add_index :unlockables, [:unlockable_type, :unlockable_id], name: 'index_unlockables_on_unlockable'
+    add_index :unlockables, [ :flag_id, :unlockable_type, :unlockable_id ], unique: true, name: 'index_unlockables_unique'
+    add_index :unlockables, [ :unlockable_type, :unlockable_id ], name: 'index_unlockables_on_unlockable'
   end
 end
-

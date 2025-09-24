@@ -45,4 +45,3 @@ class DropCalculatorTest < ActiveSupport::TestCase
     assert_equal 1, DropCalculator.quantize_with_prob(0.2, min_on_success: 1)
   end
 end
-

@@ -6,7 +6,7 @@ class CreateDismantleRulesAndYields < ActiveRecord::Migration[8.0]
       t.text    :notes
       t.timestamps
     end
-    add_index :dismantle_rules, [:subject_type, :subject_id], unique: true, name: 'index_dismantle_rules_on_subject'
+    add_index :dismantle_rules, [ :subject_type, :subject_id ], unique: true, name: 'index_dismantle_rules_on_subject'
 
     create_table :dismantle_yields do |t|
       t.references :dismantle_rule, null: false, foreign_key: true
@@ -17,7 +17,6 @@ class CreateDismantleRulesAndYields < ActiveRecord::Migration[8.0]
       t.string  :quality # for Item outputs; nil means default
       t.timestamps
     end
-    add_index :dismantle_yields, [:dismantle_rule_id, :component_type, :component_id], name: 'index_dismantle_yields_on_rule_component'
+    add_index :dismantle_yields, [ :dismantle_rule_id, :component_type, :component_id ], name: 'index_dismantle_yields_on_rule_component'
   end
 end
-

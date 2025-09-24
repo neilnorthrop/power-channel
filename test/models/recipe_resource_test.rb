@@ -6,6 +6,6 @@ class RecipeResourceTest < ActiveSupport::TestCase
     comps = hatchet_recipe.recipe_resources
     assert_equal 2, comps.size
     types = comps.map(&:component_type).sort
-    assert_equal ["Item", "Resource"], types
+    assert_equal [ "Item", "Resource" ], types
   end
 end

@@ -8,14 +8,14 @@ class CraftingServiceOrGroupsTest < ActiveSupport::TestCase
     @user.user_items.destroy_all
     @user.user_resources.destroy_all
 
-    @twine = Item.create!(name: 'Twine')
-    @reeds = Resource.create!(name: 'Reeds', base_amount: 0)
-    @fibers = Resource.create!(name: 'Plant Fibers', base_amount: 0)
+    @twine = Item.create!(name: "Twine")
+    @reeds = Resource.create!(name: "Reeds", base_amount: 0)
+    @fibers = Resource.create!(name: "Plant Fibers", base_amount: 0)
 
     @recipe = Recipe.create!(item: @twine, quantity: 1)
     # OR group: group_key 'binding'
-    RecipeResource.create!(recipe: @recipe, component: @reeds, quantity: 2, group_key: 'binding', logic: 'OR')
-    RecipeResource.create!(recipe: @recipe, component: @fibers, quantity: 4, group_key: 'binding', logic: 'OR')
+    RecipeResource.create!(recipe: @recipe, component: @reeds, quantity: 2, group_key: "binding", logic: "OR")
+    RecipeResource.create!(recipe: @recipe, component: @fibers, quantity: 4, group_key: "binding", logic: "OR")
   end
 
   test "crafts with reeds only and consumes reeds" do
@@ -44,4 +44,3 @@ class CraftingServiceOrGroupsTest < ActiveSupport::TestCase
     assert_not result[:success]
   end
 end
-

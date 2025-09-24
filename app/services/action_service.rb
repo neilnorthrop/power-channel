@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require 'set'
+
+require "set"
 
 class ActionService
   # Luck split weights (chance vs quantity). Adjust as needed.
@@ -32,13 +33,13 @@ class ActionService
     if (gate = Unlockable.find_by(unlockable_type: "Action", unlockable_id: action.id))
       unless @user.user_flags.exists?(flag_id: gate.flag_id)
         # Build requirements summary using preloaded names to avoid N+1 queries
-        names_map = RequirementNameLookup.for_flag_ids([gate.flag_id])
+        names_map = RequirementNameLookup.for_flag_ids([ gate.flag_id ])
         reqs = gate.flag.flag_requirements.map do |r|
           name = names_map.dig(r.requirement_type, r.requirement_id) || r.requirement_type
           qty = r.quantity.to_i > 1 ? " x#{r.quantity}" : ""
-          [name, qty].join
+          [ name, qty ].join
         end.compact
-        msg = "Locked. Requirements: #{reqs.presence || ['Unavailable'].join(', ')}"
+        msg = "Locked. Requirements: #{reqs.presence || [ 'Unavailable' ].join(', ')}"
         return { success: false, error: msg }
       end
     end
@@ -103,7 +104,7 @@ class ActionService
   private
 
   def user_action_update_broadcast
-    user_broadcast("user_action_update", UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash )
+    user_broadcast("user_action_update", UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash)
   end
 
   def user_update_broadcast
@@ -148,6 +149,17 @@ class ActionService
 
   def roll_resource_drops(resource_drops, user_action)
     rolls = []
+    # Backward compatibility: if no explicit resource drops are defined for the
+    # action, treat associated resources as 100% drops using their base amounts.
+    if resource_drops.blank? && action && action.respond_to?(:resources)
+      drop_struct = Struct.new(:resource, :min_amount, :max_amount, :drop_chance)
+      resource_drops = action.resources.map do |r|
+        min = r.respond_to?(:min_amount) ? r.min_amount : nil
+        max = r.respond_to?(:max_amount) ? r.max_amount : nil
+        chance = r.respond_to?(:drop_chance) ? r.drop_chance : 1.0
+        drop_struct.new(r, min, max, chance)
+      end
+    end
     total_gained = 0
     coins_gained = 0
     resource_drops.each do |drop|
@@ -185,6 +197,8 @@ class ActionService
     rolls.each do |resource, amount|
       # Use preloaded map; create only when needed
       ur = @user_resources_by_id[resource.id]
+      # Fallback to fetch existing row if not preloaded (e.g., when using resource fallback)
+      ur ||= @user.user_resources.find_by(resource_id: resource.id)
       unless ur
         ur = @user.user_resources.build(resource_id: resource.id, amount: 0)
         ur.save!
@@ -241,5 +255,4 @@ class ActionService
   def scope_key
     "action:#{action.name.to_s.downcase.gsub(/\s+/, '_')}"
   end
-  
 end

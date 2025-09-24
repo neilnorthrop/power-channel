@@ -16,4 +16,3 @@ class DismantleRuleTest < ActiveSupport::TestCase
     assert_not rule.valid?
   end
 end
-

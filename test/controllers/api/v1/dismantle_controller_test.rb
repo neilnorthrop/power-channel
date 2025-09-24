@@ -29,4 +29,3 @@ class Api::V1::DismantleControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 end
-

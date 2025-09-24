@@ -250,7 +250,7 @@ namespace :users do
 
   # Ensure user_resources for a single user
   desc "Ensure missing user_resources for a single user. Usage: rake users:ensure_resources_one[ID]"
-  task :ensure_resources_one, [:id] => :environment do |_t, args|
+  task :ensure_resources_one, [ :id ] => :environment do |_t, args|
     id = args[:id]
     abort "Usage: rake users:ensure_resources_one[ID]" if id.nil?
     user = User.find_by(id: id)

@@ -6,8 +6,7 @@ class CreateEvents < ActiveRecord::Migration[7.1]
       t.text :message, null: false
       t.timestamps
     end
-    add_index :events, [:user_id, :created_at]
+    add_index :events, [ :user_id, :created_at ]
     add_index :events, :level
   end
 end
-

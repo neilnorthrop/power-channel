@@ -121,6 +121,7 @@ Seeds are externalized to YAML files under `db/data`. This makes it easy to add 
 - Lint: `bin/rails seeds:lint` checks basic shapes and references.
 - Prune: `PRUNE=1` will remove recipe components that aren’t listed in YAML.
 - Packs: set `PACKS=woodworking,alchemy` to merge themed packs from `db/data/packs` over core YAML. Use `PACKS=all` to include all packs. Use `EXCLUDE=pack1,pack2` or `EXCLUDE=all` to filter.
+ - Cooldowns: by default, seeds set a global cooldown only when YAML omits `cooldown` (value from `Rails.application.config.action_cooldown`). Set `SEEDS_OVERRIDE_COOLDOWN=true` to override all Action cooldowns. Examples: `bin/rails seeds:dry_run` vs `SEEDS_OVERRIDE_COOLDOWN=true bin/rails seeds:dry_run`.
 
 Action ordering
 - Each Action can define an `order` in YAML. If omitted, an order is assigned automatically so you don’t need to hunt for the next number:

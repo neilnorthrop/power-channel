@@ -9,7 +9,6 @@ class CreateActionResourceDrops < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :action_resource_drops, [:action_id, :resource_id], unique: true
+    add_index :action_resource_drops, [ :action_id, :resource_id ], unique: true
   end
 end
-

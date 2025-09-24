@@ -4,4 +4,3 @@ class AddMinMaxAmountToResources < ActiveRecord::Migration[8.0]
     add_column :resources, :max_amount, :integer
   end
 end
-

@@ -14,4 +14,3 @@ class AddCurrencyToResources < ActiveRecord::Migration[8.0]
     remove_column :resources, :currency
   end
 end
-

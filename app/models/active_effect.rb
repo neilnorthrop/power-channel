@@ -56,5 +56,4 @@ class ActiveEffect < ApplicationRecord
   def self.col
     Effect.arel_table[:target_attribute]
   end
-
 end

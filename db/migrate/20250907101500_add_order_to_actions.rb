@@ -4,4 +4,3 @@ class AddOrderToActions < ActiveRecord::Migration[8.0]
     add_index :actions, :order
   end
 end
-

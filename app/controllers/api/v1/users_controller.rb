@@ -4,7 +4,7 @@ class Api::V1::UsersController < Api::ApiController
   include Authenticable
   before_action :authenticate_request
 
-  # GET /api/v1/users/me
+  # GET /api/v1/user
   # Retrieve the current user's details.
   # Example return value:
   # {
@@ -15,8 +15,8 @@ class Api::V1::UsersController < Api::ApiController
   #   "updated_at": "2024-06-01T12:00:00Z"
   # }
   # @return [JSON] a JSON object containing the current user's details
-  # @example GET /api/v1/users/me
-  #   curl -X GET "https://example.com/api/v1/users/me"
+  # @example GET /api/v1/user
+  #   curl -X GET "https://example.com/api/v1/user"
   def show
     render json: UserSerializer.new(@current_user).serializable_hash.to_json
   end

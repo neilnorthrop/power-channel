@@ -6,7 +6,7 @@ This document compares the proposed Tier 0 “survival tools” crafting tree to
 
 What’s already aligned
 - Twine as early bottleneck: Twine exists and is used as a component for tools.
-- Tool unlocks: Hatchet unlocks Chop Wood; Pick Axe is present (recipe TBD) for mining unlocks.
+- Tool unlocks: Hatchet unlocks Chop Wood; Pickaxe is present (recipe planned) for mining unlocks.
 - Salvage loop: Dismantle returns components (e.g., Hatchet → Twine + Stone).
 - Packs: Content organized by theme (woodworking, mining, gather, tax, alchemy).
 
@@ -22,7 +22,7 @@ What differs / missing
 - gather: Action ‘Gather’; resources Stick, Fibers/Reeds, Branch; Twine recipe (3 Fibers → 1 Twine).
 - woodworking: Axe/Hatchet; Knife and Torch can live here or in a ‘survival’ pack.
 - mining: Loose Stone, Flint; recipe ‘Shaped Stone Head’ (Loose Stone + Flint); Pick Axe recipe filled.
-- hunting (new): Bone (source TBD), Bone Tip (crafted), Spear; Club (Branch/Bone only) could live here.
+- hunting (new): Bone (source to be defined), Bone Tip (crafted), Spear; Club (Branch/Bone only) could live here.
 - woodworking/survival: Torch (Stick + Fiber; Resin later), Knife (Stick + Shaped Stone Head + Twine).
 
 Tool recipes (Tier 0)

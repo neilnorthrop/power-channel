@@ -1,5 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Enable verbose logging when localStorage.debugSidebar === '1'
+const DEBUG = (() => { try { return (window && window.localStorage && localStorage.getItem('debugSidebar') === '1') } catch (e) { return false } })()
+
 // Minimal focus trap helper
 function trapFocus(container) {
   const focusable = container.querySelectorAll('a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])')
@@ -47,20 +50,20 @@ export default class extends Controller {
   this.lastActiveElement = null
 
     // debug log to confirm controller connection
-  try { console.debug('Sidebar Stimulus controller connected', this.sidebarElement) } catch (e) {}
+  try { if (DEBUG) console.debug('Sidebar Stimulus controller connected', this.sidebarElement) } catch (e) {}
 
     // dev-friendly init log
     try {
-      console.info('[SIDEBAR] init', { time: new Date().toISOString(), width: window.innerWidth, userAgent: navigator.userAgent })
+      if (DEBUG) console.info('[SIDEBAR] init', { time: new Date().toISOString(), width: window.innerWidth, userAgent: navigator.userAgent })
   const sidebarFound = !!this.sidebarElement
-  console.log('[SIDEBAR] DOM presence', { sidebarFound, id: this.sidebarElement && this.sidebarElement.id, classes: this.sidebarElement && this.sidebarElement.className, backdropFound: !!this.backdrop })
+  if (DEBUG) console.log('[SIDEBAR] DOM presence', { sidebarFound, id: this.sidebarElement && this.sidebarElement.id, classes: this.sidebarElement && this.sidebarElement.className, backdropFound: !!this.backdrop })
     } catch (e) {}
 
     // media query for mobile breakpoint (adjust breakpoint if your CSS uses a different one)
     try {
       this.mq = window.matchMedia('(max-width: 767px)')
-      console.log('[SIDEBAR] media query match on connect', { mqMatches: this.mq.matches })
-      this._onMqChange = (e) => console.log('[SIDEBAR] mq change', { matches: e.matches })
+      if (DEBUG) console.log('[SIDEBAR] media query match on connect', { mqMatches: this.mq.matches })
+      this._onMqChange = (e) => { if (DEBUG) console.log('[SIDEBAR] mq change', { matches: e.matches }) }
       if (this.mq.addEventListener) this.mq.addEventListener('change', this._onMqChange)
       else if (this.mq.addListener) this.mq.addListener(this._onMqChange)
     } catch (e) {}
@@ -69,7 +72,7 @@ export default class extends Controller {
     try {
       this._onTransitionEnd = (e) => {
         try {
-          console.log('[SIDEBAR] transitionend', { propertyName: e.propertyName, elapsed: e.elapsedTime, classes: this.sidebarElement && this.sidebarElement.className })
+          if (DEBUG) console.log('[SIDEBAR] transitionend', { propertyName: e.propertyName, elapsed: e.elapsedTime, classes: this.sidebarElement && this.sidebarElement.className })
         } catch (inner) {}
       }
       this.sidebarElement.addEventListener('transitionend', this._onTransitionEnd)
@@ -84,7 +87,7 @@ export default class extends Controller {
       if (tb) {
         tb.addEventListener('click', (ev) => {
             try {
-            console.log('[SIDEBAR] native-toggle-click', { id: tb.id, event: ev.type, classes: this.sidebarElement && this.sidebarElement.className })
+            if (DEBUG) console.log('[SIDEBAR] native-toggle-click', { id: tb.id, event: ev.type, classes: this.sidebarElement && this.sidebarElement.className })
           } catch (e) {}
         })
       }
@@ -94,7 +97,7 @@ export default class extends Controller {
   open() {
     // show sidebar (mobile)
     const t0 = performance.now()
-  try { console.log('[SIDEBAR] open - start', { width: window.innerWidth, beforeClasses: this.sidebarElement && this.sidebarElement.className }) } catch (e) {}
+  try { if (DEBUG) console.log('[SIDEBAR] open - start', { width: window.innerWidth, beforeClasses: this.sidebarElement && this.sidebarElement.className }) } catch (e) {}
 
     // remember last focused element so we can return focus on close
   this.lastActiveElement = document.activeElement
@@ -112,18 +115,20 @@ export default class extends Controller {
 
     // computed styles after opening
     try {
-  const cs = this.sidebarElement ? getComputedStyle(this.sidebarElement) : { display: 'none', visibility: 'hidden', opacity: '0', transform: 'none', zIndex: 'auto' }
-      const elapsed = Math.round(performance.now() - t0)
-      console.log('[SIDEBAR] open - end', {
-        elapsedMs: elapsed,
-        display: cs.display,
-        visibility: cs.visibility,
-        opacity: cs.opacity,
-        transform: cs.transform,
-        zIndex: cs.zIndex,
-  classes: this.sidebarElement && this.sidebarElement.className,
-  ariaHidden: this.sidebarElement && this.sidebarElement.getAttribute('aria-hidden')
-      })
+      if (DEBUG) {
+        const cs = this.sidebarElement ? getComputedStyle(this.sidebarElement) : { display: 'none', visibility: 'hidden', opacity: '0', transform: 'none', zIndex: 'auto' }
+        const elapsed = Math.round(performance.now() - t0)
+        console.log('[SIDEBAR] open - end', {
+          elapsedMs: elapsed,
+          display: cs.display,
+          visibility: cs.visibility,
+          opacity: cs.opacity,
+          transform: cs.transform,
+          zIndex: cs.zIndex,
+          classes: this.sidebarElement && this.sidebarElement.className,
+          ariaHidden: this.sidebarElement && this.sidebarElement.getAttribute('aria-hidden')
+        })
+      }
     } catch (e) {}
   }
 
@@ -148,7 +153,7 @@ export default class extends Controller {
     try {
   const cs = this.sidebarElement ? getComputedStyle(this.sidebarElement) : { display: 'none', visibility: 'hidden', opacity: '0', transform: 'none', zIndex: 'auto' }
       const elapsed = Math.round(performance.now() - t0)
-      console.log('[SIDEBAR] close - end', {
+      if (DEBUG) console.log('[SIDEBAR] close - end', {
         elapsedMs: elapsed,
         display: cs.display,
         visibility: cs.visibility,
@@ -164,10 +169,10 @@ export default class extends Controller {
     try {
       const toggle = document.getElementById('sidebar-toggle')
       if (toggle) {
-        console.log('[SIDEBAR] returning focus to toggle', { toggleId: 'sidebar-toggle' })
+        if (DEBUG) console.log('[SIDEBAR] returning focus to toggle', { toggleId: 'sidebar-toggle' })
         toggle.focus()
       } else if (this.lastActiveElement) {
-        console.log('[SIDEBAR] returning focus to lastActiveElement', { tag: this.lastActiveElement && this.lastActiveElement.tagName })
+        if (DEBUG) console.log('[SIDEBAR] returning focus to lastActiveElement', { tag: this.lastActiveElement && this.lastActiveElement.tagName })
         this.lastActiveElement.focus()
       }
     } catch (e) {
@@ -176,14 +181,14 @@ export default class extends Controller {
   }
 
   toggle() {
-  try { console.log('[SIDEBAR] toggle called (pre)', { id: this.sidebarElement && this.sidebarElement.id, classList: this.sidebarElement ? Array.from(this.sidebarElement.classList) : [], width: window.innerWidth }) } catch (e) {}
+  try { if (DEBUG) console.log('[SIDEBAR] toggle called (pre)', { id: this.sidebarElement && this.sidebarElement.id, classList: this.sidebarElement ? Array.from(this.sidebarElement.classList) : [], width: window.innerWidth }) } catch (e) {}
   const hidden = this.sidebarElement ? this.sidebarElement.classList.contains('-translate-x-full') : true
-  try { console.log('[SIDEBAR] toggle computed hidden', { hidden }) } catch (e) {}
+  try { if (DEBUG) console.log('[SIDEBAR] toggle computed hidden', { hidden }) } catch (e) {}
     if (hidden) this.open(); else this.close();
   }
 
   disconnect() {
-    try { console.log('[SIDEBAR] disconnecting controller') } catch (e) {}
+    try { if (DEBUG) console.log('[SIDEBAR] disconnecting controller') } catch (e) {}
     try {
       if (this.mq) {
         if (this.mq.removeEventListener) this.mq.removeEventListener('change', this._onMqChange)

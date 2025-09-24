@@ -69,22 +69,22 @@ class RecipeSerializer
       if group_key.nil?
         parts.all? do |rr|
           case rr.component_type
-          when 'Resource'
+          when "Resource"
             (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
-          when 'Item'
+          when "Item"
             (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
           else
             false
           end
         end
       else
-        has_or = parts.any? { |rr| rr.logic.to_s.upcase == 'OR' }
+        has_or = parts.any? { |rr| rr.logic.to_s.upcase == "OR" }
         if has_or
           parts.any? do |rr|
             case rr.component_type
-            when 'Resource'
+            when "Resource"
               (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
-            when 'Item'
+            when "Item"
               (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
             else
               false
@@ -93,9 +93,9 @@ class RecipeSerializer
         else
           parts.all? do |rr|
             case rr.component_type
-            when 'Resource'
+            when "Resource"
               (user_resources_by_id[rr.component_id] || 0).to_i >= rr.quantity
-            when 'Item'
+            when "Item"
               (user_items_by_id[rr.component_id] || 0).to_i >= rr.quantity
             else
               false

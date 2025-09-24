@@ -15,9 +15,9 @@ class EnsureFlagsService
 
     # Preload user state for candidate requirements to avoid N+1
     reqs = flags.flat_map(&:flag_requirements)
-    item_req_ids     = reqs.select { |r| r.requirement_type == 'Item' }.map(&:requirement_id).uniq
-    building_req_ids = reqs.select { |r| r.requirement_type == 'Building' }.map(&:requirement_id).uniq
-    resource_req_ids = reqs.select { |r| r.requirement_type == 'Resource' }.map(&:requirement_id).uniq
+    item_req_ids     = reqs.select { |r| r.requirement_type == "Item" }.map(&:requirement_id).uniq
+    building_req_ids = reqs.select { |r| r.requirement_type == "Building" }.map(&:requirement_id).uniq
+    resource_req_ids = reqs.select { |r| r.requirement_type == "Resource" }.map(&:requirement_id).uniq
 
     @pre_user_items_by_id = if item_req_ids.any?
       rows = @user.user_items.where(item_id: item_req_ids).order(:id).to_a
@@ -51,20 +51,22 @@ class EnsureFlagsService
   def candidate_flags(touch)
     scope = Flag.all
     return scope if touch.blank?
-    req_scope = FlagRequirement.all
-    req_scope = req_scope.where(requirement_type: 'Item', requirement_id: touch[:items]) if touch[:items].present?
-    req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Building', requirement_id: touch[:buildings])) if touch[:buildings].present?
-    req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Resource', requirement_id: touch[:resources])) if touch[:resources].present?
-    req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Flag', requirement_id: touch[:flags])) if touch[:flags].present?
-    req_scope = req_scope.or(FlagRequirement.where(requirement_type: 'Skill', requirement_id: touch[:skills])) if touch[:skills].present?
+    # Begin with an empty scope and OR in each touched requirement set to avoid
+    # accidentally returning all flags when any touch key is present.
+    req_scope = FlagRequirement.none
+    req_scope = req_scope.or(FlagRequirement.where(requirement_type: "Item", requirement_id: touch[:items])) if touch[:items].present?
+    req_scope = req_scope.or(FlagRequirement.where(requirement_type: "Building", requirement_id: touch[:buildings])) if touch[:buildings].present?
+    req_scope = req_scope.or(FlagRequirement.where(requirement_type: "Resource", requirement_id: touch[:resources])) if touch[:resources].present?
+    req_scope = req_scope.or(FlagRequirement.where(requirement_type: "Flag", requirement_id: touch[:flags])) if touch[:flags].present?
+    req_scope = req_scope.or(FlagRequirement.where(requirement_type: "Skill", requirement_id: touch[:skills])) if touch[:skills].present?
     Flag.where(id: req_scope.select(:flag_id)).includes(:flag_requirements)
   end
 
   def requirements_satisfied?(flag)
     reqs = flag.flag_requirements
 
-    and_reqs = reqs.select { |r| r.logic == 'AND' }
-    or_reqs  = reqs.select { |r| r.logic == 'OR' }
+    and_reqs = reqs.select { |r| r.logic == "AND" }
+    or_reqs  = reqs.select { |r| r.logic == "OR" }
 
     and_ok = and_reqs.all? { |req| requirement_met?(req) }
     or_ok  = or_reqs.empty? || or_reqs.any? { |req| requirement_met?(req) }
@@ -78,21 +80,21 @@ class EnsureFlagsService
     @user_skill_ids ||= @user.user_skills.pluck(:skill_id).to_set
 
     case req.requirement_type
-    when 'Item'
+    when "Item"
       @user_items_cache ||= {}
       ui = @user_items_cache[req.requirement_id] ||= (@pre_user_items_by_id && @pre_user_items_by_id[req.requirement_id]) || @user.user_items.find_by(item_id: req.requirement_id)
       ui && ui.quantity.to_i >= req.quantity
-    when 'Building'
+    when "Building"
       @user_buildings_cache ||= {}
       ub = @user_buildings_cache[req.requirement_id] ||= (@pre_user_buildings_by_id && @pre_user_buildings_by_id[req.requirement_id]) || @user.user_buildings.find_by(building_id: req.requirement_id)
       ub && (ub.level.to_i >= req.quantity)
-    when 'Resource'
+    when "Resource"
       @user_resources_cache ||= {}
       ur = @user_resources_cache[req.requirement_id] ||= (@pre_user_resources_by_id && @pre_user_resources_by_id[req.requirement_id]) || @user.user_resources.find_by(resource_id: req.requirement_id)
       ur && ur.amount.to_i >= req.quantity
-    when 'Flag'
+    when "Flag"
       @user_flag_ids.include?(req.requirement_id)
-    when 'Skill'
+    when "Skill"
       @user_skill_ids.include?(req.requirement_id)
     else
       false

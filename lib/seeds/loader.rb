@@ -87,7 +87,7 @@ require "yaml"
 
       # Determine cooldown override behavior
       override_cooldown = begin
-        val = ENV['SEEDS_OVERRIDE_COOLDOWN'].to_s.strip.downcase
+        val = ENV["SEEDS_OVERRIDE_COOLDOWN"].to_s.strip.downcase
         %w[1 true yes y on].include?(val)
       end
       log.call("Seeds cooldown policy: #{override_cooldown ? 'override-all' : 'default-when-missing'} (default=#{Rails.application.config.action_cooldown.to_i}s)")

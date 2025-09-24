@@ -25,8 +25,8 @@ class MakeRecipeResourcesPolymorphic < ActiveRecord::Migration[8.0]
     change_column_null :recipe_resources, :component_id, false
 
     # Add composite indexes
-    add_index :recipe_resources, [:component_type, :component_id], name: 'index_recipe_resources_on_component'
-    add_index :recipe_resources, [:recipe_id, :component_type, :component_id], unique: true, name: 'index_recipe_resources_unique_component'
+    add_index :recipe_resources, [ :component_type, :component_id ], name: 'index_recipe_resources_on_component'
+    add_index :recipe_resources, [ :recipe_id, :component_type, :component_id ], unique: true, name: 'index_recipe_resources_unique_component'
 
     # Drop old column
     remove_column :recipe_resources, :resource_id, :bigint
@@ -55,4 +55,3 @@ class MakeRecipeResourcesPolymorphic < ActiveRecord::Migration[8.0]
     remove_column :recipe_resources, :component_id, :bigint
   end
 end
-

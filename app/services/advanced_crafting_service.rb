@@ -10,11 +10,11 @@ class AdvancedCraftingService < CraftingService
     # Simple prototype roll (no side effects yet)
     # In the future, outcomes can upgrade quality or add byproducts.
     tiers = {
-      'legendary' => 0.01,
-      'epic'      => 0.04,
-      'rare'      => 0.15
+      "legendary" => 0.01,
+      "epic"      => 0.04,
+      "rare"      => 0.15
     }
-    rolled = 'normal'
+    rolled = "normal"
     r = rand
     acc = 0.0
     tiers.each do |tier, p|
@@ -24,7 +24,7 @@ class AdvancedCraftingService < CraftingService
         break
       end
     end
-    Event.create!(user: @user, level: 'debug', message: "AdvancedCrafting roll=#{rolled}")
+    Event.create!(user: @user, level: "debug", message: "AdvancedCrafting roll=#{rolled}")
     result
   end
 end

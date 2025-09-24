@@ -9,7 +9,6 @@ class CreateActionItemDrops < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :action_item_drops, [:action_id, :item_id], unique: true
+    add_index :action_item_drops, [ :action_id, :item_id ], unique: true
   end
 end
-

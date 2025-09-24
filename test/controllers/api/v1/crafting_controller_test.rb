@@ -34,12 +34,12 @@ class Api::V1::CraftingControllerTest < ActionDispatch::IntegrationTest
     get api_v1_crafting_index_url, headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success
     data = JSON.parse(@response.body)
-    recipes = data['data'] || []
+    recipes = data["data"] || []
     refute_empty recipes
     # Find the lucky_charm_recipe
-    r = recipes.find { |x| x['id'].to_s == recipes(:lucky_charm_recipe).id.to_s }
-    assert r, 'Expected lucky_charm_recipe in response'
-    assert_equal true, r['attributes']['craftable_now']
+    r = recipes.find { |x| x["id"].to_s == recipes(:lucky_charm_recipe).id.to_s }
+    assert r, "Expected lucky_charm_recipe in response"
+    assert_equal true, r["attributes"]["craftable_now"]
   end
 
   test "uses advanced service when experimental flag is true" do

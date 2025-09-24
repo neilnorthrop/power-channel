@@ -6,4 +6,3 @@ class AddLogicToFlagRequirements < ActiveRecord::Migration[8.0]
     add_index :flag_requirements, :logic
   end
 end
-

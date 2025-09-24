@@ -14,6 +14,22 @@ class Api::V1::ActionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index sorts descending by order then name" do
+    # Ensure the user has multiple actions to sort
+    wood = actions(:gather_wood)
+    @user.user_actions.find_or_create_by!(action: wood)
+
+    get api_v1_actions_url, headers: { Authorization: "Bearer #{@token}" }, as: :json
+    assert_response :success
+    body = JSON.parse(@response.body)
+    data = body["data"] || []
+    included = (body["included"] || []).select { |inc| inc["type"] == "action" }
+    name_for_action_id = included.to_h { |inc| [ inc["id"], inc.dig("attributes", "name") ] }
+    ordered_names = data.map { |row| name_for_action_id[row.dig("relationships", "action", "data", "id")] }
+    # With descending fallback, 'Wood' should appear before 'Taxes'
+    assert_equal ordered_names.sort.reverse, ordered_names, "Expected descending sort by order then name"
+  end
+
   test "should create action" do
     @user.user_actions.destroy_all
     assert_difference("UserAction.count") do

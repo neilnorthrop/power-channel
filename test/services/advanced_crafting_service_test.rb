@@ -20,4 +20,3 @@ class AdvancedCraftingServiceTest < ActiveSupport::TestCase
     assert_equal 1, @user.user_items.count
   end
 end
-

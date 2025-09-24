@@ -15,7 +15,7 @@ class BuildingService
     user_building = @user.user_buildings.find_or_create_by(building: building) do |ub|
       ub.level = 1
     end
-    EnsureFlagsService.evaluate_for(@user, touch: { buildings: [building.id] })
+    EnsureFlagsService.evaluate_for(@user, touch: { buildings: [ building.id ] })
     { success: true, message: "#{building.name} constructed successfully." }
   end
 
@@ -28,7 +28,7 @@ class BuildingService
 
     deduct_resources(cost, sums)
     user_building.update!(level: current_level + 1)
-    EnsureFlagsService.evaluate_for(@user, touch: { buildings: [user_building.building_id] })
+    EnsureFlagsService.evaluate_for(@user, touch: { buildings: [ user_building.building_id ] })
     { success: true, message: "#{user_building.building.name} upgraded successfully." }
   end
 

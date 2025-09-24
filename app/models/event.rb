@@ -12,7 +12,7 @@ class Event < ApplicationRecord
 
   def broadcast_event
     payload = {
-      type: 'event',
+      type: "event",
       data: EventSerializer.new(self).serializable_hash
     }
     UserUpdatesChannel.broadcast_to(user, payload)
