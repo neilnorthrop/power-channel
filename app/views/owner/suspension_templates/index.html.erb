@@ -1,0 +1,52 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-3xl">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Suspension Templates</h2>
+      <%= link_to "Back to Dashboard", owner_dashboard_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <div class="rounded border bg-white p-3">
+      <h3 class="text-sm font-medium mb-2">New Template</h3>
+      <%= form_with model: @template, url: owner_suspension_templates_path, data: { controller: 'confirm', confirmMessageValue: 'Create template?', action: 'submit->confirm#intercept' } do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <%= f.label :name, class: 'block text-xs text-gray-600' %>
+            <%= f.text_field :name, class: 'mt-1 w-full border rounded px-2 py-1 text-sm' %>
+          </div>
+          <div class="md:col-span-2">
+            <%= f.label :content, class: 'block text-xs text-gray-600' %>
+            <%= f.text_area :content, rows: 3, class: 'mt-1 w-full border rounded px-2 py-1 text-sm' %>
+          </div>
+        </div>
+        <div class="mt-2">
+          <%= f.submit 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="rounded border bg-white">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 px-3">Name</th>
+            <th class="py-2 px-3">Content</th>
+            <th class="py-2 px-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @templates.each do |t| %>
+            <tr class="border-t">
+              <td class="py-2 px-3"><%= t.name %></td>
+              <td class="py-2 px-3 whitespace-pre-wrap"><%= t.content %></td>
+              <td class="py-2 px-3 space-x-2">
+                <%= link_to 'Edit', edit_owner_suspension_template_path(t), class: 'text-blue-600 hover:underline' %>
+                <%= button_to 'Delete', owner_suspension_template_path(t), method: :delete, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Delete this template?', action: 'click->confirm#intercept' } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
+

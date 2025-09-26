@@ -8,4 +8,8 @@ module ApplicationHelper
       capture(&block)
     end
   end
+
+  def current_announcement
+    @current_announcement ||= Announcement.active.published.order(Arel.sql("COALESCE(published_at, created_at) DESC")).first
+  end
 end

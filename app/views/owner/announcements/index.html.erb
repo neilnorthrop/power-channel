@@ -1,0 +1,38 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Announcements</h2>
+      <%= link_to "New Announcement", new_owner_announcement_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 pr-4">Title</th>
+            <th class="py-2 pr-4">Status</th>
+            <th class="py-2 pr-4">Published</th>
+            <th class="py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @announcements.each do |a| %>
+            <tr class="border-t">
+              <td class="py-2 pr-4"><%= a.title %></td>
+              <td class="py-2 pr-4"><span class="inline-block rounded px-2 py-0.5 text-xs <%= a.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' %>"><%= a.active ? 'Active' : 'Inactive' %></span></td>
+              <td class="py-2 pr-4"><%= a.published_at&.strftime('%Y-%m-%d %H:%M') || '-' %></td>
+              <td class="py-2 pr-4 space-x-2">
+                <%= link_to 'Edit', edit_owner_announcement_path(a), class: 'text-blue-600 hover:underline' %>
+                <%= button_to(a.active ? 'Deactivate' : 'Activate', toggle_owner_announcement_path(a), method: :post, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: (a.active ? 'Deactivate this announcement?' : 'Activate this announcement?'), action: 'click->confirm#intercept' }) %>
+                <%= button_to 'Publish Now', publish_now_owner_announcement_path(a), method: :post, class: 'text-xs px-2 py-1 rounded bg-green-600 text-white', data: { controller: 'confirm', confirmMessageValue: 'Publish now and activate?', action: 'click->confirm#intercept' } %>
+                <%= button_to '+1h', publish_in_owner_announcement_path(a, hours: 1), method: :post, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Activate and schedule for +1 hour?', action: 'click->confirm#intercept' } %>
+                <%= button_to '+24h', publish_in_owner_announcement_path(a, hours: 24), method: :post, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Activate and schedule for +24 hours?', action: 'click->confirm#intercept' } %>
+                <%= button_to '+7d', publish_in_owner_announcement_path(a, hours: 168), method: :post, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Activate and schedule for +7 days?', action: 'click->confirm#intercept' } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>

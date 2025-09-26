@@ -1,0 +1,25 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-2xl">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Edit Template</h2>
+      <%= link_to "Back", owner_suspension_templates_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <%= form_with model: @template, url: owner_suspension_template_path(@template), method: :put, data: { controller: 'confirm', confirmMessageValue: 'Update template?', action: 'submit->confirm#intercept' } do |f| %>
+      <div class="space-y-3">
+        <div>
+          <%= f.label :name, class: 'block text-sm font-medium' %>
+          <%= f.text_field :name, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div>
+          <%= f.label :content, class: 'block text-sm font-medium' %>
+          <%= f.text_area :content, rows: 6, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div>
+          <%= f.submit 'Update', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+

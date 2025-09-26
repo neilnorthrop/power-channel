@@ -24,7 +24,7 @@
     <%= javascript_importmap_tags %>
     <%= yield :page_js %>
     <% if user_signed_in? %>
-      <meta name="jwt-token" content="<%= JsonWebToken.encode(user_id: current_user.id) %>">
+      <meta name="jwt-token" content="<%= JsonWebToken.encode(user_id: current_actor.id) %>">
     <% end %>
     <!-- application module will import Turbo + Stimulus controllers -->
   </head>
@@ -76,6 +76,26 @@
               <% end %>
             </div>
           </div>
+
+          <% if user_signed_in? && impersonating? && impersonated_user.present? %>
+            <div class="mb-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900 flex items-center justify-between">
+              <div>
+                Viewing as <strong><%= impersonated_user.email %></strong> (view-only)
+              </div>
+              <div>
+                <%= button_to "Stop", stop_owner_impersonations_path, method: :post, class: "px-2 py-1 rounded bg-red-600 text-white text-xs", data: { controller: 'confirm', confirmMessageValue: 'Stop impersonation?', action: 'click->confirm#intercept' } %>
+              </div>
+            </div>
+          <% end %>
+
+          <% if user_signed_in? && current_announcement.present? && !turbo_frame_request? %>
+            <div class="mb-3 rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-900">
+              <strong><%= current_announcement.title %></strong>
+              <% if current_announcement.body.present? %>
+                <div class="mt-1 whitespace-pre-wrap"><%= current_announcement.body %></div>
+              <% end %>
+            </div>
+          <% end %>
 
           <% if turbo_frame_request? %>
             <%= yield %>

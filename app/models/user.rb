@@ -22,6 +22,23 @@ class User < ApplicationRecord
 
   after_create :initialize_defaults
 
+  enum :role, {
+    user: 0,
+    mod: 1,
+    support: 2,
+    owner: 3
+  }, default: :user, prefix: true
+
+  def owner?
+    role_owner?
+  end
+
+  def suspended_now?
+    return false unless respond_to?(:suspended) && suspended
+    return true if suspended_until.nil?
+    suspended_until > Time.current
+  end
+
   # Gain experience and level up if the threshold is reached.
   # Increases the user's experience by the specified amount, checks if the
   # user has enough experience to level up, and updates the user's level and

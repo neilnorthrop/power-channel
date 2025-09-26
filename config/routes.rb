@@ -6,6 +6,28 @@ Rails.application.routes.draw do
 
   devise_for :users, controllers: { registrations: "api/v1/registrations" }
 
+  namespace :owner do
+    get "/", to: "dashboard#index", as: :dashboard
+    resources :users, only: [:index, :update] do
+      post :suspend, on: :member
+      post :unsuspend, on: :member
+      post :grant_resource, on: :member
+      post :add_flag, on: :member
+      delete :remove_flag, on: :member
+    end
+    resources :announcements, only: [:index, :new, :create, :edit, :update] do
+      post :toggle, on: :member
+      post :publish_now, on: :member
+      post :publish_in, on: :member
+    end
+    resources :impersonations, only: [] do
+      post :start, on: :member
+      post :stop, on: :collection
+    end
+    resources :audit_logs, only: [:index]
+    resources :suspension_templates, only: [:index, :create, :edit, :update, :destroy]
+  end
+
   namespace :api do
     namespace :v1 do
       post "authenticate", to: "authentication#create"

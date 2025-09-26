@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_26_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,6 +59,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
     t.index ["effect_id"], name: "index_active_effects_on_effect_id"
     t.index ["expires_at"], name: "index_active_effects_on_expires_at"
     t.index ["user_id"], name: "index_active_effects_on_user_id"
+  end
+
+  create_table "announcements", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "body"
+    t.boolean "active", default: true, null: false
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_announcements_on_active"
+    t.index ["published_at"], name: "index_announcements_on_published_at"
   end
 
   create_table "buildings", force: :cascade do |t|
@@ -146,6 +157,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.float "drop_chance", default: 1.0
+  end
+
+  create_table "owner_audit_logs", force: :cascade do |t|
+    t.bigint "actor_id", null: false
+    t.bigint "target_user_id"
+    t.string "action", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_owner_audit_logs_on_action"
+    t.index ["actor_id"], name: "index_owner_audit_logs_on_actor_id"
+    t.index ["target_user_id"], name: "index_owner_audit_logs_on_target_user_id"
   end
 
   create_table "recipe_resources", force: :cascade do |t|
@@ -284,8 +307,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
     t.integer "experience", default: 0
     t.integer "skill_points", default: 0
     t.boolean "experimental_crafting", default: false, null: false
+    t.integer "role", default: 0, null: false
+    t.boolean "suspended", default: false, null: false
+    t.datetime "suspended_until"
+    t.text "suspension_reason"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["role"], name: "index_users_on_role"
+    t.index ["suspended"], name: "index_users_on_suspended"
+    t.index ["suspended_until"], name: "index_users_on_suspended_until"
   end
 
   add_foreign_key "action_item_drops", "actions"
@@ -297,6 +327,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_121500) do
   add_foreign_key "dismantle_yields", "dismantle_rules"
   add_foreign_key "events", "users"
   add_foreign_key "flag_requirements", "flags"
+  add_foreign_key "owner_audit_logs", "users", column: "actor_id"
+  add_foreign_key "owner_audit_logs", "users", column: "target_user_id"
   add_foreign_key "recipe_resources", "recipes"
   add_foreign_key "recipes", "items"
   add_foreign_key "resources", "actions"

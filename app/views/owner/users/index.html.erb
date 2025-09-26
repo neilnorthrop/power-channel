@@ -1,0 +1,165 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Manage Users</h2>
+      <%= link_to "Back to Dashboard", owner_dashboard_path, data: { turbo_frame: 'main', turbo_action: 'advance' }, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <div class="rounded border p-3 bg-white">
+      <%= form_with url: owner_users_path, method: :get, local: true, class: "flex flex-wrap items-end gap-3" do |f| %>
+        <div>
+          <label class="block text-xs text-gray-600">Search</label>
+          <%= text_field_tag :q, @q, class: 'border rounded px-2 py-1 text-sm', placeholder: 'email contains' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Role</label>
+          <%= select_tag :role, options_for_select([['Any','']] + User.roles.keys.map { |r| [r.titleize, r] }, @role), class: 'border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Status</label>
+          <%= select_tag :status, options_for_select([["Any", ""], ["Active", "active"], ["Suspended", "suspended"]], @status), class: 'border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Per Page</label>
+          <%= number_field_tag :per, @per, in: 1..50, class: 'w-20 border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <%= submit_tag 'Apply', class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 pr-4">Email</th>
+            <th class="py-2 pr-4">Role</th>
+            <th class="py-2 pr-4">Status</th>
+            <th class="py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |u| %>
+            <tr class="border-t">
+              <td class="py-2 pr-4"><%= u.email %></td>
+              <td class="py-2 pr-4"><span class="inline-block rounded bg-gray-100 px-2 py-0.5 text-xs"><%= u.role %></span></td>
+              <td class="py-2 pr-4">
+                <% if u.respond_to?(:suspended) && u.suspended %>
+                  <div class="space-y-1">
+                    <span class="inline-block rounded bg-red-100 text-red-800 px-2 py-0.5 text-xs">Suspended</span>
+                    <% if u.respond_to?(:suspended_until) && u.suspended_until.present? %>
+                      <div class="text-xs text-gray-600">Until: <%= u.suspended_until.strftime('%Y-%m-%d %H:%M') %></div>
+                    <% end %>
+                    <% if u.respond_to?(:suspension_reason) && u.suspension_reason.present? %>
+                      <div class="text-xs text-gray-600">Reason: <%= truncate(u.suspension_reason, length: 80) %></div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="inline-block rounded bg-green-100 text-green-800 px-2 py-0.5 text-xs">Active</span>
+                <% end %>
+              </td>
+              <td class="py-2 pr-4 space-y-1">
+                <div class="inline-block">
+                  <%= button_to "View as", start_owner_impersonation_path(u), method: :post, class: "px-2 py-1 rounded border text-xs", data: { controller: 'confirm', confirmMessageValue: "View as #{u.email}? You can stop anytime.", action: 'click->confirm#intercept' } %>
+                </div>
+                <%= form_with model: u, url: owner_user_path(u), method: :put, data: { turbo_frame: 'main' }, class: "inline-flex items-center gap-2", html: { data: { controller: 'confirm', confirmMessageValue: "Change role for #{u.email}?", action: 'submit->confirm#intercept' } } do |f| %>
+                  <%= f.select :role, User.roles.keys.map { |r| [r.titleize, r] }, {}, class: "border rounded px-2 py-1 text-xs" %>
+                  <%= f.submit "Update", class: "px-2 py-1 rounded bg-gray-800 text-white text-xs" %>
+                <% end %>
+                <div class="inline-block">
+                  <% if u.respond_to?(:suspended) && u.suspended %>
+                    <%= button_to "Unsuspend", unsuspend_owner_user_path(u), method: :post, class: "px-2 py-1 rounded border text-xs", data: { controller: 'confirm', confirmMessageValue: "Unsuspend #{u.email}?", action: 'click->confirm#intercept' } %>
+                  <% else %>
+                    <details class="inline-block">
+                      <summary class="px-2 py-1 rounded border text-xs cursor-pointer select-none">Suspend</summary>
+                      <div class="mt-2 p-2 border rounded bg-gray-50 space-y-2" data-controller="suspend">
+                        <%= form_with url: suspend_owner_user_path(u), method: :post, data: { turbo_frame: 'main' }, html: { data: { controller: 'confirm', confirmMessageValue: "Suspend #{u.email}?", action: 'submit->confirm#intercept' } } do |f| %>
+                          <div>
+                            <label class="block text-xs text-gray-600">Reason</label>
+                            <%= text_area_tag 'suspend[reason]', nil, rows: 2, class: 'w-64 border rounded px-2 py-1 text-xs', data: { suspend_target: 'reason' } %>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                              <% if @suspension_templates.present? %>
+                                <% @suspension_templates.each do |templ| %>
+                                  <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#addReason" data-suspend-template-param="<%= templ.content %>"><%= templ.name %></button>
+                                <% end %>
+                              <% else %>
+                                <% [
+                                  'Abuse / Harassment',
+                                  'Cheating / Exploits',
+                                  'Spam / Advertising',
+                                  'Inappropriate Content',
+                                  'Other - See details'
+                                ].each do |templ| %>
+                                  <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#addReason" data-suspend-template-param="<%= templ %>"><%= templ %></button>
+                                <% end %>
+                              <% end %>
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-xs text-gray-600">Until (optional)</label>
+                            <%= datetime_field_tag 'suspend[until]', nil, class: 'w-64 border rounded px-2 py-1 text-xs', data: { suspend_target: 'until' } %>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                              <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#setPreset" data-suspend-hours-param="1">+1h</button>
+                              <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#setPreset" data-suspend-hours-param="24">+24h</button>
+                              <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#setPreset" data-suspend-hours-param="168">+7d</button>
+                              <button type="button" class="px-2 py-0.5 rounded border text-xs" data-action="suspend#setPreset" data-suspend-hours-param="720">+30d</button>
+                            </div>
+                          </div>
+                          <div>
+                            <%= submit_tag 'Confirm Suspend', class: 'px-2 py-1 rounded bg-red-600 text-white text-xs' %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </details>
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      <%= button_to "+24h", suspend_owner_user_path(u, hours: 24, suspend: { reason: 'Quick suspend (+24h)' }), method: :post, class: "px-2 py-0.5 rounded border text-xs", data: { controller: 'confirm', confirmMessageValue: "Suspend #{u.email} for 24 hours?", action: 'click->confirm#intercept' } %>
+                      <%= button_to "+7d", suspend_owner_user_path(u, hours: 168, suspend: { reason: 'Quick suspend (+7d)' }), method: :post, class: "px-2 py-0.5 rounded border text-xs", data: { controller: 'confirm', confirmMessageValue: "Suspend #{u.email} for 7 days?", action: 'click->confirm#intercept' } %>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="block">
+                  <%= form_with url: grant_resource_owner_user_path(u), method: :post, data: { turbo_frame: 'main' }, class: "inline-flex items-center gap-2", html: { data: { controller: 'confirm', confirmMessageValue: "Modify resources for #{u.email}?", action: 'submit->confirm#intercept' } } do |f| %>
+                    <%= select_tag 'grant[resource_id]', options_from_collection_for_select(@resources, :id, :name), class: "border rounded px-2 py-1 text-xs" %>
+                    <%= number_field_tag 'grant[amount]', 1, class: "w-20 border rounded px-2 py-1 text-xs" %>
+                    <%= f.submit "Grant", class: "px-2 py-1 rounded border text-xs" %>
+                  <% end %>
+                </div>
+                <div class="block">
+                  <div class="text-xs text-gray-500">Flags:</div>
+                  <div class="flex flex-wrap gap-1 mb-1">
+                    <% u.flags.each do |flag| %>
+                      <%= button_to flag.name, remove_flag_owner_user_path(u, flag_id: flag.id), method: :delete, class: "px-2 py-0.5 rounded bg-gray-100 text-xs", data: { controller: 'confirm', confirmMessageValue: "Remove flag #{flag.name} from #{u.email}?", action: 'click->confirm#intercept' } %>
+                    <% end %>
+                  </div>
+                  <%= form_with url: add_flag_owner_user_path(u), method: :post, data: { turbo_frame: 'main' }, class: "inline-flex items-center gap-2", html: { data: { controller: 'confirm', confirmMessageValue: "Add flag to #{u.email}?", action: 'submit->confirm#intercept' } } do %>
+                    <%= select_tag 'flag_id', options_from_collection_for_select(@flags, :id, :name), class: "border rounded px-2 py-1 text-xs" %>
+                    <%= submit_tag "Add", class: "px-2 py-1 rounded border text-xs" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-between text-sm">
+      <div>Page <%= @page %> of <%= @total_pages %> (<%= @total_count %> users)</div>
+      <div class="space-x-2">
+        <% prev_page = @page - 1 %>
+        <% next_page = @page + 1 %>
+        <% if @page > 1 %>
+          <%= link_to 'Prev', owner_users_path(request.query_parameters.merge(page: prev_page)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Prev</span>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to 'Next', owner_users_path(request.query_parameters.merge(page: next_page)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Next</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

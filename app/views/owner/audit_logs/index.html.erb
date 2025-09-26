@@ -1,0 +1,96 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Audit Logs</h2>
+      <%= link_to "Back to Dashboard", owner_dashboard_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <div class="rounded border p-3 bg-white">
+      <%= form_with url: owner_audit_logs_path, method: :get, local: true, class: "flex flex-wrap items-end gap-3" do %>
+        <div>
+          <label class="block text-xs text-gray-600">Action contains</label>
+          <%= text_field_tag :q, @q, class: 'border rounded px-2 py-1 text-sm', placeholder: 'e.g., user.suspend' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Actor email</label>
+          <%= text_field_tag :actor, @actor, class: 'border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Target email</label>
+          <%= text_field_tag :target, @target, class: 'border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Action exact</label>
+          <%= text_field_tag :action_filter, @action, class: 'border rounded px-2 py-1 text-sm', placeholder: 'exact match' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Per Page</label>
+          <%= number_field_tag :per, @per, in: 1..50, class: 'w-20 border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <%= submit_tag 'Apply', class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 pr-4">When</th>
+            <th class="py-2 pr-4">Actor</th>
+            <th class="py-2 pr-4">Action</th>
+            <th class="py-2 pr-4">Target</th>
+            <th class="py-2 pr-4">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @logs.each do |log| %>
+            <tr class="border-t">
+              <td class="py-2 pr-4"><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+              <td class="py-2 pr-4"><%= log.actor.email %></td>
+              <td class="py-2 pr-4"><%= log.action %></td>
+              <td class="py-2 pr-4"><%= log.target_user&.email || '-' %></td>
+              <td class="py-2 pr-4 text-xs text-gray-700">
+                <% if log.action == 'user.suspend' %>
+                  <% until_time = log.metadata && log.metadata['until'] %>
+                  <% reason = log.metadata && log.metadata['reason'] %>
+                  <% if until_time.present? %>
+                    <div>Until: <%= until_time %></div>
+                  <% end %>
+                  <% if reason.present? %>
+                    <div>Reason: <%= truncate(reason.to_s, length: 80) %></div>
+                  <% end %>
+                <% else %>
+                  <% if log.metadata.present? %>
+                    <code class="break-all"><%= truncate(log.metadata.to_json, length: 100) %></code>
+                  <% else %>
+                    -
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-between text-sm">
+      <div>Page <%= @page %> of <%= @total_pages %> (<%= @total_count %> entries)</div>
+      <div class="space-x-2">
+        <% prev_page = @page - 1 %>
+        <% next_page = @page + 1 %>
+        <% if @page > 1 %>
+          <%= link_to 'Prev', owner_audit_logs_path(request.query_parameters.merge(page: prev_page)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Prev</span>
+        <% end %>
+        <% if @page < @total_pages %>
+          <%= link_to 'Next', owner_audit_logs_path(request.query_parameters.merge(page: next_page)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Next</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

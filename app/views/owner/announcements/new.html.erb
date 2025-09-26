@@ -1,0 +1,37 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-2xl">
+    <h2 class="text-xl font-semibold">New Announcement</h2>
+
+    <%= form_with model: @announcement, url: owner_announcements_path do |f| %>
+      <div class="space-y-3">
+        <div>
+          <%= f.label :title, class: 'block text-sm font-medium' %>
+          <%= f.text_field :title, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div>
+          <%= f.label :body, class: 'block text-sm font-medium' %>
+          <%= f.text_area :body, rows: 6, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div class="flex items-center gap-4" data-controller="datetime-preset">
+          <label class="inline-flex items-center gap-2">
+            <%= f.check_box :active %>
+            <span>Active</span>
+          </label>
+          <div>
+            <%= f.label :published_at, 'Publish At', class: 'block text-sm font-medium' %>
+            <%= f.datetime_field :published_at, class: 'mt-1 border rounded px-2 py-1', data: { 'datetime-preset-target': 'input' } %>
+            <div class="flex flex-wrap gap-1 mt-1 text-xs">
+              <button type="button" class="px-2 py-0.5 rounded border" data-action="datetime-preset#setNow">Now</button>
+              <button type="button" class="px-2 py-0.5 rounded border" data-action="datetime-preset#setPreset" data-datetime-preset-hours-param="1">+1h</button>
+              <button type="button" class="px-2 py-0.5 rounded border" data-action="datetime-preset#setPreset" data-datetime-preset-hours-param="24">+24h</button>
+              <button type="button" class="px-2 py-0.5 rounded border" data-action="datetime-preset#setPreset" data-datetime-preset-hours-param="168">+7d</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <%= f.submit 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

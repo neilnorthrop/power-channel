@@ -1,0 +1,113 @@
+<%= main_frame do %>
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-xl font-semibold mb-2">Owner Dashboard</h2>
+      <p class="text-sm text-gray-600">Quick stats and shortcuts.</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="p-4 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Users</div>
+        <div class="text-2xl font-bold"><%= @users_count %></div>
+      </div>
+      <div class="p-4 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Owners</div>
+        <div class="text-2xl font-bold"><%= @owners_count %></div>
+      </div>
+      <div class="p-4 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Mods</div>
+        <div class="text-2xl font-bold"><%= @mods_count %></div>
+      </div>
+      <div class="p-4 bg-gray-50 rounded">
+        <div class="text-xs text-gray-500">Support</div>
+        <div class="text-2xl font-bold"><%= @supports_count %></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-medium">Recent Users</h3>
+        <%= link_to "Manage Users", owner_users_path, class: "text-sm text-blue-600 hover:underline" %>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-500">
+              <th class="py-2 pr-4">Email</th>
+              <th class="py-2 pr-4">Role</th>
+              <th class="py-2 pr-4">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_users.each do |u| %>
+              <tr class="border-t">
+                <td class="py-2 pr-4"><%= u.email %></td>
+                <td class="py-2 pr-4"><span class="inline-block rounded bg-gray-100 px-2 py-0.5 text-xs"><%= u.role %></span></td>
+                <td class="py-2 pr-4"><%= u.created_at.strftime('%Y-%m-%d %H:%M') %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-medium">Announcements</h3>
+          <%= link_to "Manage", owner_announcements_path, class: "text-sm text-blue-600 hover:underline" %>
+        </div>
+        <ul class="space-y-1">
+          <% @recent_announcements.each do |a| %>
+            <li class="border rounded p-2">
+              <div class="flex items-center justify-between">
+                <span class="font-medium"><%= a.title %></span>
+                <span class="text-xs <%= a.active ? 'text-green-700' : 'text-gray-500' %>"><%= a.active ? 'Active' : 'Inactive' %></span>
+              </div>
+              <% if a.body.present? %>
+                <div class="text-xs text-gray-600 truncate"><%= a.body %></div>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-medium">Recent Owner Actions</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-xs">
+            <thead>
+              <tr class="text-left text-gray-500">
+                <th class="py-1 pr-2">When</th>
+                <th class="py-1 pr-2">Actor</th>
+                <th class="py-1 pr-2">Action</th>
+                <th class="py-1 pr-2">Target</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_audits.each do |log| %>
+                <tr class="border-t">
+                  <td class="py-1 pr-2"><%= log.created_at.strftime('%H:%M:%S') %></td>
+                  <td class="py-1 pr-2"><%= log.actor.email %></td>
+                  <td class="py-1 pr-2"><%= log.action %></td>
+                  <td class="py-1 pr-2"><%= log.target_user&.email || '-' %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-lg font-medium mb-2">Shortcuts</h3>
+      <div class="flex gap-2">
+        <%= link_to "Users", owner_users_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+        <%= link_to "Announcements", owner_announcements_path, class: "px-3 py-2 rounded border text-sm" %>
+        <%= link_to "Audit Logs", owner_audit_logs_path, class: "px-3 py-2 rounded border text-sm" %>
+        <%= link_to "Suspension Templates", owner_suspension_templates_path, class: "px-3 py-2 rounded border text-sm" %>
+      </div>
+    </div>
+  </div>
+<% end %>
