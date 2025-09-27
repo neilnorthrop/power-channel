@@ -1,0 +1,10 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-2xl">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Edit Effect</h2>
+      <%= link_to "Back", owner_effects_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+    <%= render 'form' %>
+  </div>
+<% end %>
+

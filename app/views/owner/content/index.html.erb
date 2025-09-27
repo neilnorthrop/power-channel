@@ -1,0 +1,192 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex flex-wrap gap-2 items-center">
+      <%= link_to 'Validate & Export', owner_seeds_path, class: 'px-2 py-1 rounded border text-xs' %>
+      <%= form_with url: validate_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Validate YAML (dry-run)?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Validate (Dry Run)', class: 'px-2 py-1 rounded border text-xs' %>
+      <% end %>
+      <%= form_with url: export_all_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Export ALL content to YAML?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Export All', class: 'px-2 py-1 rounded bg-gray-800 text-white text-xs' %>
+      <% end %>
+    </div>
+    <div class="flex flex-wrap gap-2 text-xs">
+      <% tabs = %w[actions resources items skills buildings recipes flags effects dismantle action_item_drops] %>
+      <% tabs.each do |t| %>
+        <% active = (t == @key) %>
+        <%= link_to t.titleize, owner_content_index_path(resource: t), class: "px-2 py-1 rounded border #{active ? 'bg-gray-800 text-white' : ''}" %>
+      <% end %>
+    </div>
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold"><%= @model.name %>s</h2>
+      <div class="space-x-2">
+        <% if @config[:permitted].present? %>
+          <%= link_to "New", new_owner_content_path(resource: @key), class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+        <% else %>
+          <% case @key
+             when 'recipes' %>
+            <%= link_to "New", new_owner_recipe_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+          <% when 'flags' %>
+            <%= link_to "New", new_owner_flag_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+          <% when 'effects' %>
+            <%= link_to "New", new_owner_effect_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+          <% when 'dismantle' %>
+            <%= link_to "New", new_owner_dismantle_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+          <% when 'action_item_drops' %>
+            <%= link_to "New", owner_action_item_drops_path, class: "px-3 py-2 rounded bg-gray-800 text-white text-sm" %>
+          <% else %>
+            <span class="text-xs text-gray-500">View-only for now</span>
+          <% end %>
+        <% end %>
+        <%= button_to "Export YAML", export_owner_content_index_path(resource: @key), method: :post, class: "px-3 py-2 rounded border text-sm", data: { controller: 'confirm', confirmMessageValue: "Export #{@key} to db/data/#{@key == 'dismantle' ? 'dismantle' : @key}.yml?", action: 'click->confirm#intercept' } %>
+      </div>
+    </div>
+
+    <div class="rounded border p-3 bg-white">
+      <%= form_with url: owner_content_index_path, method: :get, local: true, class: "flex items-end gap-3" do %>
+        <%= hidden_field_tag :resource, @key %>
+        <div>
+          <label class="block text-xs text-gray-600">Search</label>
+          <%= text_field_tag :q, @q, class: 'border rounded px-2 py-1 text-sm', placeholder: 'keywords' %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600">Per Page</label>
+          <%= number_field_tag :per, @per, in: 1..50, class: 'w-20 border rounded px-2 py-1 text-sm' %>
+        </div>
+        <div>
+          <%= submit_tag 'Apply', class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+      <% if @q.present? && @records.blank? && @config[:permitted].present? %>
+        <div class="mt-2 text-xs text-gray-700">
+          No results for '<%= @q %>'.
+          <%= link_to 'Create New', new_owner_content_path(resource: @key, name: @q), class: 'underline' %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <% cols = (@config[:list] || default_list_columns(@key)) %>
+            <% cols.each do |col| %>
+              <% current = (@sort == col.to_s) %>
+              <% next_dir = (current && @dir != 'desc') ? 'desc' : 'asc' %>
+              <% link_params = request.query_parameters.merge(resource: @key, sort: col, dir: next_dir, page: 1) %>
+              <th class="py-2 pr-4">
+                <%= link_to header_label_for(@key, col), owner_content_index_path(link_params), class: 'hover:underline' %>
+                <% if current %>
+                  <span class="text-xs"><%= @dir == 'desc' ? '▼' : '▲' %></span>
+                <% end %>
+              </th>
+            <% end %>
+            <th class="py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @records.each do |rec| %>
+            <tr class="border-t">
+              <% cols.each_with_index do |col, idx| %>
+                <td class="py-2 pr-4">
+                  <% val = case col
+                          when :action_name
+                            rec.respond_to?(:action) ? rec.action&.name : (rec.respond_to?(:action_id) ? Action.find_by(id: rec.action_id)&.name : nil)
+                          when :item_name
+                            rec.respond_to?(:item) ? rec.item&.name : (rec.respond_to?(:item_id) ? Item.find_by(id: rec.item_id)&.name : nil)
+                          when :effectable_name
+                            if rec.respond_to?(:effectable)
+                              rec.effectable.is_a?(Item) ? rec.effectable&.name : rec.effectable.is_a?(Action) ? rec.effectable&.name : nil
+                            elsif rec.respond_to?(:effectable_type) && rec.respond_to?(:effectable_id)
+                              rec.effectable_type == 'Item' ? Item.find_by(id: rec.effectable_id)&.name : rec.effectable_type == 'Action' ? Action.find_by(id: rec.effectable_id)&.name : nil
+                            end
+                          when :subject_name
+                            if rec.respond_to?(:subject)
+                              rec.subject&.respond_to?(:name) ? rec.subject.name : nil
+                            elsif rec.respond_to?(:subject_type) && rec.respond_to?(:subject_id)
+                              rec.subject_type == 'Item' ? Item.find_by(id: rec.subject_id)&.name : nil
+                            end
+                          when :components_count
+                            rec.respond_to?(:recipe_resources) ? rec.recipe_resources.size : nil
+                          when :yields_count
+                            rec.respond_to?(:dismantle_yields) ? rec.dismantle_yields.size : nil
+                          else
+                            rec.public_send(col) rescue nil
+                          end %>
+                  <% display = (val.is_a?(TrueClass) || val.is_a?(FalseClass)) ? (val ? 'Yes' : 'No') : (val.blank? ? '-' : val) %>
+                  <% label_col = cols.first %>
+                  <% if idx == 0 && display != '-' %>
+                    <%# Link primary label to appropriate editor %>
+                    <% path = case @key
+                             when 'actions','resources','items','skills','buildings'
+                               edit_owner_content_path(rec, resource: @key)
+                             when 'recipes'
+                               edit_owner_recipe_path(rec)
+                             when 'flags'
+                               edit_owner_flag_path(rec)
+                             when 'effects'
+                               edit_owner_effect_path(rec)
+                             when 'dismantle'
+                               edit_owner_dismantle_path(rec)
+                             when 'action_item_drops'
+                               owner_action_item_drops_path(action_id: rec.respond_to?(:action_id) ? rec.action_id : nil)
+                             else
+                               nil
+                             end %>
+                    <% if path %>
+                      <%= link_to display, path, class: 'text-blue-600 hover:underline' %>
+                    <% else %>
+                      <span><%= display %></span>
+                    <% end %>
+                  <% else %>
+                    <span><%= display %></span>
+                  <% end %>
+                  <% if [:name, :slug].include?(col) && val.present? %>
+                    <button class="ml-2 text-xs px-1 py-0.5 rounded border" data-controller="clipboard" data-clipboard-value-value="<%= val %>" data-action="click->clipboard#copy">Copy</button>
+                  <% end %>
+                </td>
+              <% end %>
+              <td class="py-2 pr-4 space-x-2">
+                <% if @config[:permitted].present? %>
+                  <%= link_to 'Edit', edit_owner_content_path(rec, resource: @key), class: 'text-blue-600 hover:underline' %>
+                  <%= button_to 'Delete', owner_content_path(rec, resource: @key), method: :delete, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Delete?', action: 'click->confirm#intercept' } %>
+                <% else %>
+                  <% case @key
+                     when 'recipes' %>
+                    <%= link_to 'Open Editor', owner_recipes_path, class: 'text-blue-600 hover:underline' %>
+                  <% when 'flags' %>
+                    <%= link_to 'Open Editor', owner_flags_path, class: 'text-blue-600 hover:underline' %>
+                  <% when 'dismantle' %>
+                    <%= link_to 'Open Editor', owner_dismantles_path, class: 'text-blue-600 hover:underline' %>
+                  <% when 'effects' %>
+                    <%= link_to 'Open Editor', owner_effects_path, class: 'text-blue-600 hover:underline' %>
+                  <% when 'action_item_drops' %>
+                    <%= link_to 'Open Editor', owner_action_item_drops_path, class: 'text-blue-600 hover:underline' %>
+                  <% else %>
+                    <span class="text-xs text-gray-400">—</span>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-between text-sm">
+      <div>Page <%= @page %> of <%= (@total / @per.to_f).ceil %> (<%= @total %> records)</div>
+      <div class="space-x-2">
+        <% prev = @page - 1; nxt = @page + 1 %>
+        <% if @page > 1 %>
+          <%= link_to 'Prev', owner_content_index_path(request.query_parameters.merge(page: prev, resource: @key)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Prev</span>
+        <% end %>
+        <% if (@page * @per) < @total %>
+          <%= link_to 'Next', owner_content_index_path(request.query_parameters.merge(page: nxt, resource: @key)), class: 'px-2 py-1 rounded border' %>
+        <% else %>
+          <span class="px-2 py-1 rounded border text-gray-400">Next</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -5,4 +5,3 @@ module Owner
     before_action :require_owner!
   end
 end
-

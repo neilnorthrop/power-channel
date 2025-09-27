@@ -1,0 +1,45 @@
+<%= form_with model: @effect, url: @effect.persisted? ? owner_effect_path(@effect) : owner_effects_path, method: @effect.persisted? ? :put : :post, data: { controller: 'validate-form confirm', action: 'submit->validate-form#intercept submit->confirm#intercept', confirmMessageValue: (@effect.persisted? ? 'Update effect?' : 'Create effect?') } do |f| %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      <%= f.label :name, class: 'block text-sm font-medium' %>
+      <%= f.text_field :name, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div>
+      <%= f.label :target_attribute, class: 'block text-sm font-medium' %>
+      <%= f.text_field :target_attribute, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div>
+      <%= f.label :modifier_type, class: 'block text-sm font-medium' %>
+      <%= f.text_field :modifier_type, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div>
+      <%= f.label :modifier_value, class: 'block text-sm font-medium' %>
+      <%= f.number_field :modifier_value, step: '0.01', class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div>
+      <%= f.label :duration, class: 'block text-sm font-medium' %>
+      <%= f.number_field :duration, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div>
+      <%= f.label :effectable_type, class: 'block text-sm font-medium' %>
+      <%= f.select :effectable_type, [['Item','Item'], ['Action','Action']], {}, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+    <div class="md:col-span-2">
+      <%= f.label :effectable_name, 'Effectable Name', class: 'block text-sm font-medium' %>
+      <%= f.text_field :effectable_name, value: (@effect.effectable_type == 'Item' ? Item.find_by(id: @effect.effectable_id)&.name : Action.find_by(id: @effect.effectable_id)&.name), class: 'mt-1 w-full border rounded px-2 py-1', data: { controller: 'typeahead validate-ref', typeaheadTypeSelectorValue: "select[name='effect[effectable_type]']", validateRefTypeSelectorValue: "select[name='effect[effectable_type]']", validateRefMessageValue: 'Unknown effectable' } %>
+      <p class="text-xs text-gray-500 mt-1">Enter Item or Action name depending on the selected type.</p>
+    </div>
+    <div class="md:col-span-2">
+      <%= f.label :description, class: 'block text-sm font-medium' %>
+      <%= f.text_area :description, rows: 3, class: 'mt-1 w-full border rounded px-2 py-1' %>
+    </div>
+  </div>
+  <div class="mt-3 flex items-center gap-2">
+    <%= f.submit (@effect.persisted? ? 'Update' : 'Create'), class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+    <% if @effect.persisted? %>
+      <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_effect_path(@effect), class: 'px-3 py-2 rounded border' %>
+    <% else %>
+      <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_effects_path, class: 'px-3 py-2 rounded border' %>
+    <% end %>
+  </div>
+<% end %>

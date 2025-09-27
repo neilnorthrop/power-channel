@@ -1,0 +1,12 @@
+<%# Renders a simple list of validation errors %>
+<% if local_assigns[:errors].present? %>
+  <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+    <div class="font-semibold mb-1">Validation Issues</div>
+    <ul class="list-disc pl-5 space-y-0.5">
+      <% Array(errors).each do |err| %>
+        <li><%= err %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+

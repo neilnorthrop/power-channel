@@ -6,4 +6,3 @@ class OwnerAuditLog < ApplicationRecord
 
   validates :action, presence: true
 end
-

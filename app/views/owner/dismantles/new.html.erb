@@ -1,0 +1,22 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-xl">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">New Dismantle Rule</h2>
+      <%= link_to "Back", owner_dismantles_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <%= form_with url: owner_dismantles_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Create dismantle rule?', action: 'submit->confirm#intercept' } do %>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium">Item Name</label>
+          <%= text_field_tag :item, @selected_name, class: 'mt-1 w-full border rounded px-2 py-1', data: { controller: 'typeahead validate-ref', validateRefTypeValue: 'Item', validateRefMessageValue: 'Unknown item' } %>
+        </div>
+        <div>
+          <%= submit_tag 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+        </div>
+      </div>
+    <% end %>
+    <p class="text-xs text-gray-500">Tip: Type an existing Item's name. If the item doesn’t exist, create it under Content → Items first.</p>
+  </div>
+<% end %>
+

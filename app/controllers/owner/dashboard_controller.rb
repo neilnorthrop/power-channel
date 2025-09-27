@@ -10,6 +10,8 @@ module Owner
       @recent_users = User.order(created_at: :desc).limit(10)
       @recent_audits = OwnerAuditLog.order(created_at: :desc).limit(10)
       @recent_announcements = Announcement.order(created_at: :desc).limit(3)
+      @latest_db_report = DbValidationReport.order(created_at: :desc).first
+      @queue_health = QueueHealthService.snapshot
     end
   end
 end

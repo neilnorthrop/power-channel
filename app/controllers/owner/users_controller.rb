@@ -22,8 +22,8 @@ module Owner
         end
       end
 
-      @page = [params[:page].to_i, 1].max
-      @per = [[params[:per].to_i, 1].max, 50].min
+      @page = [ params[:page].to_i, 1 ].max
+      @per = [ [ params[:per].to_i, 1 ].max, 50 ].min
       @per = 20 if params[:per].blank?
       @total_count = scope.count
       @total_pages = (@total_count / @per.to_f).ceil

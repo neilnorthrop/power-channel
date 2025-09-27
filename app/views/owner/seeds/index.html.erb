@@ -1,0 +1,116 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Seeds: Validate & Export</h2>
+      <%= link_to "Back to Content", owner_content_index_path(resource: 'actions'), class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <%= form_with url: validate_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Validate YAML (dry-run)?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Validate (Dry Run)', class: 'px-3 py-2 rounded border text-sm' %>
+      <% end %>
+      <%= form_with url: export_all_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Export ALL content to YAML?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Export All to YAML', class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+      <% end %>
+      <%= form_with url: validate_db_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Validate current DB content?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Validate DB Content', class: 'px-3 py-2 rounded border text-sm' %>
+      <% end %>
+      <%= form_with url: run_db_validation_owner_seeds_path, method: :post, data: { controller: 'confirm', confirmMessageValue: 'Enqueue DB validation job now?', action: 'submit->confirm#intercept' } do %>
+        <%= submit_tag 'Run DB Validation (Async)', class: 'px-3 py-2 rounded border text-sm' %>
+      <% end %>
+    </div>
+
+    <% if defined?(@log) && @log.present? %>
+      <div class="rounded border p-3 <%= @status == :ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' %>">
+        <pre class="text-xs whitespace-pre-wrap"><%= @log %></pre>
+      </div>
+    <% end %>
+
+    <% if defined?(@db_report) && @db_report.present? %>
+      <div class="space-y-3">
+        <h3 class="text-lg font-medium">DB Validation Report</h3>
+        <% @db_report.each do |section, issues| %>
+          <% title = section.to_s.titleize %>
+          <% if issues.blank? %>
+            <div class="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-800"><strong><%= title %>:</strong> OK</div>
+          <% else %>
+            <div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">
+              <div class="font-semibold mb-2"><%= title %> Issues (<%= issues.size %>)</div>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead>
+                    <tr class="text-left text-gray-700">
+                      <th class="py-1 pr-4">Issue</th>
+                      <th class="py-1 pr-4">Fix Suggestions</th>
+                      <th class="py-1 pr-4">Did you mean?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% issues.each do |entry| %>
+                      <% msg = entry.is_a?(Hash) ? entry[:message] : entry %>
+                      <tr class="border-t">
+                        <td class="py-1 pr-4"><%= msg %></td>
+                        <td class="py-1 pr-4"><%= suggestion_for(section, msg) %></td>
+                        <td class="py-1 pr-4">
+                          <% if entry.is_a?(Hash) && entry[:suggestions].present? %>
+                            <%= safe_join(entry[:suggestions].map { |s| apply_suggestion_link(section, s) }, ', '.html_safe) %>
+                            <span class="text-gray-500"> · </span>
+                            <%= safe_join(entry[:suggestions].map { |s| create_link_for(section, s) }, ' | '.html_safe) %>
+                          <% else %>
+                            <%= create_link_for(section) %>
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @latest_report.present? %>
+      <div class="space-y-2">
+        <h3 class="text-lg font-medium">Latest DB Validation Snapshot</h3>
+        <div class="text-sm text-gray-600">Status: <%= @latest_report.status %> • Issues: <%= @latest_report.issues_count %> • At: <%= @latest_report.created_at.strftime('%Y-%m-%d %H:%M') %></div>
+      </div>
+    <% end %>
+
+    <hr class="my-4" />
+    <div class="space-y-2">
+      <h3 class="text-lg font-medium">Queue & Workers</h3>
+      <% q = QueueHealthService.snapshot %>
+      <div class="text-sm">Adapter: <strong><%= q.adapter %></strong></div>
+      <% if q.solid && q.solid[:available] %>
+        <div class="text-xs text-gray-700">Solid Queue detected.</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+          <div class="rounded border p-2">Processes: <%= q.solid[:processes].nil? ? 'n/a' : q.solid[:processes] %></div>
+          <div class="rounded border p-2">Jobs: <%= q.solid[:jobs].nil? ? 'n/a' : q.solid[:jobs] %></div>
+          <div class="rounded border p-2">Failed: <%= q.solid[:failed].nil? ? 'n/a' : q.solid[:failed] %></div>
+        </div>
+        <% tables = %w[solid_queue_jobs solid_queue_failed_executions solid_queue_processes solid_queue_scheduled_executions solid_queue_recurring_executions] %>
+        <div class="mt-2 text-xs">
+          <div class="font-medium">Tables</div>
+          <ul class="list-disc pl-5">
+            <% tables.each do |tname| %>
+              <% present = ActiveRecord::Base.connection.data_source_exists?(tname) rescue false %>
+              <li><%= tname %>: <%= present ? 'present' : 'missing' %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% else %>
+        <div class="text-xs text-gray-700">Solid Queue not detected. To enable background validations and jobs:</div>
+        <ul class="list-disc pl-5 text-xs">
+          <li>Ensure the gem is installed and configured as the Active Job adapter.</li>
+          <li>Run queue migrations (or install Solid Queue tables) if needed.</li>
+          <li>Run a worker process, or enable the Puma plugin (set SOLID_QUEUE_IN_PUMA=1).</li>
+        </ul>
+      <% end %>
+      <% if q.error.present? %>
+        <div class="text-xs text-red-700">Error: <%= q.error %></div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

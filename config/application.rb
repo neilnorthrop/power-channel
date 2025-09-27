@@ -1,4 +1,5 @@
 require_relative "boot"
+require_relative '../lib/middleware/health_check_middleware'
 
 require "rails/all"
 
@@ -33,5 +34,9 @@ module AetherForge
     # Cooldown period (in seconds) between performing the same action.
     # Default is 60 seconds in production, 5 seconds in development for easier testing.
     config.action_cooldown = Rails.env.development? ? 5 : 60 # seconds
+
+    # Register the health check middleware at the very top of the stack so
+    # it responds even if routing or other middlewares are misbehaving.
+    config.middleware.insert_before 0, HealthCheckMiddleware
   end
 end

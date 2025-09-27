@@ -1,0 +1,10 @@
+<%= main_frame do %>
+  <div class="space-y-4 max-w-2xl">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">New <%= @model.name %></h2>
+      <%= link_to "Back", owner_content_index_path(resource: @key), class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+    <%= render partial: "form", locals: { record: @record } %>
+  </div>
+<% end %>
+

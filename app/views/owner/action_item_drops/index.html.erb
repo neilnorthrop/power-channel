@@ -1,0 +1,86 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Action Item Drops</h2>
+      <%= link_to "Back to Content", owner_content_index_path(resource: 'action_item_drops'), class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <label class="text-sm">Action</label>
+      <%= form_with url: owner_action_item_drops_path, method: :get, local: true, class: 'flex items-center gap-2' do %>
+        <%= select_tag :action_id, options_from_collection_for_select(@actions, :id, :name, @action.id), class: 'border rounded px-2 py-1 text-sm', onchange: 'this.form.submit()' %>
+        <%= text_field_tag :q, params[:q], placeholder: 'search action', class: 'border rounded px-2 py-1 text-sm' %>
+        <%= submit_tag 'Search', class: 'px-2 py-1 rounded border text-sm' %>
+        <% if params[:q].present? && @action.nil? %>
+          <span class="text-xs text-gray-700">No action found. <%= link_to 'Create Action', new_owner_content_path(resource: 'actions'), class: 'underline' %></span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%= form_with url: owner_action_item_drop_path(@action), method: :put, data: { controller: 'confirm', confirmMessageValue: 'Save item drops?', action: 'submit->confirm#intercept' } do %>
+      <%= render 'owner/shared/validation_banner', errors: @validation_errors, success_message: @validation_success_message if defined?(@validation_errors) || defined?(@validation_success_message) %>
+      <div data-controller="form-list" data-form-list-target="container" class="space-y-2">
+        <% @drops.each_with_index do |d, i| %>
+          <div class="border rounded p-2" data-form-list-row>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+              <div>
+                <label class="block text-xs text-gray-600">Item</label>
+                <%= select_tag "drops[#{i}][item_id]", options_from_collection_for_select(@items, :id, :name, d.item_id), class: 'border rounded px-2 py-1 text-sm' %>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Min</label>
+                <%= number_field_tag "drops[#{i}][min_amount]", d.min_amount, class: 'border rounded px-2 py-1 text-sm' %>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Max</label>
+                <%= number_field_tag "drops[#{i}][max_amount]", d.max_amount, class: 'border rounded px-2 py-1 text-sm' %>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Chance</label>
+                <%= number_field_tag "drops[#{i}][drop_chance]", d.drop_chance, step: '0.01', class: 'border rounded px-2 py-1 text-sm' %>
+              </div>
+              <div>
+                <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <template data-form-list-target="template">
+          <div class="border rounded p-2" data-form-list-row>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+              <div>
+                <label class="block text-xs text-gray-600">Item</label>
+                <select name="drops[__INDEX__][item_id]" class="border rounded px-2 py-1 text-sm">
+                  <% @items.each do |it| %>
+                    <option value="<%= it.id %>"><%= it.name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Min</label>
+                <input type="number" name="drops[__INDEX__][min_amount]" class="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Max</label>
+                <input type="number" name="drops[__INDEX__][max_amount]" class="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Chance</label>
+                <input type="number" step="0.01" name="drops[__INDEX__][drop_chance]" value="1.0" class="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="mt-2 flex items-center gap-2">
+        <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Drop</button>
+        <%= submit_tag 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_action_item_drops_path(@action), class: 'px-3 py-2 rounded border text-sm' %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

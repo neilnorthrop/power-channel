@@ -1,0 +1,52 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Flags</h2>
+      <%= link_to "Back to Content", owner_content_index_path(resource: 'flags'), class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+    <div class="rounded border p-3 bg-white mb-2">
+      <%= form_with url: owner_flags_path, method: :get, local: true, class: "flex items-end gap-2" do %>
+        <div>
+          <label class="block text-xs text-gray-600">Search</label>
+          <%= text_field_tag :q, @q, class: 'border rounded px-2 py-1 text-sm', placeholder: 'slug or name' %>
+        </div>
+        <div>
+          <%= submit_tag 'Apply', class: 'px-2 py-1 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+      <% if @q.present? && @flags.blank? %>
+        <div class="mt-2 text-xs text-gray-700">
+          No results. <%= link_to 'Create this Flag', new_owner_flag_path(slug: @q, name: @q.titleize), class: 'underline' %>
+        </div>
+      <% end %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 pr-4">Slug</th>
+            <th class="py-2 pr-4">Name</th>
+            <th class="py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @flags.each do |f| %>
+            <tr class="border-t">
+              <td class="py-2 pr-4">
+                <span><%= f.slug %></span>
+                <button class="ml-2 text-xs px-1 py-0.5 rounded border" data-controller="clipboard" data-clipboard-value-value="<%= f.slug %>" data-action="click->clipboard#copy">Copy</button>
+              </td>
+              <td class="py-2 pr-4">
+                <span><%= f.name %></span>
+                <button class="ml-2 text-xs px-1 py-0.5 rounded border" data-controller="clipboard" data-clipboard-value-value="<%= f.name %>" data-action="click->clipboard#copy">Copy</button>
+              </td>
+              <td class="py-2 pr-4">
+                <%= link_to 'Edit', edit_owner_flag_path(f), class: 'text-blue-600 hover:underline' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>

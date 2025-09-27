@@ -1,0 +1,32 @@
+<% confirm_text = record.persisted? ? 'Update?' : 'Create?' %>
+<% path = record.persisted? ? owner_content_path(record, resource: @key) : owner_content_index_path(resource: @key) %>
+<% http_method = record.persisted? ? :put : :post %>
+<%= form_with model: record,
+              url: path,
+              method: http_method,
+              data: { controller: 'confirm', confirmMessageValue: confirm_text, action: 'submit->confirm#intercept' } do |f| %>
+  <div class="space-y-3">
+    <% fields = Array(@config[:permitted]) %>
+    <% fields.each do |field| %>
+      <div>
+        <%= f.label field, class: 'block text-sm font-medium' %>
+        <% if field.to_s.end_with?("_id") && field.to_s == 'action_id' %>
+          <%= f.collection_select :action_id, Action.order(:name), :id, :name, { include_blank: true }, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        <% elsif [true, false].include?(record.try(field)) %>
+          <%= f.check_box field %>
+        <% elsif field.to_s =~ /(description|notes)/ %>
+          <%= f.text_area field, rows: 3, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        <% elsif field.to_s =~ /(cooldown|order|level|cost|quantity|min_amount|max_amount|base_amount)/ %>
+          <%= f.number_field field, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        <% elsif field.to_s =~ /(drop_chance|multiplier)/ %>
+          <%= f.number_field field, step: '0.01', class: 'mt-1 w-full border rounded px-2 py-1' %>
+        <% else %>
+          <%= f.text_field field, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        <% end %>
+      </div>
+    <% end %>
+    <div>
+      <%= f.submit(record.persisted? ? 'Update' : 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white' ) %>
+    </div>
+  </div>
+<% end %>

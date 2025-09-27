@@ -1,0 +1,162 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Edit Flag: <%= @flag.slug %></h2>
+      <%= link_to "Back", owner_flags_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <%= form_with model: @flag, url: owner_flag_path(@flag), method: :put, data: { controller: 'validate-form confirm', action: 'submit->validate-form#intercept submit->confirm#intercept', confirmMessageValue: 'Update flag?' } do |f| %>
+      <%= render 'owner/shared/validation_banner', errors: @validation_errors, success_message: @validation_success_message if defined?(@validation_errors) || defined?(@validation_success_message) %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :name, class: 'block text-sm font-medium' %>
+          <%= f.text_field :name, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div>
+          <%= f.label :slug, class: 'block text-sm font-medium' %>
+          <%= f.text_field :slug, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+        <div class="md:col-span-2">
+          <%= f.label :description, class: 'block text-sm font-medium' %>
+          <%= f.text_area :description, rows: 3, class: 'mt-1 w-full border rounded px-2 py-1' %>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="text-lg font-medium mb-2">Requirements</h3>
+        <p class="text-xs text-gray-500 mb-2">Use model name for Resource/Item/Skill/Building. Use slug for Flag.</p>
+        <div data-controller="form-list" data-form-list-target="container">
+          <% @requirements.each_with_index do |r, i| %>
+            <div class="border rounded p-2 mb-2" data-form-list-row>
+              <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+                <div>
+                  <label class="block text-xs text-gray-600">Type</label>
+                  <select name="requirements[<%= i %>][type]" class="border rounded px-2 py-1 text-sm">
+                    <% %w[Resource Item Skill Building Flag].each do |t| %>
+                      <option value="<%= t %>" <%= 'selected' if r.requirement_type == t %>><%= t %></option>
+                    <% end %>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Name (slug for Flag)</label>
+                  <input type="text" name="requirements[<%= i %>][name]" value="<%= r.requirement_type == 'Flag' ? Flag.find(r.requirement_id)&.slug : Seeds::Loader.model_for(r.requirement_type).find(r.requirement_id)&.name %>" class="border rounded px-2 py-1 text-sm" data-controller="typeahead validate-ref" data-typeahead-type-selector-value="select[name='requirements[<%= i %>][type]']" data-validate-ref-type-selector-value="select[name='requirements[<%= i %>][type]']" data-validate-ref-message-value="Unknown requirement" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Quantity</label>
+                  <input type="number" name="requirements[<%= i %>][quantity]" value="<%= r.quantity %>" class="border rounded px-2 py-1 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Logic</label>
+                  <select name="requirements[<%= i %>][logic]" class="border rounded px-2 py-1 text-sm">
+                    <option value="AND" <%= 'selected' if r.logic == 'AND' %>>AND</option>
+                    <option value="OR" <%= 'selected' if r.logic == 'OR' %>>OR</option>
+                  </select>
+                </div>
+                <div>
+                  <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          <template data-form-list-target="template">
+            <div class="border rounded p-2 mb-2" data-form-list-row>
+              <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+                <div>
+                  <label class="block text-xs text-gray-600">Type</label>
+                  <select name="requirements[__INDEX__][type]" class="border rounded px-2 py-1 text-sm">
+                    <option>Resource</option>
+                    <option>Item</option>
+                    <option>Skill</option>
+                    <option>Building</option>
+                    <option>Flag</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Name (slug for Flag)</label>
+                  <input type="text" name="requirements[__INDEX__][name]" class="border rounded px-2 py-1 text-sm" data-controller="typeahead validate-ref" data-typeahead-type-selector-value="select[name='requirements[__INDEX__][type]']" data-validate-ref-type-selector-value="select[name='requirements[__INDEX__][type]']" data-validate-ref-message-value="Unknown requirement" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Quantity</label>
+                  <input type="number" name="requirements[__INDEX__][quantity]" value="1" class="border rounded px-2 py-1 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Logic</label>
+                  <select name="requirements[__INDEX__][logic]" class="border rounded px-2 py-1 text-sm">
+                    <option>AND</option>
+                    <option>OR</option>
+                  </select>
+                </div>
+                <div>
+                  <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+                </div>
+              </div>
+            </div>
+          </template>
+          <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Requirement</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="text-lg font-medium mb-2">Unlockables</h3>
+        <p class="text-xs text-gray-500 mb-2">Enter Action name, Item name, Building name, or Item name for Recipe unlockable.</p>
+        <div data-controller="form-list" data-form-list-target="container">
+          <% @unlockables.each_with_index do |u, i| %>
+            <div class="border rounded p-2 mb-2" data-form-list-row>
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+                <div>
+                  <label class="block text-xs text-gray-600">Type</label>
+                  <select name="unlockables[<%= i %>][type]" class="border rounded px-2 py-1 text-sm">
+                    <% %w[Action Recipe Item Building].each do |t| %>
+                      <option value="<%= t %>" <%= 'selected' if u.unlockable_type == t %>><%= t %></option>
+                    <% end %>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Name</label>
+                  <% name = case u.unlockable_type
+                           when 'Action' then Action.find(u.unlockable_id)&.name
+                           when 'Recipe' then Item.find(Recipe.find(u.unlockable_id).item_id)&.name
+                           when 'Item' then Item.find(u.unlockable_id)&.name
+                           when 'Building' then Building.find(u.unlockable_id)&.name
+                           end %>
+                  <input type="text" name="unlockables[<%= i %>][name]" value="<%= name %>" class="border rounded px-2 py-1 text-sm" data-controller="typeahead validate-ref" data-typeahead-type-selector-value="select[name='unlockables[<%= i %>][type]']" data-validate-ref-type-selector-value="select[name='unlockables[<%= i %>][type]']" data-validate-ref-message-value="Unknown unlockable" />
+                </div>
+                <div>
+                  <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          <template data-form-list-target="template">
+            <div class="border rounded p-2 mb-2" data-form-list-row>
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+                <div>
+                  <label class="block text-xs text-gray-600">Type</label>
+                  <select name="unlockables[__INDEX__][type]" class="border rounded px-2 py-1 text-sm">
+                    <option>Action</option>
+                    <option>Recipe</option>
+                    <option>Item</option>
+                    <option>Building</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Name</label>
+                  <input type="text" name="unlockables[__INDEX__][name]" class="border rounded px-2 py-1 text-sm" data-controller="typeahead validate-ref" data-typeahead-type-selector-value="select[name='unlockables[__INDEX__][type]']" data-validate-ref-type-selector-value="select[name='unlockables[__INDEX__][type]']" data-validate-ref-message-value="Unknown unlockable" />
+                </div>
+                <div>
+                  <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+                </div>
+              </div>
+            </div>
+          </template>
+          <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Unlockable</button>
+        </div>
+      </div>
+
+      <div class="mt-4 flex items-center gap-2">
+        <%= f.submit 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_flag_path(@flag), class: 'px-3 py-2 rounded border' %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

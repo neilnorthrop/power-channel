@@ -16,7 +16,7 @@ module Authenticable
       @decoded = JsonWebToken.decode(header)
       @current_user = User.find(@decoded[:user_id])
       if @current_user.respond_to?(:suspended_now?) && @current_user.suspended_now?
-        return render json: { error: "account_suspended" }, status: :forbidden
+        render json: { error: "account_suspended" }, status: :forbidden
       end
     rescue ActiveRecord::RecordNotFound => e
       render json: { errors: e.message }, status: :unauthorized

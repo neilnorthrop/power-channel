@@ -10,4 +10,3 @@ class CreateSuspensionTemplates < ActiveRecord::Migration[8.0]
     add_index :suspension_templates, :name, unique: true
   end
 end
-

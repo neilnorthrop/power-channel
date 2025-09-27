@@ -13,4 +13,3 @@ class CreateAnnouncements < ActiveRecord::Migration[8.0]
     add_index :announcements, :published_at
   end
 end
-

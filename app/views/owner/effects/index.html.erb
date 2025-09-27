@@ -1,0 +1,56 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Effects</h2>
+      <div class="space-x-2">
+        <%= link_to 'New', new_owner_effect_path, class: 'px-3 py-2 rounded bg-gray-800 text-white text-sm' %>
+        <%= link_to 'Back to Content', owner_content_index_path(resource: 'effects'), class: 'text-sm text-blue-600 hover:underline' %>
+      </div>
+    </div>
+    <div class="rounded border p-3 bg-white mb-2">
+      <%= form_with url: owner_effects_path, method: :get, local: true, class: "flex items-end gap-2" do %>
+        <div>
+          <label class="block text-xs text-gray-600">Search</label>
+          <%= text_field_tag :q, @q, class: 'border rounded px-2 py-1 text-sm', placeholder: 'name or target' %>
+        </div>
+        <div>
+          <%= submit_tag 'Apply', class: 'px-2 py-1 rounded bg-gray-800 text-white text-sm' %>
+        </div>
+      <% end %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="py-2 pr-4">Name</th>
+            <th class="py-2 pr-4">Effectable</th>
+            <th class="py-2 pr-4">Target</th>
+            <th class="py-2 pr-4">Modifier</th>
+            <th class="py-2 pr-4">Duration</th>
+            <th class="py-2 pr-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @effects.each do |e| %>
+            <tr class="border-t">
+              <td class="py-2 pr-4">
+                <span><%= e.name %></span>
+                <button class="ml-2 text-xs px-1 py-0.5 rounded border" data-controller="clipboard" data-clipboard-value-value="<%= e.name %>" data-action="click->clipboard#copy">Copy</button>
+              </td>
+              <td class="py-2 pr-4"><%= e.effectable_type %>: <%= e.effectable_type == 'Item' ? Item.find(e.effectable_id)&.name : Action.find(e.effectable_id)&.name %></td>
+              <td class="py-2 pr-4"><%= e.target_attribute %></td>
+              <td class="py-2 pr-4"><%= e.modifier_type %> <%= e.modifier_value %></td>
+              <td class="py-2 pr-4"><%= e.duration %></td>
+              <td class="py-2 pr-4 space-x-2">
+                <%= link_to 'Edit', edit_owner_effect_path(e), class: 'text-blue-600 hover:underline' %>
+                <span class="text-gray-300">|</span>
+                <%= link_to 'Duplicate', duplicate_owner_effect_path(e), class: 'text-blue-600 hover:underline' %>
+                <%= button_to 'Delete', owner_effect_path(e), method: :delete, class: 'text-xs px-2 py-1 rounded border', data: { controller: 'confirm', confirmMessageValue: 'Delete effect?', action: 'click->confirm#intercept' } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>

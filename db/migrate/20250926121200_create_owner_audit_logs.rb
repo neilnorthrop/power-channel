@@ -16,4 +16,3 @@ class CreateOwnerAuditLogs < ActiveRecord::Migration[8.0]
     add_foreign_key :owner_audit_logs, :users, column: :target_user_id
   end
 end
-

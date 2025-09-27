@@ -1,0 +1,105 @@
+<%= main_frame do %>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold">Edit Recipe: <%= @recipe.item&.name %></h2>
+      <%= link_to "Back", owner_recipes_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <%= form_with model: @recipe, url: owner_recipe_path(@recipe), method: :put, data: { controller: 'validate-form confirm', action: 'submit->validate-form#intercept submit->confirm#intercept', confirmMessageValue: 'Update recipe?' } do |f| %>
+      <%= render 'owner/shared/validation_banner', errors: @validation_errors, success_message: @validation_success_message if defined?(@validation_errors) || defined?(@validation_success_message) %>
+      <div class="space-y-4" data-controller="form-list" data-form-list-target="container">
+        <div>
+          <%= f.label :quantity, class: 'block text-sm font-medium' %>
+          <%= f.number_field :quantity, class: 'mt-1 border rounded px-2 py-1' %>
+        </div>
+
+        <h3 class="text-lg font-medium">Components</h3>
+        <p class="text-xs text-gray-500 mb-2">Select Resource or Item components by ID; quantities and grouping are editable. Components must exist.</p>
+
+        <% @recipe.recipe_resources.each_with_index do |rr, idx| %>
+          <div class="border rounded p-2 mb-2" data-form-list-row>
+            <%= f.fields_for :recipe_resources, rr do |rf| %>
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+                <div>
+                  <%= rf.label :component_type, 'Type', class: 'block text-xs text-gray-600' %>
+                  <%= rf.select :component_type, [['Resource','Resource'], ['Item','Item']], {}, class: 'border rounded px-2 py-1 text-sm' %>
+                </div>
+                <div>
+                  <%= rf.label :component_id, 'Name', class: 'block text-xs text-gray-600' %>
+                  <%= rf.select :component_id, options_from_collection_for_select(@resources, :id, :name, rr.component_type == 'Resource' ? rr.component_id : nil), { include_blank: true }, class: 'border rounded px-2 py-1 text-sm', data: { resource_options: @resources.map { |r| [r.id, r.name] }.to_h.to_json, item_options: @items.map { |i| [i.id, i.name] }.to_h.to_json } %>
+                </div>
+                <div>
+                  <%= rf.label :quantity, class: 'block text-xs text-gray-600' %>
+                  <%= rf.number_field :quantity, class: 'border rounded px-2 py-1 text-sm' %>
+                </div>
+                <div>
+                  <%= rf.label :group_key, 'Group', class: 'block text-xs text-gray-600' %>
+                  <%= rf.text_field :group_key, class: 'border rounded px-2 py-1 text-sm' %>
+                </div>
+                <div>
+                  <%= rf.label :logic, class: 'block text-xs text-gray-600' %>
+                  <%= rf.select :logic, [['AND','AND'],['OR','OR']], {}, class: 'border rounded px-2 py-1 text-sm' %>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600">Remove</label>
+                  <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+                  <%= rf.hidden_field :_destroy, value: false %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <template data-form-list-target="template">
+          <div class="border rounded p-2 mb-2" data-form-list-row>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+              <div>
+                <label class="block text-xs text-gray-600">Type</label>
+                <select name="recipe[recipe_resources_attributes][__INDEX__][component_type]" class="border rounded px-2 py-1 text-sm">
+                  <option value="Resource">Resource</option>
+                  <option value="Item">Item</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Name</label>
+                <select name="recipe[recipe_resources_attributes][__INDEX__][component_id]" class="border rounded px-2 py-1 text-sm">
+                  <% @resources.each do |r| %>
+                    <option value="<%= r.id %>"><%= r.name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Quantity</label>
+                <input type="number" name="recipe[recipe_resources_attributes][__INDEX__][quantity]" class="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Group</label>
+                <input type="text" name="recipe[recipe_resources_attributes][__INDEX__][group_key]" class="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Logic</label>
+                <select name="recipe[recipe_resources_attributes][__INDEX__][logic]" class="border rounded px-2 py-1 text-sm">
+                  <option value="AND">AND</option>
+                  <option value="OR">OR</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600">Remove</label>
+                <button class="px-2 py-1 rounded border text-xs" data-action="form-list#remove">Remove</button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <div>
+          <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Component</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= f.submit 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
+          <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_recipe_path(@recipe), class: 'px-3 py-2 rounded border' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_26_123000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_26_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,6 +79,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_26_123000) do
     t.string "effect"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "db_validation_reports", force: :cascade do |t|
+    t.string "status", default: "ok", null: false
+    t.integer "issues_count", default: 0, null: false
+    t.jsonb "report", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_db_validation_reports_on_created_at"
+    t.index ["status"], name: "index_db_validation_reports_on_status"
   end
 
   create_table "dismantle_rules", force: :cascade do |t|
@@ -216,6 +226,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_26_123000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.float "multiplier"
+  end
+
+  create_table "suspension_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_suspension_templates_on_name", unique: true
   end
 
   create_table "unlockables", force: :cascade do |t|

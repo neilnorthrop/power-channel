@@ -8,14 +8,14 @@ Rails.application.routes.draw do
 
   namespace :owner do
     get "/", to: "dashboard#index", as: :dashboard
-    resources :users, only: [:index, :update] do
+    resources :users, only: [ :index, :update ] do
       post :suspend, on: :member
       post :unsuspend, on: :member
       post :grant_resource, on: :member
       post :add_flag, on: :member
       delete :remove_flag, on: :member
     end
-    resources :announcements, only: [:index, :new, :create, :edit, :update] do
+    resources :announcements, only: [ :index, :new, :create, :edit, :update ] do
       post :toggle, on: :member
       post :publish_now, on: :member
       post :publish_in, on: :member
@@ -24,8 +24,44 @@ Rails.application.routes.draw do
       post :start, on: :member
       post :stop, on: :collection
     end
-    resources :audit_logs, only: [:index]
-    resources :suspension_templates, only: [:index, :create, :edit, :update, :destroy]
+    resources :audit_logs, only: [ :index ]
+    resources :suspension_templates, only: [ :index, :create, :edit, :update, :destroy ]
+    resources :content, controller: "content" do
+      collection do
+        get :index
+        post :export
+      end
+    end
+    resources :recipes, only: [ :index, :new, :create, :edit, :update ] do
+      member do
+        get :duplicate
+      end
+    end
+    post "recipes/:id/validate", to: "recipes#validate_all", as: :validate_recipe
+    post "recipes/validate", to: "recipes#validate_new", as: :validate_recipes
+    resources :flags, only: [ :index, :new, :create, :edit, :update ]
+    post "flags/:id/validate", to: "flags#validate_all", as: :validate_flag
+    resources :dismantles, only: [ :index, :new, :create, :edit, :update ]
+    post "dismantles/:id/validate", to: "dismantles#validate_all", as: :validate_dismantle
+    resources :effects do
+      member do
+        get :duplicate
+      end
+    end
+    post "effects/:id/validate", to: "effects#validate_all", as: :validate_effect
+    post "effects/validate", to: "effects#validate_all", as: :validate_effects
+    resources :action_item_drops, only: [ :index, :update ]
+    post "action_item_drops/:id/validate", to: "action_item_drops#validate", as: :validate_action_item_drops
+    get "lookups/suggest", to: "lookups#suggest"
+    get "lookups/exists", to: "lookups#exists"
+    resources :seeds, only: [ :index ] do
+      collection do
+        post :validate
+        post :validate_db
+        post :export_all
+        post :run_db_validation
+      end
+    end
   end
 
   namespace :api do
@@ -58,4 +94,11 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   get "/favicon.ico", to: "application#favicon"
+
+  # SPA-style fallback: send unknown HTML routes to game#index
+  get "*path", to: "game#index", constraints: ->(req) {
+    req.format.html? &&
+    !req.path.start_with?("/rails/") &&
+    !req.path.start_with?("/cable")
+  }
 end
