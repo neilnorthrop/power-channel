@@ -2,7 +2,7 @@ class ActiveEffect < ApplicationRecord
   belongs_to :user
   belongs_to :effect
 
-  scope :active, -> { where("expires_at > ?", Time.current) }
+  scope :active, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
   scope :for_user, ->(user) { where(user: user) }
 

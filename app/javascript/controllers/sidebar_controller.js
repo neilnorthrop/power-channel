@@ -134,7 +134,7 @@ export default class extends Controller {
 
   close() {
     const t0 = performance.now()
-    try { console.log('[SIDEBAR] close - start', { width: window.innerWidth }) } catch (e) {}
+    try { if (DEBUG) console.log('[SIDEBAR] close - start', { width: window.innerWidth }) } catch (e) {}
 
   document.documentElement.classList.remove('overflow-hidden')
   if (this.sidebarElement) this.sidebarElement.classList.add('-translate-x-full')

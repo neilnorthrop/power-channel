@@ -22,4 +22,20 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
     get api_v1_user_url, as: :json
     assert_response :unauthorized
   end
+
+  test "show returns 403 for suspended user" do
+    @user.update!(suspended: true, suspended_until: 1.hour.from_now)
+    get api_v1_user_url, headers: { Authorization: "Bearer #{@token}" }, as: :json
+    assert_response :forbidden
+    body = JSON.parse(@response.body)
+    assert_equal "account_suspended", body["error"]
+  end
+
+  test "show returns 401 for expired token" do
+    expired = JsonWebToken.encode({ user_id: @user.id }, 1.hour.ago)
+    get api_v1_user_url, headers: { Authorization: "Bearer #{expired}" }, as: :json
+    assert_response :unauthorized
+    body = JSON.parse(@response.body)
+    assert_equal "token_expired", body["error"]
+  end
 end

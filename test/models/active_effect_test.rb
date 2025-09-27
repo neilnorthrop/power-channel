@@ -30,6 +30,16 @@ class ActiveEffectTest < ActiveSupport::TestCase
     assert_equal [ active ], ActiveEffect.active.to_a
   end
 
+  test "active scope includes effects without expiration" do
+    user = users(:one)
+    effect = effects(:luck)
+    evergreen = ActiveEffect.create!(user: user, effect: effect, expires_at: nil)
+
+    assert_includes ActiveEffect.active, evergreen
+  ensure
+    evergreen&.destroy
+  end
+
   test "luck_sum_for includes global and matching scoped luck" do
     user = users(:one)
     # Global luck (target_attribute NULL)

@@ -50,9 +50,14 @@ class Api::V1::ItemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should use item" do
-    user_item = @user.user_items.create(item: @item, quality: "normal")
-    post use_api_v1_item_url(user_item.item), headers: { Authorization: "Bearer #{@token}" }, as: :json
+    user_item = @user.user_items.create!(item: @item, quality: "normal")
+
+    assert_difference("UserItem.where(user: @user, item: @item, quality: 'normal').count", -1) do
+      post use_api_v1_item_url(user_item.item), headers: { Authorization: "Bearer #{@token}" }, as: :json
+    end
     assert_response :success
+    body = JSON.parse(@response.body)
+    assert_match(/applied\.?\z/, body["message"])
   end
 
   test "use returns 404 when not in inventory" do
@@ -84,5 +89,20 @@ class Api::V1::ItemsControllerTest < ActionDispatch::IntegrationTest
     post use_api_v1_item_url(@item), headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success
     assert_nil UserItem.find_by(user: @user, item: @item, quality: "normal")
+  end
+
+  test "use returns 422 and preserves item when effect fails" do
+    unusable_item = items(:twine)
+    UserItem.where(user: @user, item: unusable_item).delete_all
+    @user.user_items.create!(item: unusable_item, quality: "normal", quantity: 1)
+
+    assert_no_difference("UserItem.where(user: @user, item: unusable_item, quality: 'normal').count") do
+      post use_api_v1_item_url(unusable_item), headers: { Authorization: "Bearer #{@token}" }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    body = JSON.parse(@response.body)
+    assert_equal "Item cannot be used.", body["error"]
+    assert UserItem.exists?(user: @user, item: unusable_item, quality: "normal")
   end
 end

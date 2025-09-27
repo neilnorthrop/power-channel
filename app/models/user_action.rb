@@ -5,7 +5,10 @@ class UserAction < ApplicationRecord
   def off_cooldown?
     return true if self.last_performed_at.nil?
 
-    Time.current > self.last_performed_at + action.cooldown.seconds
+    cooldown_seconds = action&.cooldown.to_i
+    return true if cooldown_seconds <= 0
+
+    Time.current > (self.last_performed_at + cooldown_seconds.seconds)
   end
 
   def upgrade

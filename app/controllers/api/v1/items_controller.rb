@@ -66,11 +66,23 @@ class Api::V1::ItemsController < Api::ApiController
     user_item = @current_user.user_items.find_by(item_id: params[:id], quality: quality)
     if user_item
       item_service = ItemService.new(@current_user, user_item.item)
-      item_service.use
+      result = item_service.use
+      unless result[:success]
+        return render json: { error: result[:error] }, status: :unprocessable_entity
+      end
+
+      item_name = user_item.item.name
       user_item.destroy
       # Broadcast only the changed item as a delta
-      UserUpdatesChannel.broadcast_to(@current_user, { type: "user_item_delta", data: { changes: [ { item_id: user_item.item_id, quality: user_item.quality, quantity: 0 } ] } })
-      render json: { message: "#{user_item.item.name} used.", item_id: user_item.item_id, quality: quality }
+      UserUpdatesChannel.broadcast_to(
+        @current_user,
+        { type: "user_item_delta", data: { changes: [ { item_id: user_item.item_id, quality: user_item.quality, quantity: 0 } ] } }
+      )
+      render json: {
+        message: result[:message].presence || "#{item_name} used.",
+        item_id: user_item.item_id,
+        quality: quality
+      }
     else
       render json: { error: "Item not found in inventory." }, status: :not_found
     end
