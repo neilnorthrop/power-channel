@@ -57,3 +57,18 @@ All notable changes are organized by date (YYYY-MM-DD). Newest first.
 ## Future Roadmap
 
 See ROADMAP.md for the full, up-to-date roadmap of features and performance improvements.
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+### Added
+- Tests for JWT encode/decode, expired/tampered token handling.
+- Integration tests for authenticated requests and 401 on expired/missing tokens.
+
+### Changed
+- Hardened JWT handling: constrain algorithm to HS256, verify expiration; return 401 `token_expired` for expired tokens.
+- Documentation updates in README (Authentication & JWT, Frontend Assets), TROUBLESHOOTING (Authorization Errors), and ROADMAP (Recently Shipped).
+
+---

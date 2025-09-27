@@ -11,6 +11,7 @@ This document collects future features and improvements. Grouped by area for eas
 - Dismantle v1: item-only dismantle rules + service + API (with seeds support).
 - Indexes: added composite indexes for user lookups, including `user_items(user_id,item_id,quality)` and pairs on user_* joins.
 - Sidebar/footer layout: independent scrolling sidebar; footer overlays content with dynamic padding.
+- Security: JWT hardening (HS256 only + exp verification) and 401 on expired tokens; tests for encode/decode and integration flow.
 
 ## Gameplay & Systems
 - Effects expansion: richer item/skill/building effects and effect classes; define stacking and expiration rules.

@@ -71,7 +71,7 @@ Authentication is required for all endpoints except registration and token issua
 
 1. **Ruby version** – Install Ruby 3.4.0 and Bundler
 2. **Dependencies** – PostgreSQL, Node/JS runtime (for Rails), and gems from the Gemfile (`bundle install`)
-3. **Configuration** – Set the `JWT_SECRET` environment variable (see "JWT Secret & .env" below)
+3. **Configuration** – Set the `JWT_SECRET` environment variable (see "Authentication & JWT" below)
 4. **Database setup** – `bin/rails db:setup` or `bin/rails db:create db:migrate db:seed` (seeds create initial actions, resources, skills, items, recipes, buildings)
 5. **Run the server** – `bin/rails server`; visit `/` for the demo UI or use the API directly.
 6. **Run the test suite** – `bin/rails test` (Minitest with fixtures and mocha)
@@ -107,6 +107,38 @@ Enable locally
 Planned follow‑ups (no migration yet)
 - Add a composite index on `user_items(user_id, item_id, quality)` to support fast lookups by quality and prepare for unique constraints per tier.
 - Extend `AdvancedCraftingService` with quality rolls, partial/failure outcomes, and skill/tool/building modifiers.
+
+---
+
+## Authentication & JWT
+
+The API uses stateless JWTs for authentication.
+
+- Secret: set `JWT_SECRET` in the environment. Tests fall back to a stable `config.jwt_secret` defined in `config/environments/test.rb`.
+- Algorithm: tokens are signed with `HS256` only and are verified on decode.
+- Expiration: an `exp` claim is included; expired tokens return HTTP 401 with `{ error: "token_expired" }`.
+- Error handling: invalid or tampered tokens return HTTP 401 with details.
+- Impersonation: the app supports owner “view-as” impersonation. The layout’s JWT meta tag currently encodes the actor (`current_actor`). If you need the impersonated identity (`current_user`) for client calls, adjust the meta tag and ensure `block_writes_if_impersonating` continues to prevent mutations.
+
+Local development
+- Generate a secret: `ruby -rsecurerandom -e 'puts SecureRandom.hex(64)'` and export as `JWT_SECRET`.
+- Add to `.env` (see `.env.example`) and load with `set -a; source .env; set +a`.
+
+---
+
+## Frontend Assets (Tailwind)
+
+Current state
+- Styles include `@tailwind` directives in `app/assets/stylesheets/application.css`, and the layout also loads Tailwind via CDN (`2.2.19`). The `package.json` declares Tailwind `^4.1.12` but no local build step is wired yet.
+
+Recommended options
+- CDN-only: remove `@tailwind` directives and rely on the CDN. Simple, but locked to the CDN version.
+- Local build (preferred):
+  - Add a Tailwind build step for v4 (e.g., `npx tailwindcss -i app/assets/stylesheets/application.css -o app/assets/builds/application.css --minify`).
+  - Reference the built CSS in the layout and remove the CDN link.
+  - Ensure Propshaft serves the built file; do not commit compiled files under `public/assets`.
+
+See TASKS.md for the concrete alignment steps.
 
 ---
 

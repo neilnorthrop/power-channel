@@ -46,6 +46,21 @@ This document captures common issues observed during development and how to diag
 - Preventive Guidance
   - When using server-side computed availability flags (e.g., `craftable_now`), schedule a re-check after actions that can change availability (craft/use/dismantle) or patch them on the client if you maintain a local model.
 
+## Authorization Errors (401) — Expired or Invalid Token
+
+- Symptom
+  - API requests intermittently fail with HTTP 401; response body includes `{ "error": "token_expired" }` or a decode error message.
+
+- Root Cause
+  - JWTs include an `exp` claim and are verified on decode with algorithm constrained to `HS256`. Expired or tampered tokens are rejected.
+
+- Fix
+  - Re-authenticate to obtain a fresh token. Ensure the client refreshes tokens before expiration, or re-issues on 401.
+
+- Notes
+  - Local development: set a strong `JWT_SECRET`. Test env provides a deterministic secret via `config.jwt_secret`.
+  - Clock skew: if running multiple systems (containers/VMs), keep clocks in sync.
+
 ## Actions Feel Slow / Duplicate Refreshes
 
 - Symptom
