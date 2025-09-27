@@ -5,15 +5,17 @@ require "test_helper"
 class BuildingServiceTest < ActiveSupport::TestCase
   def setup
     @user = User.create!(email: "builder@example.com", password: "password")
-    Resource.all.each do |resource|
-      @user.user_resources.create!(resource: resource, amount: 100)
+    Resource.find_each do |resource|
+      user_resource = @user.user_resources.find_or_initialize_by(resource: resource)
+      user_resource.user = @user
+      user_resource.amount = 100
+      user_resource.save!
     end
     @service = BuildingService.new(@user)
     @building = Building.create!(name: "Mill", description: "desc", level: 1, effect: "increase_wood_production")
   end
 
   test "create_building deducts resources and adds building" do
-    skip
     result = @service.create_building(@building.id)
     assert result[:success]
     assert_not_nil @user.user_buildings.find_by(building: @building)
@@ -23,8 +25,13 @@ class BuildingServiceTest < ActiveSupport::TestCase
   end
 
   test "create_building fails with insufficient resources" do
-    skip
     poor_user = User.create!(email: "poor@example.com", password: "password")
+    Resource.find_each do |resource|
+      user_resource = poor_user.user_resources.find_or_initialize_by(resource: resource)
+      user_resource.user = poor_user
+      user_resource.amount = 0
+      user_resource.save!
+    end
     service = BuildingService.new(poor_user)
     result = service.create_building(@building.id)
     assert_not result[:success]

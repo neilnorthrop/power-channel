@@ -7,6 +7,12 @@ class Api::V1::BuildingsControllerTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     @token = JsonWebToken.encode(user_id: @user.id)
     @building = buildings(:one)
+    Resource.find_each do |resource|
+      user_resource = @user.user_resources.find_or_initialize_by(resource: resource)
+      user_resource.user = @user
+      user_resource.amount = 100
+      user_resource.save!
+    end
   end
 
   test "should get index" do
@@ -24,7 +30,6 @@ class Api::V1::BuildingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update building" do
-    skip
     user_building = @user.user_buildings.create(building: @building)
     patch api_v1_building_url(user_building), headers: { Authorization: "Bearer #{@token}" }, as: :json
     assert_response :success

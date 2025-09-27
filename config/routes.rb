@@ -30,6 +30,7 @@ Rails.application.routes.draw do
       collection do
         get :index
         post :export
+        post :export_validate
       end
     end
     resources :recipes, only: [ :index, :new, :create, :edit, :update ] do

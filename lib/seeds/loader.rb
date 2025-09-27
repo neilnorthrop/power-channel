@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "seeds/aggregate_reader"
 
 module Seeds
   module Loader
@@ -40,50 +41,16 @@ module Seeds
       names
     end
 
-    def pack_dirs
-      selected_pack_names.map { |name| data_dir.join("packs", name) }
-    end
-
     def load_yaml(basename)
-      rows = []
-      # Base file first
-      base = data_dir.join(basename)
-      rows.concat YAML.safe_load(File.read(base), permitted_classes: [ Symbol ], aliases: true) if File.exist?(base)
-
-      # Then overlay packs in listed order
-      pack_dirs.each do |dir|
-        path = dir.join(basename)
-        next unless File.exist?(path)
-        pack_rows = YAML.safe_load(File.read(path), permitted_classes: [ Symbol ], aliases: true)
-        rows.concat(pack_rows) if pack_rows
-      end
-      rows || []
-    rescue StandardError => e
-      STDOUT.puts("Error loading YAML file '#{basename}': '#{base}' #{e.message}")
-      STDOUT.puts(e.backtrace.join("\n"))
-      raise e
+      resource = basename.to_s.sub(/\.yml\z/, "")
+      aggregate_reader.resource_rows(resource, selected_pack_names)
     end
 
     def apply!(dry_run: false, prune: false, logger: STDOUT)
       log = ->(msg) { logger.puts(msg) if logger }
 
       # Actions (with order auto-assignment and pack-aware offsets)
-      action_rows = []
-      # core first
-      core_path = data_dir.join("actions.yml")
-      if File.exist?(core_path)
-        (YAML.safe_load(File.read(core_path), permitted_classes: [ Symbol ], aliases: true) || []).each do |row|
-          action_rows << [ row, "core" ]
-        end
-      end
-      # then packs
-      selected_pack_names.each do |pack|
-        path = data_dir.join("packs", pack, "actions.yml")
-        next unless File.exist?(path)
-        (YAML.safe_load(File.read(path), permitted_classes: [ Symbol ], aliases: true) || []).each do |row|
-          action_rows << [ row, pack ]
-        end
-      end
+      action_rows = aggregate_reader.resource_rows_with_source("actions", selected_pack_names)
 
       # Determine cooldown override behavior
       override_cooldown = begin
@@ -413,6 +380,15 @@ module Seeds
 
     def find_or_init(model, by: {})
       model.find_or_initialize_by(by)
+    end
+
+    def aggregate_reader
+      return @aggregate_reader if defined?(@aggregate_reader)
+
+      @aggregate_reader = Seeds::AggregateReader.new(data_dir: data_dir)
+    rescue YamlSchema::ValidationError => e
+      STDOUT.puts("Aggregate YAML schema error: #{e.message}")
+      raise e
     end
 
     def save!(record, dry_run)

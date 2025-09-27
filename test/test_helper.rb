@@ -2,6 +2,9 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 require "mocha/minitest"
+require "tmpdir"
+require "fileutils"
+require "pathname"
 
 module ActiveSupport
   class TestCase
@@ -15,6 +18,14 @@ module ActiveSupport
     include Rails.application.routes.url_helpers
 
     # Add more helper methods to be used by all tests here...
+
+    def with_temp_yaml_dir(prefix = "yaml-data")
+      dir = Dir.mktmpdir(prefix)
+      path = Pathname(dir)
+      yield path
+    ensure
+      FileUtils.remove_entry(path) if path && path.exist?
+    end
 
     setup do
       # Ensure resources, actions, skills, and items are available for tests

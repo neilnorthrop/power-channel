@@ -1,0 +1,43 @@
+core:
+  actions: &actions_schema
+    required: [name]
+    optional: [description, cooldown, order]
+  resources: &resources_schema
+    required: [name]
+    optional: [description, base_amount, currency, action_name, min_amount, max_amount, drop_chance]
+  skills: &skills_schema
+    required: [name]
+    optional: [description, cost, effect, multiplier]
+  items: &items_schema
+    required: [name]
+    optional: [description, effect, drop_chance]
+  buildings: &buildings_schema
+    required: [name]
+    optional: [description, level, effect]
+  recipes: &recipes_schema
+    required: [item]
+    optional: [quantity, components]
+  flags: &flags_schema
+    required: [slug, name]
+    optional: [description, requirements, unlockables]
+  effects: &effects_schema
+    required: [name, effectable_type, effectable_name]
+    optional: [description, target_attribute, modifier_type, modifier_value, duration]
+  dismantle: &dismantle_schema
+    required: [subject_type, subject_name]
+    optional: [notes, yields]
+  action_item_drops: &action_item_drops_schema
+    required: [action, item]
+    optional: [min_amount, max_amount, drop_chance]
+
+packs:
+  actions: *actions_schema
+  resources: *resources_schema
+  skills: *skills_schema
+  items: *items_schema
+  buildings: *buildings_schema
+  recipes: *recipes_schema
+  flags: *flags_schema
+  effects: *effects_schema
+  dismantle: *dismantle_schema
+  action_item_drops: *action_item_drops_schema

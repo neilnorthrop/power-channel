@@ -37,7 +37,7 @@
             <span class="text-xs text-gray-500">View-only for now</span>
           <% end %>
         <% end %>
-        <%= button_to "Export YAML", export_owner_content_index_path(resource: @key), method: :post, class: "px-3 py-2 rounded border text-sm", data: { controller: 'confirm', confirmMessageValue: "Export #{@key} to db/data/#{@key == 'dismantle' ? 'dismantle' : @key}.yml?", action: 'click->confirm#intercept' } %>
+        <%= button_to "Export YAML", export_owner_content_index_path(resource: @key), method: :post, class: "px-3 py-2 rounded border text-sm", data: { controller: 'confirm', confirmMessageValue: "Export #{@key} to db/data/aether.yml?", action: 'click->confirm#intercept' } %>
       </div>
     </div>
 

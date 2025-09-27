@@ -70,6 +70,13 @@ module Owner
       redirect_to owner_content_index_path(resource: @key), notice: "Exported #{@key} to YAML."
     end
 
+    def export_validate
+      basename, rows = YamlExporter.preview!(@key)
+      render json: { file: basename, rows: rows }, status: :ok
+    rescue ArgumentError => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+
     private
 
     def resolve_resource!

@@ -7,7 +7,7 @@ class Owner::RecipesControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     @owner = User.create!(email: "recipes-owner@example.com", password: "password", role: :owner)
-    sign_in @owner
+    sign_in @owner, scope: :user
   end
 
   test "new renders owner validate recipes helper" do
