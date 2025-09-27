@@ -70,5 +70,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Hardened JWT handling: constrain algorithm to HS256, verify expiration; return 401 `token_expired` for expired tokens.
 - Documentation updates in README (Authentication & JWT, Frontend Assets), TROUBLESHOOTING (Authorization Errors), and ROADMAP (Recently Shipped).
+- Tailwind alignment: switched to CDN-only, removed `@tailwind` directives from `application.css`, and removed stale compiled asset from `public/assets`.
 
 ---

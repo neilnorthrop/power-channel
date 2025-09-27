@@ -23,7 +23,7 @@
           <%= f.text_area :description, rows: 4, class: 'mt-1 w-full border rounded px-2 py-1' %>
         </div>
         <div class="flex items-center gap-2">
-          <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_flags_path, class: 'px-3 py-2 rounded border' %>
+          <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: owner_validate_flags_path, class: 'px-3 py-2 rounded border' %>
           <%= f.submit 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
         </div>
       </div>

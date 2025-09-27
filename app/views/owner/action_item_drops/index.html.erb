@@ -79,7 +79,7 @@
       <div class="mt-2 flex items-center gap-2">
         <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Drop</button>
         <%= submit_tag 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
-        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_action_item_drops_path(@action), class: 'px-3 py-2 rounded border text-sm' %>
+        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: owner_validate_action_item_drops_path(@action), class: 'px-3 py-2 rounded border text-sm' %>
       </div>
     <% end %>
   </div>

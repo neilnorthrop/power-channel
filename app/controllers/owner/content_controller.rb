@@ -124,6 +124,19 @@ module Owner
       params.require(@model.model_name.param_key).permit(*Array(@config[:permitted]))
     end
 
+    # Applies sorting to an ActiveRecord scope based on the provided key, sort column, and direction.
+    #
+    # @param scope [ActiveRecord::Relation] The initial scope to apply sorting to.
+    # @param key [String] The resource type or context (e.g., "actions", "resources", "items", etc.).
+    # @param sort [String] The column or attribute to sort by, specific to the resource type.
+    # @param dir [String] The direction of sorting ("asc" or "desc").
+    # @return [ActiveRecord::Relation] The scope with the applied sorting.
+    #
+    # The method determines the appropriate column and sorting logic based on the key and sort parameters.
+    # It safely quotes table and column names to prevent SQL injection, and handles special cases where
+    # sorting requires joining related tables (e.g., sorting resources by action name).
+    #
+    # If the key or sort parameter is not recognized, it falls back to a default ordering.
     def apply_sort(scope, key, sort, dir)
       up = dir.upcase
       # Helper: quote table + column for ORDER BY
@@ -133,9 +146,11 @@ module Owner
       case key
       when "actions"
         col = %w[name cooldown order id].include?(sort) ? sort : "order"
-        # Special-case reserved word "order"
-        sql = col == "order" ? "#{Action.quoted_table_name}.\"order\" #{up}" : qcol.call(Action, col)
-        scope.order(Arel.sql(sql))
+        if col == "order"
+          scope.order(Action.arel_table[:order].public_send(dir))
+        else
+          scope.order(Arel.sql(qcol.call(Action, col)))
+        end
       when "resources"
         if sort == "action_name"
           scope.left_outer_joins(:action).order(Arel.sql("actions.name #{up} NULLS LAST"))
@@ -171,7 +186,7 @@ module Owner
         if sort == "subject_name"
           scope.joins("LEFT JOIN items ON items.id = dismantle_rules.subject_id").order(Arel.sql("items.name #{up}"))
         else
-          scope.order(Arel.sql(qcol.call(DismantleRule, 'id')))
+          scope.order(Arel.sql(qcol.call(DismantleRule, "id")))
         end
       when "action_item_drops"
         if sort == "action_name"

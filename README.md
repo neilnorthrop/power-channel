@@ -128,17 +128,12 @@ Local development
 
 ## Frontend Assets (Tailwind)
 
-Current state
-- Styles include `@tailwind` directives in `app/assets/stylesheets/application.css`, and the layout also loads Tailwind via CDN (`2.2.19`). The `package.json` declares Tailwind `^4.1.12` but no local build step is wired yet.
+Configured: CDN-only
+- The layout loads Tailwind via CDN (`2.2.19`). There is no local Tailwind build step required.
+- `app/assets/stylesheets/application.css` contains only app-specific styles; Tailwind directives are removed.
 
-Recommended options
-- CDN-only: remove `@tailwind` directives and rely on the CDN. Simple, but locked to the CDN version.
-- Local build (preferred):
-  - Add a Tailwind build step for v4 (e.g., `npx tailwindcss -i app/assets/stylesheets/application.css -o app/assets/builds/application.css --minify`).
-  - Reference the built CSS in the layout and remove the CDN link.
-  - Ensure Propshaft serves the built file; do not commit compiled files under `public/assets`.
-
-See TASKS.md for the concrete alignment steps.
+Switching to a local build (optional)
+- If you want to move off the CDN, add a Tailwind build step (e.g., `npx tailwindcss -i app/assets/stylesheets/application.css -o app/assets/builds/application.css --minify`), reference the built CSS in the layout, and remove the CDN tag.
 
 ---
 

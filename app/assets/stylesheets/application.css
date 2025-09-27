@@ -9,9 +9,11 @@
  * Consider organizing styles into separate files for maintainability.
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind utilities are provided via CDN in the layout.
+ * If you later switch to a local build, reintroduce
+ * `@tailwind base; @tailwind components; @tailwind utilities;`
+ * and add a Tailwind build step.
+ */
 
 .countdown-visual {
     position: absolute;

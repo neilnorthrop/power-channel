@@ -97,7 +97,7 @@
 
         <div class="flex items-center gap-2">
           <%= f.submit 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
-          <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_recipe_path(@recipe), class: 'px-3 py-2 rounded border' %>
+          <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: owner_validate_recipe_path(@recipe), class: 'px-3 py-2 rounded border' %>
         </div>
       </div>
     <% end %>

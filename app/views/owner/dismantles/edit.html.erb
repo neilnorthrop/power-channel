@@ -84,7 +84,7 @@
 
       <div class="mt-4 flex items-center gap-2">
         <%= submit_tag 'Save', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
-        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: validate_owner_dismantle_path(@rule), class: 'px-3 py-2 rounded border' %>
+        <%= button_tag 'Validate All', type: 'submit', formmethod: 'post', formaction: owner_validate_dismantle_path(@rule), class: 'px-3 py-2 rounded border' %>
       </div>
     <% end %>
   </div>

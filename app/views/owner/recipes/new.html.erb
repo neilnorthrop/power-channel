@@ -66,7 +66,7 @@
         <button class="px-3 py-2 rounded border text-sm" data-action="form-list#add">Add Component</button>
 
         <div class="flex items-center gap-2">
-          <%= button_tag 'Validate All', type: 'submit', formaction: '/owner/recipes/validate', formmethod: 'post', class: 'px-3 py-2 rounded border' %>
+          <%= button_tag 'Validate All', type: 'submit', formaction: owner_validate_recipes_path, formmethod: 'post', class: 'px-3 py-2 rounded border' %>
           <%= f.submit 'Create', class: 'px-3 py-2 rounded bg-gray-800 text-white' %>
         </div>
       </div>

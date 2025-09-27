@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     post "recipes/validate", to: "recipes#validate_new", as: :validate_recipes
     resources :flags, only: [ :index, :new, :create, :edit, :update ]
     post "flags/:id/validate", to: "flags#validate_all", as: :validate_flag
+    post "flags/validate", to: "flags#validate_new", as: :validate_flags
     resources :dismantles, only: [ :index, :new, :create, :edit, :update ]
     post "dismantles/:id/validate", to: "dismantles#validate_all", as: :validate_dismantle
     resources :effects do

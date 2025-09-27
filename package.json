@@ -13,7 +13,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "tailwindcss": "^4.1.12"
-  }
+  "dependencies": {}
 }
