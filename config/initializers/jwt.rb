@@ -9,15 +9,16 @@
 # env settings in production). See README for setup instructions.
 
 class JsonWebToken
-  def self.encode(payload, exp = 24.hours.from_now)
+  def self.encode(payload, exp = 24.hours.from_now, algorithm = "HS256")
     payload[:exp] = exp.to_i
     key = secret_key!
-    JWT.encode(payload, key)
+    JWT.encode(payload, key, algorithm)
   end
 
   def self.decode(token)
     key = secret_key!
-    decoded = JWT.decode(token, key)[0]
+    # Verify signature and expiration, and constrain accepted algorithm.
+    decoded = JWT.decode(token, key, true, { algorithm: "HS256", verify_expiration: true })[0]
     HashWithIndifferentAccess.new decoded
   end
 

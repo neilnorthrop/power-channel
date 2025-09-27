@@ -20,6 +20,8 @@ module Authenticable
       end
     rescue ActiveRecord::RecordNotFound => e
       render json: { errors: e.message }, status: :unauthorized
+    rescue JWT::ExpiredSignature
+      render json: { error: "token_expired" }, status: :unauthorized
     rescue JWT::DecodeError => e
       render json: { errors: e.message }, status: :unauthorized
     end
