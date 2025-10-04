@@ -39,6 +39,22 @@ class Api::V1::ActionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "create instantiates action service once per request with a single action_id" do
+    performed_ids = []
+    service = Object.new
+    service.define_singleton_method(:perform_action) do |action_id|
+      performed_ids << action_id
+      { success: true, message: "ok" }
+    end
+
+    ActionService.expects(:new).once.with(@user).returns(service)
+
+    post api_v1_actions_url, params: { action_id: @action.id }, headers: { Authorization: "Bearer #{@token}" }, as: :json
+
+    assert_response :success
+    assert_equal [ @action.id ], performed_ids
+  end
+
   test "should update action" do
     user_action = @user.user_actions.create(action: @action)
     patch api_v1_action_url(user_action), headers: { Authorization: "Bearer #{@token}" }, as: :json

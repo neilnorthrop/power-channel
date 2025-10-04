@@ -29,6 +29,10 @@ class User < ApplicationRecord
     owner: 3
   }, default: :user, prefix: true
 
+  def user_flags_exists?(flag_id)
+    user_flags.exists?(flag_id: flag_id)
+  end
+
   def owner?
     role_owner?
   end

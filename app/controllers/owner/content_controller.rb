@@ -92,31 +92,36 @@ module Owner
           model: Action,
           search: %i[name description],
           order: :order,
-          permitted: %i[name description cooldown order]
+          permitted: %i[name description cooldown order],
+          param_key: :content_action
         },
         "resources" => {
           model: Resource,
           search: %i[name description],
           order: :name,
-          permitted: %i[name description base_amount action_id min_amount max_amount drop_chance currency]
+          permitted: %i[name description base_amount action_id min_amount max_amount drop_chance currency],
+          param_key: :content_resource
         },
         "skills" => {
           model: Skill,
           search: %i[name description effect],
           order: :name,
-          permitted: %i[name description cost effect multiplier]
+          permitted: %i[name description cost effect multiplier],
+          param_key: :content_skill
         },
         "items" => {
           model: Item,
           search: %i[name description effect],
           order: :name,
-          permitted: %i[name description effect drop_chance]
+          permitted: %i[name description effect drop_chance],
+          param_key: :content_item
         },
         "buildings" => {
           model: Building,
           search: %i[name description effect],
           order: :name,
-          permitted: %i[name description level effect]
+          permitted: %i[name description level effect],
+          param_key: :content_building
         },
         # View-only placeholders (export only via Export button)
         "recipes" => { model: Recipe, search: [], order: :id, permitted: [] },
@@ -128,7 +133,8 @@ module Owner
     end
 
     def permitted_params
-      params.require(@model.model_name.param_key).permit(*Array(@config[:permitted]))
+      key = @config[:param_key] || @model.model_name.param_key
+      params.require(key).permit(*Array(@config[:permitted]))
     end
 
     # Applies sorting to an ActiveRecord scope based on the provided key, sort column, and direction.

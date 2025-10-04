@@ -7,7 +7,7 @@ class Owner::LookupsControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     @owner = User.create!(email: "owner@example.com", password: "password", role: :owner)
-    sign_in @owner
+    sign_in @owner, scope: :user
   end
 
   test "suggest returns item names" do

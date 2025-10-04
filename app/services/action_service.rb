@@ -29,20 +29,7 @@ class ActionService
     @action_id = action_id
     return { success: false, error: "Action not found." } unless action
 
-    # Gate by flag via polymorphic unlockables
-    if (gate = Unlockable.find_by(unlockable_type: "Action", unlockable_id: action.id))
-      unless @user.user_flags.exists?(flag_id: gate.flag_id)
-        # Build requirements summary using preloaded names to avoid N+1 queries
-        names_map = RequirementNameLookup.for_flag_ids([ gate.flag_id ])
-        reqs = gate.flag.flag_requirements.map do |r|
-          name = names_map.dig(r.requirement_type, r.requirement_id) || r.requirement_type
-          qty = r.quantity.to_i > 1 ? " x#{r.quantity}" : ""
-          [ name, qty ].join
-        end.compact
-        msg = "Locked. Requirements: #{reqs.presence || [ 'Unavailable' ].join(', ')}"
-        return { success: false, error: msg }
-      end
-    end
+    return result if (result = flag_is_locked?)
 
     user_action = @user.user_actions.find_or_create_by(action: action)
 
@@ -102,6 +89,75 @@ class ActionService
   end
 
   private
+
+  def flag_is_locked?
+    # Gate by flag via polymorphic unlockables
+    if (gate = Unlockable.find_by(unlockable_type: "Action", unlockable_id: action.id))
+      unless @user.user_flags_exists?(gate.flag_id)
+        # Build requirements summary using preloaded names to avoid N+1 queries
+        # names_map = RequirementNameLookup.for_flag_ids([ gate.flag_id ])
+        reqs = gate.flag_requirements.map do |r|
+          [ requirement_name_lookup(gate.flag_id, r.requirement_type, r.requirement_id), req_qty(r) ].join
+        end.compact
+        msg = "Locked. Requirements: #{reqs.presence&.join(', ') || 'Unavailable' }"
+        { success: false, error: msg }
+      end
+    end
+  end
+
+  def requirement_name_lookup(flag_id, req_type, req_id)
+    # Lookup name from preloaded map; fallback to type if not found
+    # This avoids N+1 queries by using a preloaded hash of names
+    # The names_map is structured as { requirement_type => { requirement_id => name } }
+    # We use dig to safely navigate the nested hash
+    # If the name is not found, we fallback to using the requirement_type as a generic name
+    # This ensures we always have something to display in the requirements list
+    # Example: If requirement is an Item with id=5 and name="Wood", we show "Wood"
+    # If the name is not found, we show "Item" instead
+    # This way, we avoid leaking exact requirement details while still providing useful information
+    # to the user about what they need to unlock the action.
+    # The goal is to inform the user without overwhelming them with specifics.
+    # This is especially important for requirements that may not have a user-friendly name
+    # or for requirements that are not directly visible to the user.
+    # By using the requirement_type as a fallback, we ensure clarity and simplicity in the message.
+    # This approach balances informativeness with usability in the user interface.
+    # It also helps prevent confusion or frustration if the user cannot find the exact item/building
+    # they need to unlock the action.
+    (req_name_lookup_for_flag(flag_id).dig(req_type, req_id)) || req_type
+  end
+
+  def req_name_lookup_for_flag(flag_id)
+    @req_name_lookup_for_flag ||= RequirementNameLookup.for_flag_ids([ flag_id ])
+  end
+
+  def req_qty(r)
+    # Append quantity if more than 1
+    #
+    # Note: quantity is informational only; actual requirement logic is enforced in Flag model
+    # (e.g., user must have at least that many items/buildings)
+    # If quantity is 1 or nil, we omit it for brevity.
+    # If quantity is more than 1, we append " xN" to indicate the requirement.
+    # This is purely for user information and does not affect the requirement check itself.
+    # Example: "Item x2", "Building x3", "Quest"
+    # If quantity is 1, we just show "Item", "Building", etc.
+    # If quantity is nil, we also just show the type/name.
+    # If the name is unavailable, we fallback to the requirement type.
+    # This ensures we always have something to display.
+    # Examples:
+    # - Requirement: Item id=5, quantity=3, name="Wood" => "Wood x3"
+    # - Requirement: Building id=2, quantity=1, name="House" => "House"
+    # - Requirement: Quest id=10, quantity=nil, name=nil => "Quest"
+    # - Requirement: Item id=7, quantity=4, name=nil => "Item x4"
+    # - Requirement: Building id=3, quantity=1, name=nil => "Building"
+    # - Requirement: Quest id=11, quantity=nil, name="Dragon Slayer" => "Dragon Slayer"
+    # This logic ensures clarity while avoiding unnecessary detail that could confuse users.
+    # The goal is to inform the user what they need without overwhelming them with specifics.
+    # The actual requirement enforcement is handled elsewhere, so this is just for display.
+    # This approach balances informativeness with simplicity in the user message.
+    # It also avoids revealing exact requirement details that could be exploited.
+    # The focus is on what the user needs to unlock the action, not the exact mechanics.
+    r.quantity.to_i > 1 ? " x#{r.quantity}" : ""
+  end
 
   def user_action_update_broadcast
     user_broadcast("user_action_update", UserActionSerializer.new(user_action, include: [ :action ]).serializable_hash)

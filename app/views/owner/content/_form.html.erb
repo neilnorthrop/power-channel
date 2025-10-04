@@ -1,7 +1,9 @@
 <% confirm_text = record.persisted? ? 'Update?' : 'Create?' %>
 <% path = record.persisted? ? owner_content_path(record, resource: @key) : owner_content_index_path(resource: @key) %>
 <% http_method = record.persisted? ? :put : :post %>
+<% form_param = @config[:param_key] || record.model_name.param_key %>
 <%= form_with model: record,
+              scope: form_param,
               url: path,
               method: http_method,
               data: { controller: 'confirm', confirmMessageValue: confirm_text, action: 'submit->confirm#intercept' } do |f| %>
