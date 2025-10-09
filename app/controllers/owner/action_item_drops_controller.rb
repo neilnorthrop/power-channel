@@ -6,9 +6,9 @@ module Owner
       @actions = Action.order(:name)
       if params[:q].present?
         pick = Action.where("name ILIKE ?", "%#{params[:q]}%").order(:name).first
-        params[:action_id] ||= pick&.id
+        params[:action_id] = pick&.id if pick
       end
-      @action = params[:action_id].present? ? Action.find(params[:action_id]) : @actions.first
+      @action = Action.find_by(id: params[:action_id]) || @actions.first
       @drops = ActionItemDrop.includes(:item).where(action_id: @action.id).order("items.name")
       @items = Item.order(:name)
     end

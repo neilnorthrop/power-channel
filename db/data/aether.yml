@@ -1,0 +1,560 @@
+---
+core:
+  actions:
+  - name: Taxes
+    description: Gather taxes from your citizens.
+    cooldown: 60
+    order: 10
+  - name: Gather
+    description: Gather basic resources.
+    cooldown: 60
+    order: 20
+  - name: Mining
+    description: Mine for rocks, minerals, and gems.
+    cooldown: 60
+    order: 20010
+  - name: Hunt
+    description: Hunt small game for meat, hides, bones, and feathers.
+    cooldown: 60
+    order: 20020
+  - name: Chop Wood
+    description: Chop down trees for wood.
+    cooldown: 60
+    order: 30010
+  - name: Fishing
+    description: Fishing represents the player’s ability to harvest resources from
+      rivers, lakes, and seas. It begins with simple, low-yield catches like small
+      fish and shells, but expands into rarer aquatic resources as the player levels
+      up the action.
+    cooldown: 60
+    order: 40010
+  resources:
+  - name: Bark
+    description: Outer tree bark.
+    currency: false
+    action_name: Chop Wood
+    min_amount: 1
+    max_amount: 3
+    drop_chance: 1.0
+  - name: Bone
+    description: Bones from hunted game.
+    currency: false
+    action_name: Hunt
+    min_amount: 1
+    max_amount: 1
+    drop_chance: 0.5
+  - name: Branch
+    description: A sturdy branch suitable for tool handles.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 3
+    drop_chance: 0.6
+  - name: Clay
+    description: Pliable clay used for pottery and bricks.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 2
+    drop_chance: 0.6
+  - name: Coal
+    description: A fuel source for smelting and crafting.
+    currency: false
+    action_name: Mining
+    min_amount: 2
+    max_amount: 3
+    drop_chance: 0.33
+  - name: Egg
+    description: A bird egg that is ready to be cooked.
+    currency: false
+    action_name: Hunt
+    min_amount: 1
+    max_amount: 3
+    drop_chance: 0.33
+  - name: Feathers
+    description: Feathers useful for fletching and pillows.
+    currency: false
+    action_name: Hunt
+    min_amount: 1
+    max_amount: 3
+    drop_chance: 0.4
+  - name: Flint
+    description: A hard stone useful for crafting.
+    currency: false
+    action_name: Mining
+    min_amount: 1
+    max_amount: 2
+    drop_chance: 0.33
+  - name: Gold Coins
+    description: The currency of the realm.
+    currency: true
+    action_name: Taxes
+    min_amount: 6
+    max_amount: 12
+    drop_chance: 1.0
+  - name: Hide
+    description: Animal hide suitable for crafting.
+    currency: false
+    action_name: Hunt
+    min_amount: 1
+    max_amount: 2
+    drop_chance: 0.6
+  - name: Minnows
+    description: A general term for many small freshwater fish .
+    base_amount: 0
+    currency: false
+    action_name: Fishing
+    min_amount: 1
+    max_amount: 5
+    drop_chance: 0.5
+  - name: Plant Fibers
+    description: Tough fibers useful for making twine.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 4
+    drop_chance: 0.7
+  - name: Reeds
+    description: Flexible reeds that can be twisted into bindings.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 2
+    drop_chance: 0.7
+  - name: Rock
+    description: A small rock useful for early crafting.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 5
+    drop_chance: 0.85
+  - name: Sand
+    description: Fine sand for glassmaking.
+    currency: false
+    action_name: Mining
+    min_amount: 2
+    max_amount: 4
+    drop_chance: 1.0
+  - name: Small Meat
+    description: Cuts of meat from small game.
+    currency: false
+    action_name: Hunt
+    min_amount: 1
+    max_amount: 2
+    drop_chance: 0.9
+  - name: Stick
+    description: A basic crafting material.
+    currency: false
+    action_name: Gather
+    min_amount: 1
+    max_amount: 5
+    drop_chance: 0.85
+  - name: Stone
+    description: Rocks from the quarry.
+    currency: false
+    action_name: Mining
+    min_amount: 2
+    max_amount: 4
+    drop_chance: 1.0
+  - name: Wood
+    description: A basic crafting material.
+    currency: false
+    action_name: Chop Wood
+    min_amount: 1
+    max_amount: 5
+    drop_chance: 1.0
+  skills:
+  - name: Fleet Footed
+    description: Reduce action cooldowns by 10%.
+    cost: 1
+    effect: decrease_gold_cooldown
+    multiplier: 0.9
+  - name: Golden Touch
+    description: Increase gold gained from all actions by 10%.
+    cost: 1
+    effect: increase_gold_gain
+    multiplier: 1.1
+  items:
+  - name: Arrows
+    description: Bundle of arrows.
+    drop_chance: 1.0
+  - name: Basic Pick
+    description: A basic mining tool.
+    drop_chance: 1.0
+  - name: Bundle of Sticks
+    description: A bundle of sticks bound together.
+    drop_chance: 1.0
+  - name: Hatchet
+    description: A basic woodcutting tool.
+    drop_chance: 1.0
+  - name: Longbow
+    description: A bow made of flexible wood.
+    drop_chance: 1.0
+  - name: Lucky Charm
+    description: Grants good fortune while gathering.
+    effect: increase_luck
+    drop_chance: 1.0
+  - name: Lucky Rabbit's Foot
+    description: Grants good fortune while hunting.
+    effect: increase_luck
+    drop_chance: 1.0
+  - name: Rope
+    description: A sturdier cord made from twine.
+    drop_chance: 1.0
+  - name: Small Backpack
+    description: A small backpack to carry more findings.
+    drop_chance: 1.0
+  - name: Spear
+    description: A simple spear used for hunting.
+    drop_chance: 1.0
+  - name: Twine
+    description: Simple fiber cord for crafting.
+    drop_chance: 1.0
+  - name: Wood Plank
+    description: A processed timber plank.
+    drop_chance: 1.0
+  - name: Wooden Handle
+    description: A carved wooden handle.
+    drop_chance: 1.0
+  buildings:
+  - name: Carpenter’s Workshop
+    description: Improves plank yield and unlocks advanced woodworking.
+    level: 1
+  - name: Large Home
+    description: A large dwelling for your citizens.
+    level: 3
+  - name: Medium Home
+    description: A medium-sized dwelling for your citizens.
+    level: 2
+  - name: Small Home
+    description: A small dwelling for your citizens.
+    level: 1
+  recipes:
+  - item: Basic Pick
+    quantity: 1
+    components:
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 1
+      logic: AND
+    - type: Item
+      name: Twine
+      quantity: 2
+      logic: AND
+    - type: Resource
+      name: Rock
+      quantity: 5
+      logic: AND
+    - type: Resource
+      name: Flint
+      quantity: 2
+      logic: AND
+  - item: Bundle of Sticks
+    quantity: 1
+    components:
+    - type: Item
+      name: Twine
+      quantity: 2
+      logic: AND
+    - type: Resource
+      name: Stick
+      quantity: 5
+      logic: AND
+  - item: Hatchet
+    quantity: 1
+    components:
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 1
+      logic: AND
+    - type: Item
+      name: Twine
+      quantity: 2
+      logic: AND
+    - type: Resource
+      name: Rock
+      quantity: 5
+      logic: AND
+    - type: Resource
+      name: Flint
+      quantity: 1
+      logic: AND
+  - item: Rope
+    quantity: 1
+    components:
+    - type: Item
+      name: Twine
+      quantity: 2
+      logic: AND
+  - item: Small Backpack
+    quantity: 1
+    components:
+    - type: Item
+      name: Rope
+      quantity: 2
+      logic: AND
+    - type: Resource
+      name: Hide
+      quantity: 4
+      logic: AND
+  - item: Spear
+    quantity: 1
+    components:
+    - type: Item
+      name: Twine
+      quantity: 1
+      logic: AND
+    - type: Resource
+      name: Rock
+      quantity: 2
+      logic: AND
+    - type: Resource
+      name: Flint
+      quantity: 1
+      logic: AND
+    - type: Resource
+      name: Branch
+      quantity: 1
+      logic: AND
+  - item: Twine
+    quantity: 1
+    components:
+    - type: Resource
+      name: Reeds
+      quantity: 2
+      group: binding
+      logic: OR
+    - type: Resource
+      name: Plant Fibers
+      quantity: 4
+      group: binding
+      logic: OR
+  - item: Wood Plank
+    quantity: 2
+    components:
+    - type: Resource
+      name: Wood
+      quantity: 1
+      logic: AND
+  - item: Wooden Handle
+    quantity: 1
+    components:
+    - type: Item
+      name: Wood Plank
+      quantity: 1
+      logic: AND
+    - type: Resource
+      name: Bark
+      quantity: 2
+      logic: AND
+  flags:
+  - slug: can_chop_wood
+    name: Can Chop Wood
+    description: Allows woodcutting after crafting a hatchet.
+    requirements:
+    - type: Item
+      name: Hatchet
+      quantity: 1
+      logic: AND
+    unlockables:
+    - type: Action
+      name: Chop Wood
+  - slug: can_fish
+    name: Can Fish
+    description: Gives the ability to fish.
+    requirements: []
+    unlockables: []
+  - slug: can_hunt
+    name: Can Hunt
+    description: Unlocks Hunt after crafting a spear.
+    requirements:
+    - type: Item
+      name: Spear
+      quantity: 1
+      logic: AND
+    unlockables:
+    - type: Action
+      name: Hunt
+  - slug: can_quarry
+    name: Can Quarry Stone
+    description: Unlocks stone quarrying after crafting a basic pick.
+    requirements:
+    - type: Item
+      name: Basic Pick
+      quantity: 1
+      logic: AND
+    unlockables:
+    - type: Action
+      name: Mining
+  - slug: craft_basic_pick
+    name: Can Craft Basic Pick
+    description: Allows crafting a basic pick for quarrying stone.
+    requirements:
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 1
+      logic: OR
+    - type: Resource
+      name: Rock
+      quantity: 1
+      logic: OR
+    - type: Item
+      name: Twine
+      quantity: 1
+      logic: OR
+    unlockables:
+    - type: Recipe
+      name: Basic Pick
+  - slug: craft_hatchet
+    name: Can Craft Hatchet
+    description: Allows crafting a basic hatchet for chopping wood.
+    requirements:
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 1
+      logic: OR
+    - type: Resource
+      name: Rock
+      quantity: 1
+      logic: OR
+    - type: Item
+      name: Twine
+      quantity: 1
+      logic: OR
+    unlockables:
+    - type: Recipe
+      name: Hatchet
+  - slug: has_basic_hatchet
+    name: Has Basic Hatchet
+    description: Indicates the user has equipped a basic hatchet.
+    requirements:
+    - type: Item
+      name: Hatchet
+      quantity: 1
+      logic: AND
+    unlockables: []
+  - slug: has_basic_pick
+    name: Has Basic Pick
+    description: Indicates the user has equipped a basic pick.
+    requirements:
+    - type: Item
+      name: Basic Pick
+      quantity: 1
+      logic: AND
+    unlockables: []
+  - slug: has_small_backpack
+    name: Has Small Backpack
+    description: Indicates the user has equipped a small backpack.
+    requirements:
+    - type: Item
+      name: Small Backpack
+      quantity: 1
+      logic: AND
+    unlockables: []
+  - slug: has_spear
+    name: Has Spear
+    description: Indicates the user has equipped a spear.
+    requirements:
+    - type: Item
+      name: Spear
+      quantity: 1
+      logic: AND
+    unlockables: []
+  - slug: large_home
+    name: Large Home
+    description: Unlocks the ability to build large homes for your citizens.
+    requirements:
+    - type: Building
+      name: Medium Home
+      quantity: 1
+      logic: AND
+    unlockables:
+    - type: Building
+      name: Large Home
+  - slug: medium_home
+    name: Medium Home
+    description: Unlocks the ability to build medium homes for your citizens.
+    requirements:
+    - type: Building
+      name: Small Home
+      quantity: 1
+      logic: AND
+    unlockables:
+    - type: Building
+      name: Medium Home
+  - slug: small_home
+    name: Small Home
+    description: Unlocks the ability to build small homes for your citizens.
+    requirements: []
+    unlockables:
+    - type: Building
+      name: Small Home
+  - slug: unlock_carpenters_workshop
+    name: Unlock Carpenter’s Workshop
+    description: Unlocks the Carpenter’s Workshop building.
+    requirements: []
+    unlockables:
+    - type: Building
+      name: Carpenter’s Workshop
+  dismantle:
+  - subject_type: Item
+    subject_name: Hatchet
+    notes: Recover basic components from a simple tool.
+    yields:
+    - type: Item
+      name: Twine
+      quantity: 1
+      salvage_rate: 0.8
+    - type: Resource
+      name: Rock
+      quantity: 2
+      salvage_rate: 0.6
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 2
+      salvage_rate: 0.5
+  - subject_type: Item
+    subject_name: Basic Pick
+    notes: Recover basic components from a simple mining tool.
+    yields:
+    - type: Item
+      name: Twine
+      quantity: 1
+      salvage_rate: 0.8
+    - type: Resource
+      name: Rock
+      quantity: 2
+      salvage_rate: 0.6
+    - type: Item
+      name: Bundle of Sticks
+      quantity: 2
+      salvage_rate: 0.5
+  effects:
+  - name: Gatherer's Luck
+    description: Increases luck when gathering.
+    target_attribute: action:gather
+    modifier_type: luck
+    modifier_value: 0.2
+    duration: 600
+    effectable_type: Item
+    effectable_name: Lucky Charm
+  - name: Hunter's Luck
+    description: Increases luck when hunting.
+    target_attribute: action:hunt
+    modifier_type: luck
+    modifier_value: 0.2
+    duration: 600
+    effectable_type: Item
+    effectable_name: Lucky Rabbit's Foot
+  action_item_drops:
+  - action: Gather
+    item: Lucky Charm
+    min_amount: 1
+    max_amount: 1
+    drop_chance: 5.0e-05
+  - action: Hunt
+    item: Lucky Rabbit's Foot
+    min_amount: 1
+    max_amount: 1
+    drop_chance: 5.0e-05
+packs: {}
