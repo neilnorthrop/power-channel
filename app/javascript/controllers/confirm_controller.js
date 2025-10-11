@@ -11,14 +11,31 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static values = { message: String }
 
-  intercept(event) {
-    // If a native confirm has already been asked, skip
-    if (this._confirmed) return
-    event.preventDefault()
-    this.showModal()
+  connect() {
+    this.state = 'idle' // idle | pending | confirming
   }
 
-  showModal() {
+  intercept(event) {
+    const form = this._form()
+
+    // If we just approved the modal, allow this submit through and reset the state.
+    if (this.state === 'confirming') {
+      this.state = 'idle'
+      return
+    }
+
+    // Prevent double opening while we already have a modal on screen.
+    if (this.state === 'pending') {
+      event.preventDefault()
+      return
+    }
+
+    event.preventDefault()
+    this.state = 'pending'
+    this.showModal(form)
+  }
+
+  showModal(form) {
     const msg = this.messageValue || this.element.getAttribute('data-confirm') || 'Are you sure?'
     const backdrop = document.createElement('div')
     backdrop.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'
@@ -37,31 +54,54 @@ export default class extends Controller {
         <button type="button" data-ref="ok" class="px-3 py-1.5 rounded bg-gray-800 text-white">Confirm</button>
       </div>
     `
+
     backdrop.appendChild(box)
     document.body.appendChild(backdrop)
 
-    const cleanup = () => backdrop.remove()
+    const closeModal = () => {
+      backdrop.remove()
+      if (this.state === 'pending') this.state = 'idle'
+    }
+
     const cancelBtn = box.querySelector('[data-ref="cancel"]')
     const okBtn = box.querySelector('[data-ref="ok"]')
-    cancelBtn.addEventListener('click', cleanup)
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) cleanup() })
-    okBtn.addEventListener('click', () => {
-      cleanup()
-      this._confirmed = true
-      // Submit form or trigger original click
-      if (this.element.tagName === 'FORM') {
-        this.element.requestSubmit()
-      } else {
-        // find nearest form and submit, or re-trigger click
-        const form = this.element.closest('form')
-        if (form) form.requestSubmit(); else this.element.click()
-      }
-      this._confirmed = false
+
+    cancelBtn.addEventListener('click', closeModal)
+    backdrop.addEventListener('click', (event) => {
+      if (event.target !== backdrop) return
+      closeModal()
     })
+
+    okBtn.addEventListener('click', () => {
+      closeModal()
+      this.state = 'confirming'
+
+      if (!form) {
+        // Fall back to retriggering the original element for non-form usage.
+        requestAnimationFrame(() => this.element.click())
+        return
+      }
+
+      form.dataset.confirmBypass = 'true'
+      form.dataset.skipValidate = 'true'
+
+      requestAnimationFrame(() => {
+        form.requestSubmit()
+        // Allow validate-form to run again on future submits.
+        setTimeout(() => {
+          delete form.dataset.confirmBypass
+          delete form.dataset.skipValidate
+        }, 0)
+      })
+    })
+  }
+
+  _form() {
+    if (this.element.tagName === 'FORM') return this.element
+    return this.element.closest('form')
   }
 
   escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))
   }
 }
-

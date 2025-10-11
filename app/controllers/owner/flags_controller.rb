@@ -40,14 +40,14 @@ module Owner
 
         FlagRequirement.where(flag_id: @flag.id).delete_all
         Array(params[:requirements]).each do |_, r|
-          next if r[:type].blank? || r[:name].blank?
+          next if r.blank? || r[:type].blank? || r[:name].blank?
           req_id = lookup_id(r[:type], r[:name])
           FlagRequirement.create!(flag_id: @flag.id, requirement_type: r[:type], requirement_id: req_id, quantity: r[:quantity].to_i.presence || 1, logic: (r[:logic].presence || "AND").upcase)
         end
 
         Unlockable.where(flag_id: @flag.id).delete_all
         Array(params[:unlockables]).each do |_, u|
-          next if u[:type].blank? || u[:name].blank?
+          next if u.blank? || u[:type].blank? || u[:name].blank?
           target = lookup_unlockable(u[:type], u[:name])
           Unlockable.create!(flag_id: @flag.id, unlockable: target)
         end
@@ -56,6 +56,7 @@ module Owner
       OwnerAuditLog.create!(actor: current_actor, action: "flags.update", metadata: { id: @flag.id })
       redirect_to owner_flags_path, notice: "Flag updated."
     rescue StandardError => e
+      Rails.logger.error("Failed to update flag: #{e.class} #{e.message}\n#{e.backtrace.join("\n")}")
       load_selects
       @requirements = FlagRequirement.where(flag_id: @flag.id)
       @unlockables = Unlockable.where(flag_id: @flag.id)

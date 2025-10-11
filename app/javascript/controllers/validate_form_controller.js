@@ -5,6 +5,8 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   async intercept(event) {
+    if (this.element.dataset.skipValidate === 'true') return
+    if (this.element.dataset.confirmBypass === 'true') return
     const inputs = this.element.querySelectorAll('[data-controller~="validate-ref"]')
     if (inputs.length === 0) return
     event.preventDefault()
@@ -15,8 +17,11 @@ export default class extends Controller {
       try { firstInvalid.el.focus() } catch (_) {}
       return // keep form blocked
     }
-    // All ok; submit for real
+    // All ok; submit for real (avoid re-validating during the follow-up submit)
+    this.element.dataset.skipValidate = 'true'
     this.element.requestSubmit()
+    // Allow future submissions to validate again after this cycle completes
+    setTimeout(() => { delete this.element.dataset.skipValidate }, 0)
   }
 
   async checkOne(el) {
@@ -51,4 +56,3 @@ export default class extends Controller {
     return (el.controllers || []).find((c) => c.identifier === identifier) || null
   }
 }
-

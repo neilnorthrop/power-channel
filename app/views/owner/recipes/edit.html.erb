@@ -17,16 +17,22 @@
         <p class="text-xs text-gray-500 mb-2">Select Resource or Item components by ID; quantities and grouping are editable. Components must exist.</p>
 
         <% @recipe.recipe_resources.each_with_index do |rr, idx| %>
-          <div class="border rounded p-2 mb-2" data-form-list-row>
+          <div class="border rounded p-2 mb-2" data-form-list-row
+               data-controller="component-select"
+               data-resource-options="<%= h @resource_options_json %>"
+               data-item-options="<%= h @item_options_json %>"
+               data-initial-type="<%= rr.component_type.presence || 'Resource' %>"
+               data-initial-component-id="<%= rr.component_id %>">
             <%= f.fields_for :recipe_resources, rr do |rf| %>
               <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
                 <div>
                   <%= rf.label :component_type, 'Type', class: 'block text-xs text-gray-600' %>
-                  <%= rf.select :component_type, [['Resource','Resource'], ['Item','Item']], {}, class: 'border rounded px-2 py-1 text-sm' %>
+                  <%= rf.select :component_type, [['Resource','Resource'], ['Item','Item']], {}, class: 'border rounded px-2 py-1 text-sm', data: { component_select_target: 'type', action: 'change->component-select#changeType' } %>
                 </div>
                 <div>
                   <%= rf.label :component_id, 'Name', class: 'block text-xs text-gray-600' %>
-                  <%= rf.select :component_id, options_from_collection_for_select(@resources, :id, :name, rr.component_type == 'Resource' ? rr.component_id : nil), { include_blank: true }, class: 'border rounded px-2 py-1 text-sm', data: { resource_options: @resources.map { |r| [r.id, r.name] }.to_h.to_json, item_options: @items.map { |i| [i.id, i.name] }.to_h.to_json } %>
+                  <% collection = rr.component_type == 'Item' ? @items : @resources %>
+                  <%= rf.select :component_id, options_from_collection_for_select(collection, :id, :name, rr.component_id), { include_blank: true }, class: 'border rounded px-2 py-1 text-sm', data: { component_select_target: 'component' } %>
                 </div>
                 <div>
                   <%= rf.label :quantity, class: 'block text-xs text-gray-600' %>
@@ -51,18 +57,23 @@
         <% end %>
 
         <template data-form-list-target="template">
-          <div class="border rounded p-2 mb-2" data-form-list-row>
+          <div class="border rounded p-2 mb-2" data-form-list-row
+               data-controller="component-select"
+               data-resource-options="<%= h @resource_options_json %>"
+               data-item-options="<%= h @item_options_json %>"
+               data-initial-type="Resource">
             <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
               <div>
                 <label class="block text-xs text-gray-600">Type</label>
-                <select name="recipe[recipe_resources_attributes][__INDEX__][component_type]" class="border rounded px-2 py-1 text-sm">
+                <select name="recipe[recipe_resources_attributes][__INDEX__][component_type]" class="border rounded px-2 py-1 text-sm" data-component-select-target="type" data-action="change->component-select#changeType">
                   <option value="Resource">Resource</option>
                   <option value="Item">Item</option>
                 </select>
               </div>
               <div>
                 <label class="block text-xs text-gray-600">Name</label>
-                <select name="recipe[recipe_resources_attributes][__INDEX__][component_id]" class="border rounded px-2 py-1 text-sm">
+                <select name="recipe[recipe_resources_attributes][__INDEX__][component_id]" class="border rounded px-2 py-1 text-sm" data-component-select-target="component">
+                  <option value=""></option>
                   <% @resources.each do |r| %>
                     <option value="<%= r.id %>"><%= r.name %></option>
                   <% end %>

@@ -126,6 +126,8 @@ module Owner
     def load_selects
       @resources = Resource.order(:name)
       @items = Item.order(:name)
+      @resource_options_json = @resources.map { |r| [r.id, r.name] }.to_json
+      @item_options_json = @items.map { |i| [i.id, i.name] }.to_json
     end
   end
 end

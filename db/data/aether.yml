@@ -21,6 +21,10 @@ core:
     description: Chop down trees for wood.
     cooldown: 60
     order: 30010
+  - name: Forestry
+    description: Chop down trees.
+    cooldown: 60
+    order: 30010
   - name: Fishing
     description: Fishing represents the player’s ability to harvest resources from
       rivers, lakes, and seas. It begins with simple, low-yield catches like small
@@ -181,6 +185,10 @@ core:
   - name: Basic Pick
     description: A basic mining tool.
     drop_chance: 1.0
+  - name: Basic Spear
+    description: A basic spear used for hunting.
+    effect: ''
+    drop_chance: 1.0
   - name: Bundle of Sticks
     description: A bundle of sticks bound together.
     drop_chance: 1.0
@@ -236,18 +244,50 @@ core:
     - type: Item
       name: Bundle of Sticks
       quantity: 1
-      logic: AND
+      group: ''
+      logic: OR
     - type: Item
       name: Twine
       quantity: 2
+      group: ''
       logic: AND
     - type: Resource
       name: Rock
       quantity: 5
+      group: ''
       logic: AND
     - type: Resource
       name: Flint
       quantity: 2
+      group: ''
+      logic: AND
+    - type: Resource
+      name: Branch
+      quantity: 1
+      group: ''
+      logic: OR
+  - item: Basic Spear
+    quantity: 1
+    components:
+    - type: Item
+      name: Twine
+      quantity: 1
+      group: ''
+      logic: AND
+    - type: Resource
+      name: Rock
+      quantity: 2
+      group: ''
+      logic: AND
+    - type: Resource
+      name: Flint
+      quantity: 1
+      group: ''
+      logic: AND
+    - type: Resource
+      name: Branch
+      quantity: 1
+      group: ''
       logic: AND
   - item: Bundle of Sticks
     quantity: 1
@@ -284,7 +324,8 @@ core:
     components:
     - type: Item
       name: Twine
-      quantity: 2
+      quantity: 3
+      group: ''
       logic: AND
   - item: Small Backpack
     quantity: 1
@@ -358,6 +399,8 @@ core:
       logic: AND
     unlockables:
     - type: Action
+      name: Forestry
+    - type: Action
       name: Chop Wood
   - slug: can_fish
     name: Can Fish
@@ -368,6 +411,10 @@ core:
     name: Can Hunt
     description: Unlocks Hunt after crafting a spear.
     requirements:
+    - type: Item
+      name: Basic Spear
+      quantity: 1
+      logic: AND
     - type: Item
       name: Spear
       quantity: 1
@@ -455,6 +502,10 @@ core:
     name: Has Spear
     description: Indicates the user has equipped a spear.
     requirements:
+    - type: Item
+      name: Basic Spear
+      quantity: 1
+      logic: AND
     - type: Item
       name: Spear
       quantity: 1
