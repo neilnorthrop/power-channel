@@ -1,0 +1,38 @@
+body {
+  background: #1d1d1d;
+  font-family: 'Times New Roman', serif;
+  color: #fff;
+  margin: 0;
+  overflow: hidden;
+}
+.controls {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+#map-container {
+  width: 100vw;
+  height: 100vh;
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+}
+#map {
+  width: 800px;
+  height: 600px;
+  background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/BlankMap-World-v2.png/800px-BlankMap-World-v2.png') center/cover;
+  position: absolute;
+  transform-origin: top left;
+}
+.location {
+  position: absolute;
+  background: rgba(255,255,255,0.8);
+  color: #000;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+.fog {
+  position: absolute;
+  background: rgba(0,0,0,0.8);
+}
